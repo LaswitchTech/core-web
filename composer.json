@@ -11,6 +11,10 @@
         {
             "name": "LaswitchTech Inc.",
             "email": "support@laswitchtech.com"
+        },
+        {
+            "name": "Louis Ouellet",
+            "email": "louis@laswitchtech.com"
         }
     ],
     "require": {}
