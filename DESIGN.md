@@ -128,7 +128,7 @@ Both follow the exact same 2-line pattern:
 
 ```php
 require_once dirname(__DIR__) . "/vendor/autoload.php";
-$BOOTSTRAP = new Laswitchtech\CoreWeb\Bootstrap("ROUTER"); // or "CLI"
+$BOOTSTRAP = new Laswitchtech\CoreWeb\Bootstrap("WEB"); // or "CLI"
 ```
 
 ### Bootstrap Class Responsibilities
@@ -137,7 +137,7 @@ Mode-driven single-entry bootstrap that handles all initialization. The mode str
 
 | Mode | Responsibility |
 |---------|----------------|
-| `ROUTER` | Config → DI → Router → Request parse → Middleware pipeline → Route dispatch → Response output |
+| `WEB` | Config → DI → Router → Request parse → Middleware pipeline → Route dispatch → Response output |
 | `CLI`   | Config → CLI router → Args parse → Command resolve → Execute → Exit code |
 
 ### Bootstrap Execution Flow (ROUTER Mode)
@@ -248,7 +248,7 @@ For end-users, the file stays minimal — one line of actual code:
 ```php
 <?php
 require_once dirname(__DIR__) . "/vendor/autoload.php";
-new Laswitchtech\CoreWeb\Bootstrap("ROUTER");
+$BOOTSTRAP = new Laswitchtech\CoreWeb\Bootstrap("WEB"); // or "CLI"
 ```
 
 Any routing or custom logic lives inside `routes/` or a user-created bootstrap override. The framework handles request lifecycle end-to-end by default. Users can hook in via:

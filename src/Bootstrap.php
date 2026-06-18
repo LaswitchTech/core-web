@@ -12,7 +12,7 @@ namespace Laswitchtech\CoreWeb;
  *   Config -> Container -> CoreServices -> Extensions -> Subsystem
  *
  * Two modes are supported:
- *   "ROUTER" -- HTTP request lifecycle (Router, middleware, dispatch, output)
+ *   "WEB"    -- HTTP request lifecycle (Router, middleware, dispatch, output)
  *   "CLI"    -- CLI command lifecycle (CLIRouter, arguments, execute, exit)
  */
 class Bootstrap
@@ -21,8 +21,8 @@ class Bootstrap
      *  `Bootstrap::container()` after bootstrap completes.               */
     private static ?Container $instance = null;
 
-    public const string MODE_ROUTER = 'ROUTER';
-    public const string MODE_CLI    = 'CLI';
+    public const string MODE_WEB  = 'WEB';
+    public const string MODE_CLI  = 'CLI';
 
     private readonly string        $mode;
 
@@ -35,9 +35,9 @@ class Bootstrap
 
     public function __construct(string $mode)
     {
-        if (!in_array($mode, [self::MODE_ROUTER, self::MODE_CLI], true)) {
+        if (!in_array($mode, [self::MODE_WEB, self::MODE_CLI], true)) {
             throw new \InvalidArgumentException(
-                "Bootstrap mode must be 'ROUTER' or 'CLI'. Got: {$mode}"
+                "Bootstrap mode must be 'WEB' or 'CLI'. Got: {$mode}"
             );
         }
 
@@ -59,8 +59,8 @@ class Bootstrap
             $this->initExtensions();
 
             switch ($this->mode) {
-                case self::MODE_ROUTER:
-                    $this->bootRouter();
+                case self::MODE_WEB:
+                    $this->bootWeb();
                     break;
 
                 case self::MODE_CLI:
@@ -175,8 +175,8 @@ class Bootstrap
      /  Subsystems (mode-specific)                                          */
     /* ------------------------------------------------------------------ */
 
-    /** BOOTSTRAP ROUTER CHAIN. Stubbed until Router & middleware exist. */
-    private function bootRouter(): void
+    /** BOOTSTRAP WEB CHAIN. Stubbed until Router & middleware exist. */
+    private function bootWeb(): void
     {
         // TODO: $router = new Router(static::$instance);
         //       $router->detectServerType();     -> Apache / Nginx / IIS / built-in
