@@ -21,8 +21,8 @@ class Bootstrap
      *  `Bootstrap::container()` after bootstrap completes.               */
     private static ?Container $instance = null;
 
-    public const string MODE_WEB  = 'WEB';
-    public const string MODE_CLI  = 'CLI';
+    const string MODE_WEB  = 'WEB';
+    const string MODE_CLI  = 'CLI';
 
     private readonly string        $mode;
 
@@ -209,9 +209,10 @@ class Bootstrap
         // ── 4. Register hooks, layouts, and index metadata into Container ───────
         $hookRegistry = new \Laswitchtech\CoreWeb\Hook\Registry();  // one instance per bootstrap run
         $extIndex    = [];                   // extension name -> array{type, version, directory}
+        $srcDirs     = [];                   // collect src/ dirs for autoloader
 
         foreach ($manifests as $manifest) {
-            // – Hooks (class::method or dotted namespace) ────────────────────
+            // ── Extension src/ dir into namespace-aware autoloader ───────────────
             foreach ($manifest->hooks as $hookDef) {
                 // Attempt class::method registration; if it fails, fall back to
                 // treating the hook name itself as a callable hint.

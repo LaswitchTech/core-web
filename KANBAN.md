@@ -51,7 +51,7 @@
 - [ ] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, extensions
   - [~] Manifest Parser
-    - Discover, parse, and validate extension manifests (manifest.json). Version normalization (X.Y.Z), hook format validation, type/name/version required fields. Partial: class::method registration from Bootstrap exists; layout registration from Bootstrap is stubbed.
+     - Discover, parse, and validate extension manifests (manifest.json). Version normalization (X.Y.Z), hook format validation, type/name/version required fields. Partial: class::method registration from Bootstrap exists; layout registration from Bootstrap is stubbed. **Gap: hooks declared as `ClassName::method` never resolve at runtime — no spl_autoload or include_path wiring maps extension namespaces to their src/ directories.**
     - Tags: feature
     - [x] Implement manifest schema validation ✓ <!-- committed 5fc42f2 -->
     - [ ] Implement actual plugin/theme lifecycle (activation/deactivation) <!-- TODO -->
@@ -60,6 +60,8 @@
     - Tags: feature
     - [x] Implement directory walker manifest discovery ✓ <!-- committed 5fc42f2 -->
     - [ ] Implement actual extension loading (plugin/service hooks, theme assets) <!-- TODO -->
+     - **Gap from `EXTENSION` test: extension class files (`ext/plugins/{name}/src/*.php`) have no autoloader -- spl_autoload or include_path must be registered during discovery so `ClassName::method` references resolve at runtime.**
+     - **Gap: hook callbacks are stored in the registry but never fired — bootWeb()/bootCli() stubs don't call ``trigger()`` on the ``Hook\Registry`` after subsystem init completes.**
 - [ ] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, messaging
   - [ ] Message Provider Interface <!-- created_at: 2026-06-18T11:30:00-04:00 priority: normal -->

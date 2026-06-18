@@ -18,7 +18,7 @@ final class Parser
     /**
      * Canonical manifest filenames that the walker will look for.
      */
-    public const array VALID_MANIFEST_NAMES = ['manifest.json', 'extension.json'];
+    const VALID_MANIFEST_NAMES = ['manifest.json', 'extension.json'];
 
     // ---- discovery --------------------------------------------------
 
