@@ -213,3 +213,15 @@ Push when:
 - explicitly requested,
 - completing a task,
 - or preparing for CI validation.
+
+## Project-Specific Notes
+
+### Audit Rule
+
+Before marking any KANBAN task as `[x]` in this project:
+
+1. Confirm the claimed code actually exists (grep/ls/read).
+2. Verify the scope of claims match what's implemented (e.g., "typed getters" vs generic `get()`).
+3. Do not document capability that is stubbed, implied, or future-plan only.
+
+Err on conservative status — `[~]` for partial/incomplete is always correct over a premature `[x]`.

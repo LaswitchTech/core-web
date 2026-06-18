@@ -12,7 +12,7 @@ final readonly class Plugin
         /** @var string  dotted hook namespace (e.g., `layout.header`) */
         public string $hook,
         /** @var callable The resolved callback */
-        public mixed $callback,
+        public callable $callback,
         /** @var int Hook priority — higher fires first */
         public int $priority = 0,
     ) {}
@@ -22,7 +22,7 @@ final readonly class Plugin
      * The resolve Callable is deferred to the Hook\Registry which has
      * access to autoloader and namespace context at boot time.
      */
-    public static function fromRaw(string $hook, mixed $callback, int $priority = 0): self
+    public static function fromRaw(string $hook, callable|string $callback, int $priority = 0): self
     {
         return new self($hook, $callback, $priority);
     }

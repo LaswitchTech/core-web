@@ -4,9 +4,9 @@
  *
  * Ultra-minimal bootstrapping — one line of actual code:
  *   1. Autoload Composer classes
- *   2. Bootstrap the application in "ROUTER" mode
+ *   2. Bootstrap the application in "WEB" mode
  */
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-new Laswitchtech\CoreWeb\Bootstrap('ROUTER');
+new Laswitchtech\CoreWeb\Bootstrap('WEB');

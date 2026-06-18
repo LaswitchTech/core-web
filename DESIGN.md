@@ -263,3 +263,65 @@ Any routing or custom logic lives inside `routes/` or a user-created bootstrap o
 - Interfaces: `Interface` suffix (`MessageProviderInterface`, `PluginInterface`)
 - Config files: kebab-case (`.env`, `extension.json`)
 - Database tables: snake_case, plural (`users`, `admin_settings`)
+- Directory names: `PascalCase` matching the PHP namespace segment (e.g., `src/Hook/`, `src/Manifest/`)
+- Documentation files: match each PHP filename with a `.md` counterpart of the same basename
+
+## Source Code Organization
+
+The `src/` directory follows a **namespace-to-directory** mapping where each top-level namespace segment becomes its own subdirectory.
+
+### Directory Structure (Current)
+
+```
+src/
+├── Bootstrap.php          # Laswitchtech\CoreWeb\Bootstrap — bootstrap orchestrator
+├── Config.php             # Laswitchtech\CoreWeb\Config — configuration loader
+├── Container.php          # Laswitchtech\CoreWeb\Container — DI container
+│
+├── Hook/                  # Laswitchtech\CoreWeb\Hook
+│   ├── Plugin.php        # Immutable value object for hook callbacks
+│   └── Registry.php      # Hook registration and trigger orchestration
+│
+└── Manifest/              # Laswitchtech\CoreWeb\Manifest
+    ├── Extension.php     # Immutable extension data transfer object
+    └── Parser.php        # Manifest discovery, parsing, validation
+```
+
+### File Placement Rules
+
+1. **Single-entry classes go at `src/` root** — Bootstrap triad (`Bootstrap`, `Config`, `Container`) and any future single-class subsystems with no logical grouping partner.
+
+2. **Group related classes into subdirectories** — when a subsystem has multiple cooperating classes, create one subdirectory named after the parent namespace segment:
+   - ✅ `src/Hook/Plugin.php` + `src/Hook/Registry.php` (cooperating pair)
+   - ✅ `src/Manifest/Extension.php` + `src/Manifest/Parser.php` (data + loader)
+
+3. **Namespace mirrors directory** — `Laswitchtech\CoreWeb\Hook\Plugin` lives at `src/Hook/Plugin.php`, not `src/hooks/plugin.php`. The file path is the fully-qualified namespace with `Laswitchtech\\CoreWeb\\` stripped, using forward slashes as separators.
+
+4. **Directories are PascalCase** — `src/Hook/`, `src/Manifest/`, never `src/hook/` or `src/manifest`. This matches PSR-4 conventions and avoids case-sensitivity issues on case-insensitive filesystems if filenames also match the class name.
+
+### Documentation Organization
+
+Docs mirror `src/` under `docs/development/architecture/` with a one-to-one correspondence:
+
+```
+docs/development/architecture/
+├── Bootstrap.md           # mirrors src/Bootstrap.php
+├── Config.md             # mirrors src/Config.php
+├── Container.md          # mirrors src/Container.php
+│
+├── Hook/
+│   ├── Plugin.md         # mirrors src/Hook/Plugin.php
+│   └── Registry.md       # mirrors src/Hook/Registry.php
+│
+└── Manifest/
+    ├── Extension.md      # mirrors src/Manifest/Extension.php
+    └── Parser.md         # mirrors src/Manifest/Parser.php
+```
+
+Additional docs live at the sibling level grouped by topic:
+
+- `docs/development/extensions/` — extension system documentation (beyond just manifest parsing)
+- `docs/administration/` — admin panel setup and usage (placeholder)
+- `docs/installation/` — installation instructions (placeholder)
+- `docs/usage/` — runtime usage guides (placeholder)
+- `docs/general/` — general reference material (placeholder)

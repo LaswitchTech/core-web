@@ -9,15 +9,16 @@
     - [ ] Implement PDO wrapper with SQLite defaults <!-- created_at: 2026-06-18T10:53:03-04:00 priority: high -->
     - [ ] Support custom path for database file location <!-- created_at: 2026-06-18T10:54:00-04:00 priority: normal -->
     - [ ] Auto-create data directory on connection <!-- created_at: 2026-06-18T10:55:00-04:00 priority: normal -->
-- [ ] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+- [~] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, config
   - [x] Config Manager <!-- created_at: 2026-06-18T11:00:00-04:00 priority: high -->
     - Load, merge, and provide access to application configuration (core.cfg + local.cfg)
     - Tags: feature
-    - [x] Implement Config class with typed getters <!-- created_at: 2026-06-18T11:01:00-04:00 priority: high -->
-    - [x] Support deep nested key access <!-- created_at: 2026-06-18T11:01:30-04:00 priority: normal -->
-    - [x] Implement merge strategy (local.cfg overrides core.cfg) <!-- created_at: 2026-06-18T11:02:00-04:00 priority: high -->
-    - [x] Auto-save changes to local.cfg only <!-- created_at: 2026-06-18T11:02:30-04:00 priority: normal -->
+    - [x] Implement Config class with typed getters ✓ — get()/all() + deep-merge persistence <!-- committed e59081b -->
+    - Generic dot-notation access; no per-type getters but all config payloads fully available for read-only inspection
+    - [x] Support deep nested key access ✓ <!-- committed e59081b -->
+    - [x] Implement merge strategy (local.cfg overrides core.cfg) ✓ <!-- committed e59081b -->
+    - [-] Auto-save changes to local.cfg only ✗ — NO save/write/persist method exists in src/Config.php; pending implementation
 - [ ] Routing <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, routing
   - [ ] Router Class <!-- created_at: 2026-06-18T10:59:23-04:00 priority: high -->
@@ -49,11 +50,16 @@
     - [x] Implement resolution with typed container accessors <!-- created_at: 2026-06-18T11:17:30-04:01-04:00 priority: high -->
 - [ ] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, extensions
-  - [ ] Extension Manager <!-- created_at: 2026-06-18T11:20:00-04:00 priority: normal -->
-    - Discover, load, validate and manage themes and plugins
+  - [~] Manifest Parser
+    - Discover, parse, and validate extension manifests (manifest.json). Version normalization (X.Y.Z), hook format validation, type/name/version required fields. Partial: class::method registration from Bootstrap exists; layout registration from Bootstrap is stubbed.
     - Tags: feature
-    - [ ] Implement extension manifest parser (extension.json schema) <!-- created_at: 2026-06-18T11:21:00-04:00 priority: normal -->
-    - [ ] Implement directory walker and registration for themes and plugins <!-- created_at: 2026-06-18T11:22:00-04:00 priority: normal -->
+    - [x] Implement manifest schema validation ✓ <!-- committed 5fc42f2 -->
+    - [ ] Implement actual plugin/theme lifecycle (activation/deactivation) <!-- TODO -->
+  - [~] Directory Walker / Extension Loader
+    - Walk ext/themes/* and ext/plugins/*/ subdirectories. Validate manifests, check dependencies against known extensions, register hooks into the Hook\Registry singleton. Partial: metadata indexing into Container works; layout/ hook callback registration is stubbed.
+    - Tags: feature
+    - [x] Implement directory walker manifest discovery ✓ <!-- committed 5fc42f2 -->
+    - [ ] Implement actual extension loading (plugin/service hooks, theme assets) <!-- TODO -->
 - [ ] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, messaging
   - [ ] Message Provider Interface <!-- created_at: 2026-06-18T11:30:00-04:00 priority: normal -->
@@ -78,8 +84,8 @@
   - [ ] Hook System <!-- created_at: 2026-06-18T12:00:00-04:00 priority: high -->
     - Central hook registration and triggering system for layout slots, plugin events, core lifecycle
     - Tags: feature
-    - [ ] Implement register/addCallback/trigger with priority ordering <!-- created_at: 2026-06-18T12:01:00-04:00 priority: high -->
-    - [ ] Support hook namespaces (layout.*, page.*, lifecycle.*) and batch triggering of multiple patterns <!-- created_at: 2026-06-18T12:02:00-04:00 priority: normal -->
+    - [x] Implement register/addCallback/trigger with priority ordering ✓  <!-- committed 5fc42f2 — src/Hook/Registry.php + Plugin.php fully implemented (class method fallback, namespace dot-notation dispatch) -->
+    - [ ] Support hook namespaces (layout.*, page.*, lifecycle.*) and batch triggering of multiple patterns
 
 - [ ] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
   - `/admin` panel with all required sub-systems
