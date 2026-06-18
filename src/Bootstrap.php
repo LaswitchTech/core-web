@@ -209,10 +209,16 @@ class Bootstrap
         // ── 4. Register hooks, layouts, and index metadata into Container ───────
         $hookRegistry = new \Laswitchtech\CoreWeb\Hook\Registry();  // one instance per bootstrap run
         $extIndex    = [];                   // extension name -> array{type, version, directory}
-        $srcDirs     = [];                   // collect src/ dirs for autoloader
+        $srcDirs     = [];                   // collect src/ dirs for namespace autoloader
 
         foreach ($manifests as $manifest) {
-            // ── Extension src/ dir into namespace-aware autoloader ───────────────
+            // -- Register ext/{name}/src as a namespace-aware autoload root ----------
+            $srcDir = "{$manifest->directory}/src";
+            if (is_dir($srcDir)) {
+                $srcDirs[] = $srcDir;
+            }
+
+            // -- Hooks (class::method or dotted namespace) -------------------------
             foreach ($manifest->hooks as $hookDef) {
                 // Attempt class::method registration; if it fails, fall back to
                 // treating the hook name itself as a callable hint.
@@ -248,10 +254,25 @@ class Bootstrap
             ];
         }
 
-        // – Bind resolved Hook\Registry into the container ────────────────────────
+        // -- Register namespace-aware autoloader for extension src/ dirs --------
+        foreach ($srcDirs as $dir) {
+            spl_autoload_register(function (string $class) use ($dir): void {
+                // Only handle our plugin/theme namespaces.
+                if (str_starts_with($class, 'Laswitchtech\\CoreWeb\\Plugin\\') === false
+                    && str_starts_with($class, 'Laswitchtech\\CoreWeb\\Theme\\') === false) {
+                    return;
+                }
+                $file = "{$dir}/" . substr(str_replace('\\', '/', $class), 21) . '.php';
+                if (is_file($file)) {
+                    require_once $file;
+                }
+            });
+        }
+
+        // -- Bind resolved Hook\Registry into the container ---------------------
         $c->set('hook_registry', $hookRegistry);
 
-        // – Store extension index keyed by name ──────────────────────────────────
+        // -- Store extension index keyed by name --------------------------------
         $c->set('extension_index', (object) $extIndex);
     }
 
@@ -262,6 +283,12 @@ class Bootstrap
     /** BOOTSTRAP WEB CHAIN. Stubbed until Router & middleware exist. */
     private function bootWeb(): void
     {
+        // Fire plugin-started hook so test plugins can run bootstrap-time.
+        $registry = static::$instance->resolve('hook_registry');
+        if ($registry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
+            $registry->trigger('plugin.started', ['mode' => 'web']);
+        }
+
         // TODO: $router = new Router(static::$instance);
         //       $router->detectServerType();     -> Apache / Nginx / IIS / built-in
         //       $router->loadCoreRoutes();       -> framework-level routes (/admin etc.)
@@ -274,6 +301,12 @@ class Bootstrap
     /** BOOTSTRAP CLI CHAIN. Stubbed until CLIRouter & commands exist. */
     private function bootCli(): void
     {
+        // Fire plugin-started hook so test plugins can run bootstrap-time.
+        $registry = static::$instance->resolve('hook_registry');
+        if ($registry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
+            $registry->trigger('plugin.started', ['mode' => 'cli']);
+        }
+
         // TODO: $cli = new CLIRouter(static::$instance);
         //       $cli->loadRegisteredCommands();  -> core + plugin commands
         //       $exitCode = $cli->dispatch($_SERVER['argv']);
