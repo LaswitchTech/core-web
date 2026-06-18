@@ -21,8 +21,8 @@ class Bootstrap
      *  `Bootstrap::container()` after bootstrap completes.               */
     private static ?Container $instance = null;
 
-    const string MODE_WEB  = 'WEB';
-    const string MODE_CLI  = 'CLI';
+    const MODE_WEB  = 'WEB';
+    const MODE_CLI  = 'CLI';
 
     private readonly string        $mode;
 
