@@ -107,9 +107,9 @@ QueryBuilder::select($columns)->from($table)->where(...)->get()
 
 ## Implementation Order (Proposed)
 
-1. Application bootstrap (`index.php` → single entry point)
-2. DI Container (minimal)
-3. Configuration loader (env → defaults → config files)
+1. Application bootstrap (`index.php` → **Bootstrap class** with mode-driven initialization)
+2. Configuration loader (core.cfg → local.cfg merge, Config class)
+3. DI Container (minimal)
 4. Router (server detection + routing rules)
 5. Database abstraction (SQLite → MySQL)
 6. Hook Registry
@@ -117,7 +117,145 @@ QueryBuilder::select($columns)->from($table)->where(...)->get()
 8. UI Builder (components)
 9. Extension Manager (loader + manifest parser)
 10. Messaging (SMTP → SMS provider interface)
-11. Admin panel (dashboard, settings, dev console, theme preview)
+11. CLI system (router-like command dispatch)
+12. Admin panel (dashboard, settings, dev console, theme preview)
+
+## Bootstrap Architecture
+
+### Entry Points (`index.php` and `cli`)
+
+Both follow the exact same 2-line pattern:
+
+```php
+require_once dirname(__DIR__) . "/vendor/autoload.php";
+$BOOTSTRAP = new Laswitchtech\CoreWeb\Bootstrap("ROUTER"); // or "CLI"
+```
+
+### Bootstrap Class Responsibilities
+
+Mode-driven single-entry bootstrap that handles all initialization. The mode string determines which subsystem chain runs:
+
+| Mode | Responsibility |
+|---------|----------------|
+| `ROUTER` | Config → DI → Router → Request parse → Middleware pipeline → Route dispatch → Response output |
+| `CLI`   | Config → CLI router → Args parse → Command resolve → Execute → Exit code |
+
+### Bootstrap Execution Flow (ROUTER Mode)
+
+```
+Bootstrap("ROUTER")
+  └── initConfig()
+        load core.cfg
+        merge local.cfg on top
+        store in Config singleton
+
+  └── initContainer()
+        register core services (config, router, hook registry, session)
+        return Container instance stored as static
+
+  └── initExtensions()
+        scan extensions/{theme,plugin}/ directories
+        register hooks and plugin providers
+
+  └── bootSubsystem("ROUTER")
+        create Router
+        attach global middleware (error handling, CSRF check when on, session start)
+        parse $_GET / $_POST / headers → Request object
+        dispatch to matched route
+        capture response → output buffered or stream directly
+```
+
+### Bootstrap Execution Flow (CLI Mode)
+
+```
+Bootstrap("CLI")
+  └── initConfig()    // same as ROUTER mode
+
+  └── initContainer() // same as ROUTER mode, but CLI subsystem registered instead of HTTP router
+
+  └── bootSubsystem("CLI")
+        load all plugin-registered commands
+        parse $_SERVER["argv"] → namespace + command + args[]
+        resolve handler:
+          "core.*" → CoreWeb\CLI\Command\<namespace> classes
+          "*"      → Extension-registered callbacks
+        execute command
+        return exit code (0 success, 1 error)
+```
+
+### Subsystem Selection Pattern
+
+Both modes share the same initialization chain up to `bootSubsystem()`:
+
+```php
+class Bootstrap {
+    public const MODE_ROUTER = "ROUTER";
+    public const MODE_CLI    = "CLI";
+
+    private string $mode;
+    private static ?Container $instance = null;
+
+    public function __construct(string $mode) {
+        $this->mode = $mode;
+        $this->run();
+    }
+
+    private function run(): void {
+        Config::load($this->resolveConfigPath());  // core.cfg + local.cfg
+        static::$instance = new Container();        // DI container initialized
+
+        $this->registerCoreServices(static::$instance);  // config, hook registry, session
+
+        switch ($this->mode) {
+            case self::MODE_ROUTER:
+                $router = new Router(static::$instance);
+                $router->detectServerType();       // Apache / Nginx / IIS / built-in
+                $router->loadCoreRoutes();         // framework-level routes (/admin, etc.)
+                $response = $router->dispatch($_SERVER);
+                echo $response->getBody();          // output the final response
+                break;
+
+            case self::MODE_CLI:
+                $cli = new CLIRouter(static::$instance);
+                $cli->loadRegisteredCommands();      // core commands + plugin-registered
+                $exitCode = $cli->dispatch($_SERVER["argv"]);
+                exit($exitCode);
+                break;
+        }
+    }
+
+    private function resolveConfigPath(): array {
+        $basePath = __DIR__ . "/../../config/";  // framework path
+        return [
+            $basePath . "core.cfg",
+            file_exists("./config/local.cfg") ? "./config/local.cfg" : null,
+        ];
+    }
+
+    public static function container(): Container {
+        if (static::$instance === null) {
+            throw new RuntimeException("Bootstrap not initiated yet. Call Bootstrap::MODE_ROUTER or BOOTSTRAP_CLI first.");
+        }
+        return static::$instance;
+    }
+}
+```
+
+### What the Skeleton `index.php` Should Look Like
+
+For end-users, the file stays minimal — one line of actual code:
+
+```php
+<?php
+require_once dirname(__DIR__) . "/vendor/autoload.php";
+new Laswitchtech\CoreWeb\Bootstrap("ROUTER");
+```
+
+Any routing or custom logic lives inside `routes/` or a user-created bootstrap override. The framework handles request lifecycle end-to-end by default. Users can hook in via:
+
+1. Extension hooks (non-invasive, plugin-driven)
+2. Override file `index.php` with their own code before `new Bootstrap()`
+3. Route-level middleware for selective request customization
 
 ## Naming Conventions
 
