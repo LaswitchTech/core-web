@@ -14,11 +14,11 @@ Work in small, verifiable increments.
 2. Read `DESIGN.md`.
 3. Read relevant documentation under `docs/` when available.
 4. Review the existing implementation.
-5. Update documentation if behavior is undocumented.
-6. Create or update a TODO list.
-7. Implement one small change.
-8. Run focused tests.
-9. Run broader tests when practical.
+5. Check `git status` and identify user/uncommitted changes.
+6. Preserve existing user changes unless explicitly approved otherwise.
+7. Update documentation if behavior is undocumented.
+8. Create or update a TODO list.
+9. Implement one small change.
 10. Run `git diff --check`.
 11. Commit the change when appropriate.
 12. Update `KANBAN.md` when task status changes.
@@ -145,6 +145,14 @@ Do not:
 
 Small, incremental changes are preferred.
 
+Do not “fix” code by reverting it to a previous version.
+
+Prefer surgical edits over replacement.
+
+If the agent believes a user edit broke functionality, explain the issue and ask before changing it.
+
+**Do not assume unexpected changes are mistakes.**
+
 ## CI Failure Handling
 
 When fixing CI failures:
@@ -213,6 +221,45 @@ Push when:
 - explicitly requested,
 - completing a task,
 - or preparing for CI validation.
+
+## User Change Protection
+
+User-made changes are authoritative.
+
+Agents must never revert, overwrite, remove, or “clean up” user changes unless the user explicitly approves it.
+
+Before reverting or replacing any existing code, configuration, documentation, or planning file, the agent must:
+
+1. Identify exactly what would be reverted or overwritten.
+2. Explain why the change seems necessary.
+3. Ask the user for confirmation.
+4. Wait for approval before proceeding.
+
+This applies especially when:
+- the user made manual fixes during the same session,
+- files were modified outside the agent’s last action,
+- `git status` shows changes the agent did not create,
+- code differs from the agent’s expected state,
+- tests fail after user edits.
+
+Do not assume unexpected changes are mistakes.
+
+If a conflict exists between the agent’s plan and current repository state, stop and ask.
+
+Never use broad destructive commands without explicit approval, including:
+
+```sh
+git checkout -- .
+git reset --hard
+git clean -fd
+git restore .
+git restore path/to/file
+rm -rf
+```
+
+Path-specific reverts also require approval unless the agent created the exact change in the current step and has not yet yielded control to the user.
+
+When in doubt, preserve the current file and adapt the implementation around it.
 
 ## Project-Specific Notes
 
