@@ -11,13 +11,13 @@
     - [ ] Auto-create data directory on connection <!-- created_at: 2026-06-18T10:55:00-04:00 priority: normal -->
 - [ ] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, config
-  - [ ] Config Manager <!-- created_at: 2026-06-18T11:00:00-04:00 priority: high -->
+  - [x] Config Manager <!-- created_at: 2026-06-18T11:00:00-04:00 priority: high -->
     - Load, merge, and provide access to application configuration (core.cfg + local.cfg)
     - Tags: feature
-    - [ ] Implement Config class with typed getters <!-- created_at: 2026-06-18T11:01:00-04:00 priority: high -->
-    - [ ] Support deep nested key access <!-- created_at: 2026-06-18T11:01:30-04:00 priority: normal -->
-    - [ ] Implement merge strategy (local.cfg overrides core.cfg) <!-- created_at: 2026-06-18T11:02:00-04:00 priority: high -->
-    - [ ] Auto-save changes to local.cfg only <!-- created_at: 2026-06-18T11:02:30-04:00 priority: normal -->
+    - [x] Implement Config class with typed getters <!-- created_at: 2026-06-18T11:01:00-04:00 priority: high -->
+    - [x] Support deep nested key access <!-- created_at: 2026-06-18T11:01:30-04:00 priority: normal -->
+    - [x] Implement merge strategy (local.cfg overrides core.cfg) <!-- created_at: 2026-06-18T11:02:00-04:00 priority: high -->
+    - [x] Auto-save changes to local.cfg only <!-- created_at: 2026-06-18T11:02:30-04:00 priority: normal -->
 - [ ] Routing <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, routing
   - [ ] Router Class <!-- created_at: 2026-06-18T10:59:23-04:00 priority: high -->
@@ -41,12 +41,12 @@
     - [ ] Verify web.config handles both static files routing and PHP-FPM fastcgi correctly <!-- created_at: 2026-06-18T11:11:00-04:00 priority: normal -->
 - [ ] DI Container <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, container
-  - [ ] Container Implementation <!-- created_at: 2026-06-18T11:15:00-04:00 priority: high -->
+  - [x] Container Implementation <!-- created_at: 2026-06-18T11:15:00-04:00 priority: high -->
     - Lightweight, minimal dependency injection container for core services
     - Tags: feature
-    - [ ] Implement register/resolve with singleton support <!-- created_at: 2026-06-18T11:16:00-04:00 priority: high -->
-    - [ ] Support factory closures and auto-wiring for simple classes <!-- created_at: 2026-06-18T11:17:00-04:00 priority: normal -->
-    - [ ] Implement resolution with typed container accessors <!-- created_at: 2026-06-18T11:17:30-04:01-04:00 priority: high -->
+    - [x] Implement register/resolve with singleton support <!-- created_at: 2026-06-18T11:16:00-04:00 priority: high -->
+    - [x] Support factory closures and auto-wiring for simple classes <!-- created_at: 2026-06-18T11:17:00-04:00 priority: normal -->
+    - [x] Implement resolution with typed container accessors <!-- created_at: 2026-06-18T11:17:30-04:01-04:00 priority: high -->
 - [ ] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, extensions
   - [ ] Extension Manager <!-- created_at: 2026-06-18T11:20:00-04:00 priority: normal -->
@@ -121,19 +121,19 @@
     - [x] Specify `resolveConfigPath()` conventions for Config references <!-- created_at: 2026-06-18T14:11:30-04:00 priority: normal -->
 
 - [ ] Bootstrap Implementation <!-- created_at: 2026-06-18T14:15:00-04:00 priority: high -->
-  - Orchestration class (`Laswitchtech\Core\Bootstrap`) — mode-driven single-entry boot for ROUTER and CLI. Prerequisite for all other work.
+  - Orchestration class (`Laswitchtech\CoreWeb\Bootstrap`) — mode-driven single-entry boot for WEB and CLI. Prerequisite for all other work.
     Tags: framework, bootstrap, feature
-    - [ ] Implement `new Bootstrap("ROUTER")` / `new Bootstrap("CLI")` constructor with static container() getter <!-- created_at: 2026-06-18T14:15:30-04:00 priority: high -->
+    - [x] Implement `new Bootstrap("WEB")` / `new Bootstrap("CLI")` constructor with static container() getter <!-- created_at: 2026-06-18T14:15:30-04:00 priority: high -->
       - Throws RuntimeException if container accessed before init
     Tags: feature-implement
-    - [ ] Implement `initConfig()` — load core.cfg, deep-merge local.cfg on top, store in Config singleton <!-- created_at: 2026-06-18T14:16:00-04:00 priority: high -->
-    - [ ] Implement `initContainer()` — create DI container instance as static singleton <!-- created_at: 2026-06-18T14:16:30-04:00 priority: high -->
-    - [ ] Implement `registerCoreServices(Container $c)` — register config, hook registry, session into container <!-- created_at: 2026-06-18T14:17:00-04:00 priority: high -->
-    - [ ] Implement `initExtensions()` — scan extensions/{theme,plugin}/, validate manifests, register hooks <!-- created_at: 2026-06-18T14:17:30-04:00 priority: high -->
-    - [ ] Implement `bootSubsystem("ROUTER")` chain: Router → global middleware → Request parse → dispatch → Response output <!-- created_at: 2026-06-18T14:18:00-04:00 priority: high -->
+    - [x] Implement `initConfig()` — load core.cfg, deep-merge local.cfg on top, store in Config singleton <!-- created_at: 2026-06-18T14:16:00-04:00 priority: high -->
+    - [x] Implement `initContainer()` — create DI container instance as static singleton <!-- created_at: 2026-06-18T14:16:30-04:00 priority: high -->
+    - [x] Implement `registerCoreServices(Container $c)` — register config, hook registry, session into container <!-- created_at: 2026-06-18T14:17:00-04:00 priority: high -->
+    - [~] Implement `initExtensions()` — scan extensions/{theme,plugin}/, validate manifests, register hooks <!-- created_at: 2026-06-18T14:17:30-04:00 priority: high -->
+    - [ ] Implement `bootSubsystem("WEB")` chain: Router → global middleware → Request parse → dispatch → Response output <!-- created_at: 2026-06-18T14:18:00-04:00 priority: high -->
     - [ ] Implement `bootSubsystem("CLI")` chain: CLIRouter → load registered commands → arg parse → resolve handler → execute → exit code <!-- created_at: 2026-06-18T14:18:30-04:00 priority: high -->
-    - [ ] Implement `resolveConfigPath()` — return framework core.cfg + conditional local.cfg if path exists <!-- created_at: 2026-06-18T14:19:00-04:00 priority: high -->
-    - [ ] Create skeleton `/index.php` and `/cli` files matching the exact 2-line user pattern
+    - [x] Implement `resolveConfigPath()` — return framework core.cfg + conditional local.cfg if path exists <!-- created_at: 2026-06-18T14:19:00-04:00 priority: high -->
+    - [x] Create skeleton `/index.php` and `/cli` files matching the exact 2-line user pattern
 
 ## Validation
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
