@@ -113,12 +113,12 @@
 
 ## In Progress
 
-- [ ] Bootstrap Architecture <!-- created_at: 2026-06-18T14:10:00-04:00 priority: high -->
+- [x] Bootstrap Architecture <!-- created_at: 2026-06-18T14:10:00-04:00 priority: high -->
   - Design document for the mode-driven bootstrap system and both entry-point patterns
     Tags: framework, bootstrap, documentation
-    - Document BOOTSTRAP_MODES table (ROUTER vs CLI responsibilities) <!-- created_at: 2026-06-18T14:10:30-04:00 priority: high -->
-    - Document exact 2-line entry pattern for `/index.php` and `/cli` <!-- created_at: 2026-06-18T14:11:00-04:00 priority: high -->
-    - Specify `resolveConfigPath()` conventions for Config references <!-- created_at: 2026-06-18T14:11:30-04:00 priority: normal -->
+    - [x] Document BOOTSTRAP_MODES table (WEB vs CLI responsibilities) <!-- created_at: 2026-06-18T14:10:30-04:00 priority: high -->
+    - [x] Document exact 2-line entry pattern for `/index.php` and `/cli` <!-- created_at: 2026-06-18T14:11:00-04:00 priority: high -->
+    - [x] Specify `resolveConfigPath()` conventions for Config references <!-- created_at: 2026-06-18T14:11:30-04:00 priority: normal -->
 
 - [ ] Bootstrap Implementation <!-- created_at: 2026-06-18T14:15:00-04:00 priority: high -->
   - Orchestration class (`Laswitchtech\Core\Bootstrap`) — mode-driven single-entry boot for ROUTER and CLI. Prerequisite for all other work.
