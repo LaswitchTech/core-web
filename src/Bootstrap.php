@@ -160,15 +160,98 @@ class Bootstrap
      /  Extensions                                                          */
     /* ------------------------------------------------------------------ */
 
-    /**
-     * Discover & load extensions/themes/plugins from known locations when the
-     * HookRegistry and manifest parser are in place (future work).
-     */
+    /** Entry point for extension discovery — delegates to ``registerExtensions()``. */
     private function initExtensions(): void
     {
-        // TODO: walk extensions/{theme,plugin}/{name}/ manifests
-        // TODO: validate schema -- type, name, version, hooks, layouts, depends
-        // TODO: register callbacks into HookRegistry on boot.
+        $this->registerExtensions();
+    }
+
+    /**
+     * Walk ``ext/{themes,plugins}/{name}/``, parse/validate manifests, check dependencies,
+     * register hook callbacks into Hook\Registry, and store extension metadata in the Container.
+     *
+     * Runs at bootstrap time and throws on any invalid manifest or unresolved dependency —
+     * failing fast before any subsystem starts.
+     */
+    private function registerExtensions(): void
+    {
+        $c   = static::$instance;
+        if ($c === null) {
+            throw new \RuntimeException('Container not yet initialised when initExtensions() runs.');
+        }
+
+        // ── 1. Resolve ext/ base directory (framework vendor path) ────────────
+        $extBase = __DIR__ . '/../../ext';
+
+        // ── 2. Discover & parse every manifest ────────────────────────────────
+        $manifests = Manifest\Parser::discover($extBase);
+
+        if ($manifests === []) {
+            return; // Nothing to do -- no extensions found.
+        }
+
+        // ── 3. Quick dependency sanity check (fail fast) ──────────────────────
+        $knownNames = array_column($manifests, 'name');
+        foreach ($manifests as $manifest) {
+            if ($manifest->depends === []) {
+                continue;
+            }
+            foreach ($manifest->depends as $dep) {
+                if (!in_array($dep, $knownNames, true)) {
+                    throw new \RuntimeException(
+                        "Extension '{$manifest->name}': unresolved dependency '{$dep}'. "
+                        . 'Known: ' . implode(', ', array_unique($knownNames))
+                    );
+                }
+            }
+        }
+
+        // ── 4. Register hooks, layouts, and index metadata into Container ───────
+        $hookRegistry = new \Laswitchtech\CoreWeb\Hook\Registry();  // one instance per bootstrap run
+        $extIndex    = [];                   // extension name -> array{type, version, directory}
+
+        foreach ($manifests as $manifest) {
+            // – Hooks (class::method or dotted namespace) ────────────────────
+            foreach ($manifest->hooks as $hookDef) {
+                // Attempt class::method registration; if it fails, fall back to
+                // treating the hook name itself as a callable hint.
+                if (str_contains($hookDef, '::')) {
+                    try {
+                        $hookRegistry->addClassCall($hookDef, $hookDef);  // uses hook name as callback too
+                        continue;
+                    } catch (\Throwable $_) {
+                        // Not an invokable class -- treat as a regular hook name below.
+                    }
+                }
+                // Dotted namespace hook (e.g. "layout.header") — register with empty callback
+                // placeholder so that subsystems can inspect the hook later.
+                $hookRegistry->addCallback($hookDef, static fn () => [], 0);
+            }
+
+            // – Layouts (list of layout identifiers) ─────────────────────────
+            if ($manifest->layouts !== []) {
+                foreach ($manifest->layouts as $layoutDef) {
+                    // Layout hooks follow the convention: "layout.<name>"
+                    if (is_string($layoutDef)) {
+                        $hookRegistry->addCallback("layout.{$layoutDef}", static fn () => [], 0);
+                    }
+                }
+            }
+
+            // – Index extension metadata into Container ──────────────────────
+            $extIndex[$manifest->name] = [
+                'type'      => $manifest->type,
+                'version'   => $manifest->version,
+                'directory' => $manifest->directory,
+                'depends'   => $manifest->depends,
+            ];
+        }
+
+        // – Bind resolved Hook\Registry into the container ────────────────────────
+        $c->set('hook_registry', $hookRegistry);
+
+        // – Store extension index keyed by name ──────────────────────────────────
+        $c->set('extension_index', (object) $extIndex);
     }
 
     /* ------------------------------------------------------------------ --/

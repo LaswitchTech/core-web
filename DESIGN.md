@@ -59,7 +59,7 @@ index.php (1 line)
 Detect server type by checking `$_SERVER` keys (`SERVER_SOFTWARE`, `GATEWAY_INTERFACE`). This is the first boot step — before routing is set up. The detection feeds into a strategy that selects the correct `.htaccess` / `nginx.conf` snippet and serves it to `.well-known/core-web/` for the user to copy/download.
 
 ### Extension Loading
-- Extensions live in `extensions/{theme,plugin}/{name}/`
+- Extensions live in `ext/{themes,plugins}/{name}/`
 - Each extension has a manifest with: type, name, version, hooks (array), layouts (array), depends (optional)
 - Loader walks directories, validates manifests, registers hooks and plugins into the container
 - Hooks are registered during a pre-boot phase; resolved at render time
@@ -154,7 +154,7 @@ Bootstrap("ROUTER")
         return Container instance stored as static
 
   └── initExtensions()
-        scan extensions/{theme,plugin}/ directories
+         scan ext/{themes,plugins}/{name}/ directories
         register hooks and plugin providers
 
   └── bootSubsystem("ROUTER")

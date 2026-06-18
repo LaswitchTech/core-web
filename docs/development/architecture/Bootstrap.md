@@ -9,7 +9,7 @@ Config → Container → Core Services → Extensions → Mode-Specific Subsyste
 ```
 
 Two modes are supported:
-- **`ROUTER`** — Standard HTTP request lifecycle (router dispatch, middleware pipeline, output)
+- **`WEB`**   — HTTP request lifecycle (router dispatch, middleware pipeline, output)
 - **`CLI`**   — Command-line execution (command routing, argument parsing, exit codes)
 
 ## Why This Design
@@ -29,7 +29,7 @@ For typical application files:
 ```php
 <?php // index.php — HTTP entry point
 require_once __DIR__ . '/vendor/autoload.php';
-new Laswitchtech\CoreWeb\Bootstrap('ROUTER');
+new Laswitchtech\CoreWeb\Bootstrap('WEB');
 ```
 
 ```php
@@ -69,26 +69,36 @@ Registers the minimal set of core framework services into the container:
 | Key      | Value            | Purpose                                        |
 |----------|------------------|-------------------------------------------------|
 | `config` | `Config::class`  | Reference to the active config instance          |
-| `mode`   | `'ROUTER'` / `'CLI'` | Active bootstrap mode for downstream routing  |
+| `mode`   | `'WEB'` / `'CLI'`    | Active bootstrap mode for downstream routing  |
 
 When future subsystems (Database, HookRegistry, Routing) are implemented, their bindings will be added to this method.
 
-### 4. Extension Loading (`initExtensions`)
+### 4. Extensions (`initExtensions`)
 
-Scans the `extensions/` directory tree for theme/plugin manifests and registers hook callbacks. Currently a placeholder — implementation begins when Extension Manager is developed.
+Resolves all extension manifests, validates dependencies, registers hooks and layouts into the Hook Registry, and indexes metadata in the Container. Implementation lives in `registerExtensions()`.
 
-**Planned behavior:**
-1. Walk `extensions/{theme,plugin}/{name}/` directories
-2. Validate manifest schema (`type`, `name`, `version`, `hooks`, `layouts`, `depends`)
-3. Register declared hook callbacks during the pre-boot phase (before subsystem dispatch)
+**Step-by-step:**
 
-### 5. Mode-Specific Boot (`bootRouter` or `bootCli`)
+1. **Resolve base path** — `ext/` directory under the framework vendor root (`__DIR__ . '/../../ext'`).
+2. **Discover & parse manifests** — uses `Manifest\Parser::discover()` to walk `ext/{themes,plugins}/{name}/`, producing a list of `Extension` value objects.
+3. **Dependency sanity check (fail fast)** — resolves against the full manifest list; throws `\RuntimeException` if any declared dependency is unresolved.
+4. **Register hooks / layouts / metadata:**
+   - For each hook definition: if it contains `::` attempts class-based invocation via `Registry::addClassCall()`, falling back to a no-op callable for dotted namespaces (e.g. `layout.header`).
+   - Layouts are registered as callbacks on the convention `layout.<name>`.
+   - Each extension's metadata (`type`, `version`, `directory`, `depends`) is indexed in `$extIndex`.
+5. **Bind into container:**
+   | Key               | Value                  | Purpose                                     |
+   |-------------------|------------------------|----------------------------------------------|
+   | `hook_registry`   | `Hook\Registry`        | Shared hook registry instance                |
+   | `extension_index` | `(object) $extIndex`   | Extension metadata keyed by name (stdClass)  |
+
+### 5. Mode-Specific Boot (`bootWeb` or `bootCli`)
 
 Executes the chain appropriate to the mode:
 
 | Chain   | Key Steps                                          |
 |---------|-----------------------------------------------------|
-| **ROUTER** | Create Router → detect server type → load core routes → dispatch request → output response |
+| **WEB**    | Create Router → detect server type → load core routes → dispatch request → output response |
 | **CLI**    | Create CLIRouter → register commands → parse `$_SERVER['argv']` → resolve handler → execute → exit code |
 
 Both chains are currently stubbed; their TODO annotations detail the implementation contract.
@@ -103,7 +113,7 @@ sequenceDiagram
     participant C as Container
     participant S as Subsystem
 
-    App->>B: new Bootstrap('ROUTE r'/ 'CLI')
+    App->>B: new Bootstrap('WEB' / 'CLI')
     B->>B: resolveConfigPaths()
     B->>C: new Container()
     C-->>B: $instance stored statically
@@ -111,7 +121,7 @@ sequenceDiagram
     Config-->>B: configuration merged & loaded
     B->>C: registerCoreServices(c)
     B->>B: initExtensions()
-    B->>S: bootRouter() / bootCli()
+    B->>S: bootWeb() / bootCli()
     S-->>App: response or exit code
 ```
 
@@ -136,7 +146,7 @@ Throws `RuntimeException` if called before bootstrap completes:
 $container = Bootstrap::container();
 
 // ✅ Valid — bootstrap has run.
-new Bootstrap('ROUTER');
+new Laswitchtech\CoreWeb\Bootstrap('WEB');
 $container = Bootstrap::container();
 ```
 

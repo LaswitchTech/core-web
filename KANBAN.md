@@ -129,7 +129,7 @@
     - [x] Implement `initConfig()` — load core.cfg, deep-merge local.cfg on top, store in Config singleton <!-- created_at: 2026-06-18T14:16:00-04:00 priority: high -->
     - [x] Implement `initContainer()` — create DI container instance as static singleton <!-- created_at: 2026-06-18T14:16:30-04:00 priority: high -->
     - [x] Implement `registerCoreServices(Container $c)` — register config, hook registry, session into container <!-- created_at: 2026-06-18T14:17:00-04:00 priority: high -->
-    - [~] Implement `initExtensions()` — scan extensions/{theme,plugin}/, validate manifests, register hooks <!-- created_at: 2026-06-18T14:17:30-04:00 priority: high -->
+    - [~] Implement `initExtensions()` — scan ext/{themes,plugins}/{name}/, validate manifests, register hooks <!-- created_at: 2026-06-18T14:17:30-04:00 priority: high -->
     - [ ] Implement `bootSubsystem("WEB")` chain: Router → global middleware → Request parse → dispatch → Response output <!-- created_at: 2026-06-18T14:18:00-04:00 priority: high -->
     - [ ] Implement `bootSubsystem("CLI")` chain: CLIRouter → load registered commands → arg parse → resolve handler → execute → exit code <!-- created_at: 2026-06-18T14:18:30-04:00 priority: high -->
     - [x] Implement `resolveConfigPath()` — return framework core.cfg + conditional local.cfg if path exists <!-- created_at: 2026-06-18T14:19:00-04:00 priority: high -->
