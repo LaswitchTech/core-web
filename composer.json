@@ -1,0 +1,17 @@
+{
+    "name": "laswitchtech/core-web",
+    "description": "Core Web is a Web Application Framework",
+    "license": "GPL-3.0",
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "LaswitchTech Inc.",
+            "email": "support@laswitchtech.com"
+        }
+    ],
+    "require": {}
+}
