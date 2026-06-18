@@ -49,8 +49,12 @@ final class Registry
             );
         }
 
-        // Resolve to invokable closure: attempt call_user_func for static or instance.
-        $this->addCallback($hook, static fn (...$args) => $callback(...$args), $priority);
+        // The class and method are confirmed valid above — resolve to an invokable closure.
+        $classRef   = $class;
+        $methodRef  = $method;
+        $this->addCallback($hook, static function (...$args) use ($classRef, $methodRef): mixed {
+            return $classRef::$methodRef(...$args);
+        }, $priority);
     }
 
     /**
@@ -73,7 +77,8 @@ final class Registry
         foreach ($this->hooks[$hook] as $priority => $callbacks) {
             foreach ($callbacks as $i => $hookEntry) {
                 try {
-                    $results[$priority][$i] = [$hookEntry->callback(...$context)];
+                    $cb = $hookEntry->callback;
+                    $results[$priority][$i] = [($cb)(...$context)];
                 } catch (\Throwable $e) {
                     // Fail individual callbacks without halting bootstrap.
                     $results[$priority][$i] = ['__error' => $e->getMessage()];
