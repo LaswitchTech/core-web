@@ -52,8 +52,9 @@ final class Registry
         // The class and method are confirmed valid above — resolve to an invokable closure.
         $classRef   = $class;
         $methodRef  = $method;
-        $this->addCallback($hook, static function (...$args) use ($classRef, $methodRef): mixed {
-            return $classRef::$methodRef(...$args);
+        $this->addCallback($hook, static function (array $context) use ($classRef, $methodRef): mixed {
+            // Variable static method calls require the [Class, method] callable form.
+            return call_user_func([$classRef, $methodRef], $context);
         }, $priority);
     }
 
@@ -78,7 +79,10 @@ final class Registry
             foreach ($callbacks as $i => $hookEntry) {
                 try {
                     $cb = $hookEntry->callback;
-                    $results[$priority][$i] = [($cb)(...$context)];
+                    // Always pass $context as a single array argument.
+                    // Spreading ($cb)(...$context) triggers PHP's named-argument expansion,
+                    // which fatally breaks when the callback expects `array $context`.
+                    $results[$priority][$i] = ($cb)($context);
                 } catch (\Throwable $e) {
                     // Fail individual callbacks without halting bootstrap.
                     $results[$priority][$i] = ['__error' => $e->getMessage()];
@@ -108,24 +112,5 @@ final class Registry
         return $entries;
     }
 
-    /** Resolve a class::method pair into an invokable closure. */
-    private function resolvingCallable(string $callback): callable
-    {
-        if (!str_contains($callback, '::')) {
-            throw new \InvalidArgumentException(
-                "Callback must be in ClassName::methodName format. Got: {$callback}"
-            );
-        }
 
-        [$class, $method] = explode('::', $callback, 2);
-
-        return static function (...$args) use ($class, $method): mixed {
-            if (!method_exists($class, $method)) {
-                throw new \BadMethodCallException(
-                    "Method {$class}::{$method} does not exist."
-                );
-            }
-            return $class::$method(...$args);
-        };
-    }
 }

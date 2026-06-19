@@ -175,7 +175,7 @@ class Bootstrap
      */
     private function registerExtensions(): void
     {
-        $c   = static::$instance;
+        $c     = static::$instance;
         if ($c === null) {
             throw new \RuntimeException('Container not yet initialised when initExtensions() runs.');
         }
@@ -187,90 +187,102 @@ class Bootstrap
         $manifests = Manifest\Parser::discover($extBase);
 
         if ($manifests === []) {
+            // Register an empty registry so `bootWeb()` / `bootCli()` can still resolve 'hook_registry'.
+            $c->set('hook_registry', new \Laswitchtech\CoreWeb\Hook\Registry());
+            $c->set('extension_index', (object) []);
             return; // Nothing to do -- no extensions found.
         }
 
         // ── 3. Quick dependency sanity check (fail fast) ──────────────────────
         $knownNames = array_column($manifests, 'name');
-        foreach ($manifests as $manifest) {
-            if ($manifest->depends === []) {
+        foreach ($manifests as $m) {
+            if ($m->depends === []) {
                 continue;
             }
-            foreach ($manifest->depends as $dep) {
+            foreach ($m->depends as $dep) {
                 if (!in_array($dep, $knownNames, true)) {
                     throw new \RuntimeException(
-                        "Extension '{$manifest->name}': unresolved dependency '{$dep}'. "
+                        "Extension '{$m->name}': unresolved dependency '{$dep}'. "
                         . 'Known: ' . implode(', ', array_unique($knownNames))
                     );
                 }
             }
         }
 
-        // ── 4. Register hooks, layouts, and index metadata into Container ───────
-        $hookRegistry = new \Laswitchtech\CoreWeb\Hook\Registry();  // one instance per bootstrap run
-        $extIndex    = [];                   // extension name -> array{type, version, directory}
-        $srcDirs     = [];                   // collect src/ dirs for namespace autoloader
+        // ── 4. Collect src/ directories from all extensions (before any hook processing) --
+        $srcDirs = [];
+        foreach ($manifests as $manifest) {
+            if (is_dir("{$manifest->directory}/src")) {
+                $srcDirs[] = "{$manifest->directory}/src";
+            }
+        }
+
+        // ── 5. Register extension autoloader BEFORE parsing hooks --------------
+        $uniqueSrcDirs = array_values(array_unique($srcDirs));
+
+        spl_autoload_register(function (string $class) use ($uniqueSrcDirs): void {
+            if (str_starts_with($class, 'Laswitchtech\\CoreWeb\\Plugin\\') === false
+                && str_starts_with($class, 'Laswitchtech\\CoreWeb\\Theme\\') === false) {
+                return;
+            }
+
+            $prefix   = str_starts_with($class, 'Laswitchtech\\CoreWeb\\Plugin\\')
+                ? strlen('Laswitchtech\\CoreWeb\\Plugin\\')
+                : strlen('Laswitchtech\\CoreWeb\\Theme\\');
+            $relPath  = str_replace('\\', '/', substr($class, $prefix));
+
+            foreach ($uniqueSrcDirs as $dir) {
+                $file = "{$dir}/{$relPath}.php";
+                if (is_file($file)) {
+                    require_once $file;
+                    return;
+                }
+            }
+        });
+
+        // ── 6. Create Hook\Registry and iterate manifests --------------------
+        $hookRegistry = new \Laswitchtech\CoreWeb\Hook\Registry();
+        $extIndex     = [];
 
         foreach ($manifests as $manifest) {
-            // -- Register ext/{name}/src as a namespace-aware autoload root ----------
-            $srcDir = "{$manifest->directory}/src";
-            if (is_dir($srcDir)) {
-                $srcDirs[] = $srcDir;
-            }
 
             // -- Hooks (class::method or dotted namespace) -------------------------
             foreach ($manifest->hooks as $hookDef) {
                 if (!str_contains($hookDef, '::')) {
-
-                    // Dotted namespace hook (e.g. "layout.header") — register with empty callback
-                    // placeholder so that subsystems can inspect the hook later.
+                    // Dotted namespace hook (e.g. "layout.header") -- register with
+                    // empty callback placeholder so subsystems can inspect the hook later.
                     $hookRegistry->addCallback($hookDef, static fn () => [], 0);
                     continue;
                 }
 
-                // Split on "::" — first occurrence separates hook name from class::method pair.
-                $firstDoubleColon = strpos($hookDef, '::');
-                $hookName       = substr($hookDef, 0, $firstDoubleColon);
-                $classMethod    = trim(substr($hookDef, $firstDoubleColon + 2));
+                // Split on "::" -- first occurrence separates hook name from class::method pair.
+                $firstColon = strpos($hookDef, '::');
+                $hookName   = substr($hookDef, 0, $firstColon);
+                $classMethod= trim(substr($hookDef, $firstColon + 2));
 
                 // Find the last "::" within classMethod to split class FQCN from method name.
-                $lastDblPos     = strrpos($classMethod, '::');
+                $lastDblPos = strrpos($classMethod, '::');
                 if ($lastDblPos === false) {
-                    // No second "::" — cannot separate class from method; register as
-                    // dotted placeholder so downstream subsystems can report the issue.
                     $hookRegistry->addCallback($hookName, static fn () => [], 0);
                     continue;
                 }
 
-                // Extract class FQCN and method name — pass them unmodified to addClassCall().
-                // Composer's PSR-4 autoloader resolves Laswitchtech\\CoreWeb\\ from src/;
-                // extension-specific spl_autoload callbacks handle Plugin/ and Theme/ leaf
-                // segments under ext/{name}/src via the namespace prefix strip.
-                $classPart = substr($classMethod, 0, $lastDblPos);
-                $methodPart = substr($classMethod, $lastDblPos + 2);
+                // Try to register via class_exists + addClassCall (requires the autoloader
+                // from §5 to be in place so ReflectionClass can load it).
+                $classFqcn = substr($classMethod, 0, $lastDblPos);
+                $methodNm  = substr($classMethod, $lastDblPos + 2);
 
-                try {
-                    $hookRegistry->addClassCall($hookName, "{$classPart}::{$methodPart}", 0);
-                    continue;
-                } catch (\Throwable) {
-                    // Class not loaded or method missing — fall through to dotted registration.
-                }
-
-                // Fallback: treat the entire hookDef as a dotted namespace name.
-                $hookRegistry->addCallback($hookDef, static fn () => [], 0);
+                $hookRegistry->addClassCall($hookName, "{$classFqcn}::{$methodNm}", 0);
             }
 
-            // – Layouts (list of layout identifiers) ─────────────────────────
-            if ($manifest->layouts !== []) {
-                foreach ($manifest->layouts as $layoutDef) {
-                    // Layout hooks follow the convention: "layout.<name>"
-                    if (is_string($layoutDef)) {
-                        $hookRegistry->addCallback("layout.{$layoutDef}", static fn () => [], 0);
-                    }
+            // -- Layouts (list of layout identifiers) ------------------------------
+            foreach ($manifest->layouts as $layoutDef) {
+                if (is_string($layoutDef)) {
+                    $hookRegistry->addCallback("layout.{$layoutDef}", static fn () => [], 0);
                 }
             }
 
-            // – Index extension metadata into Container ──────────────────────
+            // -- Index extension metadata into Container ---------------------------
             $extIndex[$manifest->name] = [
                 'type'      => $manifest->type,
                 'version'   => $manifest->version,
@@ -279,39 +291,8 @@ class Bootstrap
             ];
         }
 
-        // -- Register a single namespace-aware autoloader for all extension src/ dirs
-        //    Deduplicate dirs to avoid redundant file-lookups when multiple extensions
-        //    share the same src/ directory (e.g. symlinked or monorepo layouts).
-        $uniqueSrcDirs = array_values(array_unique($srcDirs));
-
-        spl_autoload_register(function (string $class) use ($uniqueSrcDirs): void {
-            // Only handle our plugin/theme namespaces.
-            if (str_starts_with($class, 'Laswitchtech\\CoreWeb\\Plugin\\') === false
-                && str_starts_with($class, 'Laswitchtech\\CoreWeb\\Theme\\') === false) {
-                return;
-            }
-
-            // Strip the matched namespace prefix dynamically so the remaining
-            // path segments map directly to files under an extension's src/.
-            $prefix = str_starts_with($class, 'Laswitchtech\\CoreWeb\\Plugin\\')
-                ? strlen('Laswitchtech\\CoreWeb\\Plugin\\')
-                : strlen('Laswitchtech\\CoreWeb\\Theme\\');
-            $relPath = str_replace('\\', '/', substr($class, $prefix));
-
-            // Try each extension's src/ directory until the file is found.
-            foreach ($uniqueSrcDirs as $dir) {
-                $file = "{$dir}/{$relPath}.php";
-                if (is_file($file)) {
-                    require_once $file;
-                    return;  // stop after first resolution hit
-                }
-            }
-        });
-
-        // -- Bind resolved Hook\Registry into the container ---------------------
+        // -- Bind resolved Hook\Registry and extension index into container -----
         $c->set('hook_registry', $hookRegistry);
-
-        // -- Store extension index keyed by name --------------------------------
         $c->set('extension_index', (object) $extIndex);
     }
 

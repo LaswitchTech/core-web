@@ -48,13 +48,27 @@ final class Parser
                     continue;
                 }
 
-                $extDir = "{$typePath}/{$entry}";
-                if (!is_dir($extDir) || !is_file("{$extDir}/manifest.json")) {
+                $extDir  = "{$typePath}/{$entry}";
+                if (!is_dir($extDir)) {
                     continue;
                 }
 
+                // Look for any valid manifest filename.
+                $manifestFile = null;
+                foreach (self::VALID_MANIFEST_NAMES as $name) {
+                    $candidate = "{$extDir}/{$name}";
+                    if (is_file($candidate)) {
+                        $manifestFile = $candidate;
+                        break;  // take the first match.
+                    }
+                }
+
+                if ($manifestFile === null) {
+                    continue;  // no valid manifest in this directory.
+                }
+
                 try {
-                    $manifests[] = self::parse("{$extDir}/manifest.json");
+                    $manifests[] = self::parse($manifestFile);
                 } catch (\Throwable $e) {
                     // Log but continue — one bad manifest does not block others.
                     fwrite(STDERR, "Manifest parse error for {$extDir}: {$e->getMessage()}\n");
@@ -153,7 +167,7 @@ final class Parser
         // Strip common prefixes (v, V, =) and whitespace.
         $trimmed = ltrim(trim($version), 'vV= ');
 
-        if (!preg_match('/^\d+\.\d+\.\d+/', $trimmed)) {
+        if (!preg_match('/^\d+\.\d+\.\d+$/', $trimmed)) {
             throw new \InvalidArgumentException(
                 "Manifest 'version' must be X.Y.Z format. Got: {$version}"
             );
