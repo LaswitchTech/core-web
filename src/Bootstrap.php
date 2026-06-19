@@ -220,18 +220,43 @@ class Bootstrap
 
             // -- Hooks (class::method or dotted namespace) -------------------------
             foreach ($manifest->hooks as $hookDef) {
-                // Attempt class::method registration; if it fails, fall back to
-                // treating the hook name itself as a callable hint.
-                if (str_contains($hookDef, '::')) {
-                    try {
-                        $hookRegistry->addClassCall($hookDef, $hookDef);  // uses hook name as callback too
-                        continue;
-                    } catch (\Throwable $_) {
-                        // Not an invokable class -- treat as a regular hook name below.
-                    }
+                if (!str_contains($hookDef, '::')) {
+
+                    // Dotted namespace hook (e.g. "layout.header") — register with empty callback
+                    // placeholder so that subsystems can inspect the hook later.
+                    $hookRegistry->addCallback($hookDef, static fn () => [], 0);
+                    continue;
                 }
-                // Dotted namespace hook (e.g. "layout.header") — register with empty callback
-                // placeholder so that subsystems can inspect the hook later.
+
+                // Split on "::" — first occurrence separates hook name from class::method pair.
+                $firstDoubleColon = strpos($hookDef, '::');
+                $hookName       = substr($hookDef, 0, $firstDoubleColon);
+                $classMethod    = trim(substr($hookDef, $firstDoubleColon + 2));
+
+                // Find the last "::" within classMethod to split class FQCN from method name.
+                $lastDblPos     = strrpos($classMethod, '::');
+                if ($lastDblPos === false) {
+                    // No second "::" — cannot separate class from method; register as
+                    // dotted placeholder so downstream subsystems can report the issue.
+                    $hookRegistry->addCallback($hookName, static fn () => [], 0);
+                    continue;
+                }
+
+                // Extract class FQCN and method name — pass them unmodified to addClassCall().
+                // Composer's PSR-4 autoloader resolves Laswitchtech\\CoreWeb\\ from src/;
+                // extension-specific spl_autoload callbacks handle Plugin/ and Theme/ leaf
+                // segments under ext/{name}/src via the namespace prefix strip.
+                $classPart = substr($classMethod, 0, $lastDblPos);
+                $methodPart = substr($classMethod, $lastDblPos + 2);
+
+                try {
+                    $hookRegistry->addClassCall($hookName, "{$classPart}::{$methodPart}", 0);
+                    continue;
+                } catch (\Throwable) {
+                    // Class not loaded or method missing — fall through to dotted registration.
+                }
+
+                // Fallback: treat the entire hookDef as a dotted namespace name.
                 $hookRegistry->addCallback($hookDef, static fn () => [], 0);
             }
 
@@ -254,20 +279,34 @@ class Bootstrap
             ];
         }
 
-        // -- Register namespace-aware autoloader for extension src/ dirs --------
-        foreach ($srcDirs as $dir) {
-            spl_autoload_register(function (string $class) use ($dir): void {
-                // Only handle our plugin/theme namespaces.
-                if (str_starts_with($class, 'Laswitchtech\\CoreWeb\\Plugin\\') === false
-                    && str_starts_with($class, 'Laswitchtech\\CoreWeb\\Theme\\') === false) {
-                    return;
-                }
-                $file = "{$dir}/" . substr(str_replace('\\', '/', $class), 21) . '.php';
+        // -- Register a single namespace-aware autoloader for all extension src/ dirs
+        //    Deduplicate dirs to avoid redundant file-lookups when multiple extensions
+        //    share the same src/ directory (e.g. symlinked or monorepo layouts).
+        $uniqueSrcDirs = array_values(array_unique($srcDirs));
+
+        spl_autoload_register(function (string $class) use ($uniqueSrcDirs): void {
+            // Only handle our plugin/theme namespaces.
+            if (str_starts_with($class, 'Laswitchtech\\CoreWeb\\Plugin\\') === false
+                && str_starts_with($class, 'Laswitchtech\\CoreWeb\\Theme\\') === false) {
+                return;
+            }
+
+            // Strip the matched namespace prefix dynamically so the remaining
+            // path segments map directly to files under an extension's src/.
+            $prefix = str_starts_with($class, 'Laswitchtech\\CoreWeb\\Plugin\\')
+                ? strlen('Laswitchtech\\CoreWeb\\Plugin\\')
+                : strlen('Laswitchtech\\CoreWeb\\Theme\\');
+            $relPath = str_replace('\\', '/', substr($class, $prefix));
+
+            // Try each extension's src/ directory until the file is found.
+            foreach ($uniqueSrcDirs as $dir) {
+                $file = "{$dir}/{$relPath}.php";
                 if (is_file($file)) {
                     require_once $file;
+                    return;  // stop after first resolution hit
                 }
-            });
-        }
+            }
+        });
 
         // -- Bind resolved Hook\Registry into the container ---------------------
         $c->set('hook_registry', $hookRegistry);

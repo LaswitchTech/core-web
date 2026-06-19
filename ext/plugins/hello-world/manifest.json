@@ -1,8 +1,8 @@
 {
     "type": "plugin",
-    "name": "hello-world",
+    "name": "Hello World",
     "version": "1.0.0",
-    "description": "Testing harness — hello world extension.",
+    "description": "Testing harness — Hello World extension.",
     "hooks": [
         "plugin.started::Laswitchtech\\CoreWeb\\Plugin\\HelloWorld::onStartup"
     ]
