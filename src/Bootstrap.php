@@ -204,11 +204,12 @@ class Bootstrap
 
         // Resolve extension base directories — app root first, then vendor fallback.
         $candidates = [
-            "{$this->appRoot}/ext",                              // primary: user's application root
-            __DIR__ . '/../../ext',                              // fallback: package/vendor install
+            "{$this->appRoot}/ext",                    // primary: user's application root
+            dirname(__DIR__) . '/ext',                  // fallback: package/vendor install
         ];
 
-        $extBase = null;
+        // If no ext/ directory is found, register empty hooks and return early.
+        // Composer installs may ship without extensions by default.
         foreach ($candidates as $dir) {
             if (is_dir($dir)) {
                 $extBase = $dir;
@@ -216,11 +217,18 @@ class Bootstrap
             }
         }
 
-        if ($extBase === null) {
-            throw new \RuntimeException(
-                "Extension base directory not found. Searched: "
-                . implode(', ', array_map(fn ($d) => realpath($d) ?: $d, $candidates))
-            );
+        if (!isset($extBase)) {
+            // No ext/ directory found — register empty hooks and return.
+            // This is normal for Composer installs that ship without extensions
+            // by default; users create ext/{name}/manifest.json when ready.
+            $c->set('hook_registry', new \Laswitchtech\CoreWeb\Hook\Registry());
+            $c->set('extension_index', (object) []);
+
+            // Debug bindings for inspection via Bootstrap::container()->resolve()
+            $c->set('app_root',        $this->appRoot);
+            $c->set('extension_base',  $extBase ?? 'N/A');
+
+            return;
         }
 
         // ── 2. Discover & parse every manifest ────────────────────────────────
@@ -230,6 +238,10 @@ class Bootstrap
             // Register an empty registry so `bootWeb()` / `bootCli()` can still resolve 'hook_registry'.
             $c->set('hook_registry', new \Laswitchtech\CoreWeb\Hook\Registry());
             $c->set('extension_index', (object) []);
+
+            // Debug: where we looked and that no manifests were found.
+            fwrite(STDERR, "[bootstrap] appRoot={$this->appRoot} extBase={$extBase} — 0 manifests\n");
+
             return; // Nothing to do -- no extensions found.
         }
 
