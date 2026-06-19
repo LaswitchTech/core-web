@@ -11,8 +11,8 @@ final readonly class Plugin
     public function __construct(
         /** @var string  dotted hook namespace (e.g., `layout.header`) */
         public string $hook,
-        /** @var Closure|array|string The resolved callback */
-        public Closure|array|string $callback,
+        /** @var \Closure|array|string The resolved callback */
+        public \Closure|array|string $callback,
         /** @var int Hook priority — higher fires first */
         public int $priority = 0,
     ) {}
