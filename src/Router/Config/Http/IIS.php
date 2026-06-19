@@ -8,12 +8,15 @@ namespace Laswitchtech\CoreWeb\Router\Config\Http;
  * Emits a <rewrite> rule set that routes all requests to index.php
  * via IIS URL Rewrite module, supporting both root and subdirectory deployments.
  *
+ * Note: web.config is always placed in the application root. The $subdir parameter
+ * controls rewrite-path generation but the action URL stays as "index.php" since
+ * deployment context (reverse-proxy headers) handles subdirectory routing on IIS.
+ *
  * Usage:
  *     file_put_contents('web.config', \Laswitchtech\CoreWeb\Router\Config\Http\IIS::generate('/app'));
  */
 final class IIS
 {
-    public const string FORM_PREFIX = '';
 
     /**
      * Generate a web.config snippet for IIS URL Rewrite.
@@ -27,10 +30,8 @@ final class IIS
 
         if ($trimmed !== '') {
             $rewritePath = '/' . $trimmed . '/{R:0}';
-            $actionUrl = '/' . $trimmed . '/index.php';
         } else {
             $rewritePath = '{R:0}';
-            $actionUrl = 'index.php';
         }
 
         return <<<XML
@@ -45,7 +46,7 @@ final class IIS
                         <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
                         <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
                     </conditions>
-                    <action type="Rewrite" url="{$actionUrl}" />
+                    <action type="Rewrite" url="index.php" />
                 </rule>
             </rules>
         </rewrite>

@@ -34,7 +34,7 @@ if ($path !== '/' && is_file($file)) {
     return false;
 }
 
-require __DIR__ . '/index.php';
+require __DIR__ . '/' . ltrim($entry, '/');
 ROUTER;
     }
 

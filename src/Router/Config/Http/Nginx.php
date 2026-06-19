@@ -49,7 +49,8 @@ NGINX;
 
         // ================================================================
         // SUBDIRECTORY deployment (e.g. https://example.com/app/).
-        // Requires an `alias` block and rewritten URI handling.
+        // Note: This uses a location prefix block, NOT an `alias` directive.
+        // Alias support is future work — currently only try_files fallback works.
         // ================================================================
         return <<<NGINX
     location /{$trimmed}/ {
@@ -74,9 +75,6 @@ NGINX;
      */
     public static function writeToFile(string $path, string $subdir = ''): ?string
     {
-        // Escape any forward-slash delimiters in the subdir for use as a regex anchor.
-        $regexSubdir = '/' . preg_quote(trim($subdir, '/'), '/') . '/';
-
         $content   = self::generate($subdir);
         $tmpDir    = dirname($path);
 
