@@ -192,8 +192,12 @@ class Bootstrap
      * Walk ``ext/{themes,plugins}/{name}/``, parse/validate manifests, check dependencies,
      * register hook callbacks into Hook\Registry, and store extension metadata in the Container.
      *
-     * Runs at bootstrap time and throws on any invalid manifest or unresolved dependency —
-     * failing fast before any subsystem starts.
+     * Manifest discovery is tolerant: individual malformed manifests are logged to STDERR and
+     * skipped so one broken extension does not block discovery of valid extensions.
+     * Bootstrap still fails fast on unresolved dependencies between successfully parsed manifests.
+     *
+     * If no ``ext/`` directory exists, registers an empty hook registry and returns silently —
+     * this is normal for Composer installs that ship without extensions by default.
      */
     private function registerExtensions(): void
     {
@@ -217,8 +221,9 @@ class Bootstrap
             }
         }
 
-        // ── 1. Diagnostics — always available for debugging via `$c->resolve(...)`. -
-        $c->set('app_root',   $this->appRoot);
+        // Diagnostic bindings: useful for debugging install layout and extension discovery.
+        // These are informational values, not required runtime services.
+        $c->set('app_root',      $this->appRoot);
         $c->set('extension_base', isset($extBase) ? $extBase : null);
 
         if (!isset($extBase)) {

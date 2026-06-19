@@ -11,6 +11,10 @@ use Laswitchtech\CoreWeb\Manifest\Extension;
  *
  * Schema required keys: type (theme|plugin), name (string), version (X.Y.Z).
  * Optional keys       : hooks ([]), layouts ([]), depends ([] of name-slugs).
+ *
+ * discover() is tolerant by design: individual malformed manifests are logged to STDERR
+ * and skipped so one broken extension does not block discovery of valid extensions.
+ * Bootstrap still fails fast on unresolved dependencies between successfully parsed manifests.
  */
 final class Parser
 {
