@@ -217,6 +217,10 @@ class Bootstrap
             }
         }
 
+        // ── 1. Diagnostics — always available for debugging via `$c->resolve(...)`. -
+        $c->set('app_root',   $this->appRoot);
+        $c->set('extension_base', isset($extBase) ? $extBase : null);
+
         if (!isset($extBase)) {
             // No ext/ directory found — register empty hooks and return.
             // This is normal for Composer installs that ship without extensions
@@ -224,28 +228,21 @@ class Bootstrap
             $c->set('hook_registry', new \Laswitchtech\CoreWeb\Hook\Registry());
             $c->set('extension_index', (object) []);
 
-            // Debug bindings for inspection via Bootstrap::container()->resolve()
-            $c->set('app_root',        $this->appRoot);
-            $c->set('extension_base',  $extBase ?? 'N/A');
-
             return;
         }
 
-        // ── 2. Discover & parse every manifest ────────────────────────────────
+        // ── 2. Discover & parse every manifest (tolerant — bad manifests are logged and skipped). -
         $manifests = Manifest\Parser::discover($extBase);
 
         if ($manifests === []) {
-            // Register an empty registry so `bootWeb()` / `bootCli()` can still resolve 'hook_registry'.
+            // Register empty registry so `bootWeb()` / `bootCli()` can still resolve 'hook_registry'.
             $c->set('hook_registry', new \Laswitchtech\CoreWeb\Hook\Registry());
             $c->set('extension_index', (object) []);
-
-            // Debug: where we looked and that no manifests were found.
-            fwrite(STDERR, "[bootstrap] appRoot={$this->appRoot} extBase={$extBase} — 0 manifests\n");
 
             return; // Nothing to do -- no extensions found.
         }
 
-        // ── 3. Quick dependency sanity check (fail fast) ──────────────────────
+        // ── 3. Dependency sanity check (throws — fail fast on *unresolved* deps only, discovery is tolerant). -
         $knownNames = array_column($manifests, 'name');
         foreach ($manifests as $m) {
             if ($m->depends === []) {
