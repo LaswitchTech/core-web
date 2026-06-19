@@ -11,7 +11,7 @@ namespace Laswitchtech\CoreWeb\Hook;
  */
 final class Registry
 {
-    /** @var array<string,array<int,list<Plugin>>>  hook => [priority => [Plugin, ...]] */
+    /** @var array<string,array<int,list<Entry>>>  hook => [priority => [Entry, ...]] */
     private array $hooks = [];
 
     /**
@@ -19,7 +19,7 @@ final class Registry
      */
     public function addCallback(string $hook, callable $callback, int $priority = 0): void
     {
-        $this->hooks[$hook][$priority][] = \Laswitchtech\CoreWeb\Hook\Plugin::fromRaw($hook, $callback, $priority);
+        $this->hooks[$hook][$priority][] = \Laswitchtech\CoreWeb\Hook\Entry::fromRaw($hook, $callback, $priority);
     }
 
     /**
@@ -94,7 +94,7 @@ final class Registry
     }
 
     /**
-     * Return all registered PluginHook entries for `$hook`.
+     * Return all registered EntryHook entries for `$hook`.
      */
     public function getHooks(string $hook): array
     {

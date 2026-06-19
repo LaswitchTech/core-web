@@ -4,9 +4,9 @@ namespace Laswitchtech\CoreWeb\Hook;
 
 /**
  * Immutable value object representing a single registered hook entry.
- * Documentation: docs/development/architecture/Hook/Plugin.md
+ * Documentation: docs/development/architecture/Hook/Entry.md
  */
-final readonly class Plugin
+final readonly class Entry
 {
     public function __construct(
         /** @var string  dotted hook namespace (e.g., `layout.header`) */
