@@ -24,28 +24,29 @@ final class Container {
 
     /* ─── registration ────────────────────────────────────────────── */
 
-    /** Bind a factory (callable) to `$key`. Every ``resolve()`` call invokes it fresh. */
+    /** Bind a factory (callable) to `$key`. Invalidates any prior singleton cache for this key. */
     public function register(string $key, callable $fn): void {
         $this->factories[$key] = $fn;
+        unset($this->singletons[$key], $this->instances[$key]);
     }
 
-    /** Mark an existing registration as singleton (cached after first resolution).      */
-    public function singleton(string $key): static {
+    /** Mark an existing registration as singleton (cached after first resolution). Resolves and returns the result. */
+    public function singleton(string $key): mixed {
         $this->singletons[$key] = true;
-        return $this;
+        return $this->resolve($key);
     }
 
-    /** Register a new factory *and* mark it as singleton in one call.                    */
-    public function registerSingleton(string $key, callable $fn): static {
-        $this->factories[$key]     = $fn;
-        $this->singletons[$key]    = true;
-        return $this;
+    /** Register a new factory and mark it as singleton in one call. Invalidates prior cached instance for this key.                  */
+    public function registerSingleton(string $key, callable $fn): void {
+        $this->factories[$key]  = $fn;
+        $this->singletons[$key] = true;
+        unset($this->instances[$key]);
     }
 
-    /** Store a value directly — resolved as a factory that always returns the same data. */
-    public function set(string $key, mixed $value): static {
+    /** Store a value directly — stored as a factory that always returns the same data. Invalidates singleton cache for this key.     */
+    public function set(string $key, mixed $value): void {
         $this->factories[$key] = static fn () => $value;
-        return $this;
+        unset($this->singletons[$key], $this->instances[$key]);
     }
 
     /* ─── resolution ──────────────────────────────────────────────── */
