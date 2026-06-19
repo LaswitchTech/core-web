@@ -9,13 +9,13 @@ namespace Laswitchtech\CoreWeb\Router;
 final class Response
 {
     /* ─── Status codes ──────────────────────────────────────────────── */
-    public const int STATUS_CONTINUE             = 100;
-    public const int STATUS_OK                   = 200;
-    public const int STATUS_CREATED              = 201;
-    public const int STATUS_ACCEPTED             = 202;
-    public const int STATUS_NOT_FOUND            = 404;
-    public const int STATUS_METHOD_NOT_ALLOWED   = 405;
-    public const int STATUS_INTERNAL_ERROR       = 500;
+    public const STATUS_CONTINUE             = 100;
+    public const STATUS_OK                   = 200;
+    public const STATUS_CREATED              = 201;
+    public const STATUS_ACCEPTED             = 202;
+    public const STATUS_NOT_FOUND            = 404;
+    public const STATUS_METHOD_NOT_ALLOWED   = 405;
+    public const STATUS_INTERNAL_ERROR       = 500;
 
     /** @var array<string,string> */
     private array $headers = [];

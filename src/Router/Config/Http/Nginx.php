@@ -37,7 +37,7 @@ final class Nginx
             return <<<NGINX
     location / {
         # Serve static files, then fall through to index.php.
-        try_files \$uri \$uri/ =404;
+        try_files \$uri \$uri/ /index.php\$is_args\$args;
 
         # Pass everything else to the PHP-FPM backend.
         include fastcgi_params;
@@ -54,23 +54,13 @@ NGINX;
         return <<<NGINX
     location /{$trimmed}/ {
         # Serve static files at /{subdir}/path/to/file, then fall through.
-        try_files \$uri \$uri/ @app;
+        try_files \$uri \$uri/ /{$trimmed}/index.php\$is_args\$args;
 
         # Pass everything else to the PHP-FPM backend.
         include fastcgi_params;
         fastcgi_pass   unix:/run/php-fpm/www.sock;
         fastcgi_param  SCRIPT_FILENAME \$document_root{$trimmed}/index.php;
         fastcgi_param  PATH_INFO          \$fastcgi_path_info;
-    }
-
-    # Internal catch-all for the application root.
-    location @app {
-        rewrite ^/{$trimmed}/(.*)\$ /{$trimmed}/index.php last;
-    }
-
-    # Root-level fallback (required when deploying to a sub-directory).
-    location = {$trimmed} {
-        return 301 /{$trimmed}/;
     }
 
 NGINX;

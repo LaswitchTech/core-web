@@ -15,8 +15,11 @@ final class Router
     private array $deleteRoutes   = [];
     private array $patchRoutes    = [];
 
-    /** @var array<string, string[]> Allowed methods per matched path. */
+    /** @var array<string, string[]> All registered paths → methods (for 405 detection). */
     private array $methodMap = [];
+
+    /** HTTP methods to check when scanning for method-not-allowed. */
+    private const ALL_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 
     /* ─── Public API — route registration ───────────────────────────── */
 
@@ -86,6 +89,23 @@ final class Router
         return $this;
     }
 
+    /* ─── Internal route access ────────────────────────────────────── */
+
+    /**
+     * Return all routes registered for a given HTTP method.
+     */
+    private function getMethodRoutes(string $method): array
+    {
+        return match ($method) {
+            'GET'     => $this->getRoutes,
+            'POST'    => $this->postRoutes,
+            'PUT'     => $this->putRoutes,
+            'DELETE'  => $this->deleteRoutes,
+            'PATCH'   => $this->patchRoutes,
+            default   => [],
+        };
+    }
+
     /* ─── Dispatch — entry point ───────────────────────────────────── */
 
     /**
@@ -98,56 +118,46 @@ final class Router
      */
     public function dispatch(Request $request): Response
     {
-        $path    = $request->path();
-        $method  = $request->method();
+        $path   = $request->path();
+        $method = $request->method();
 
-        // Collect all methods that serve this path.
-        $allowedMethods = $this->methodMap[$path] ?? [];
-
-        if ($allowedMethods !== []) {
-            // Path is registered, but we're on the wrong method → 405.
-            if ($method !== 'OPTIONS' && !\in_array($method, $allowedMethods, true)) {
-                return Response::methodNotAllowed();
+        // Step 1: iterate routes registered for the *current* HTTP method,
+        //          using pattern matching (supports dynamic params like /users/{id}).
+        foreach ($this->getMethodRoutes($method) as $route) {
+            $params = self::matchParams($route->path, $path);
+            if ($params === null) {
+                continue;
             }
 
-            // Retrieve the correct bucket for dispatching.
-            $routes = match ($method) {
-                'GET'     => $this->getRoutes,
-                'POST'    => $this->postRoutes,
-                'PUT'     => $this->putRoutes,
-                'DELETE'  => $this->deleteRoutes,
-                'PATCH'   => $this->patchRoutes,
-                default   => [],
-            };
+            // Step 2: pattern matched — enrich the Request with route params
+            // while preserving query/queryString/post body state.
+            $withParams = new Request(
+                method:      $method,
+                path:        $path,
+                queryString: $request->queryString(),
+                query:       $request->query(),
+                params:      $params + $request->params(),
+                postBody:    $request->post(),
+            );
 
-            if ($routes === []) {
-                return Response::methodNotAllowed();
+            return ($route->handler)($withParams);
+        }
+
+        // Step 3: current method has no matching path.
+        //         Scan routes registered under OTHER methods for the same pattern.
+        foreach (self::ALL_METHODS as $altMethod) {
+            if ($altMethod === $method) {
+                continue;
             }
-
-            // Search this method's routes for an exact path match.
-            foreach ($routes as $route) {
-                if ($route->path !== $path) continue;
-
-                // Convert `/users/{id}/posts/{slug}` → regex, extract params.
+            foreach ($this->getMethodRoutes($altMethod) as $route) {
                 $params = self::matchParams($route->path, $path);
-
-                // If param extraction succeeds, the route matches.
                 if ($params !== null) {
-                    // Clone $request with extracted params so handlers receive them.
-                    $withParams = new Request(
-                        method:   $method,
-                        path:     $path,
-                        params:   $params + $request->params(),
-                        postBody: $request->post(),
-                    );
-
-                    // Call the handler with the enriched request.
-                    return ($route->handler)($withParams);
+                    return Response::methodNotAllowed();
                 }
             }
         }
 
-        // No path matched at all → 404.
+        // Step 4: no route matched at all → 404.
         return Response::notFound();
     }
 
@@ -159,39 +169,49 @@ final class Router
      */
     private static function matchParams(string $pattern, string $path): ?array
     {
-        // /prefix/{name}/suffix/… → preg_quote segments + named capture groups.
-        $segments   = explode('/', trim($pattern, '/'));
-        $expressions = [];
-        /** @var array<string,int> */
-        $names       = [];
-
-        foreach ($segments as $i => $seg) {
-            if ($seg === '') continue;  // skip empty leading/trailing segments.
-
-            // Named param like {id} → (?P<id>[^/]+).
-            if (str_contains($seg, '{') && str_contains($seg, '}')) {
-                $name = substr($seg, 1, -1);  // strip braces.
-                $expressions[]    = "(?P<{$name}>[^/]+)";
-                $names[$i]       = $name;
-            } else {
-                // Literal segment → regex-escape it.
-                $expressions[]     = preg_quote($seg, '/');
-            }
+        // Trailing-slash normalisation (route /users/42 matches /users/42 and /users/42/).
+        $path = rtrim($path, '/');
+        if ($path === '') {
+            $path = '/';
         }
 
-        if ($expressions === []) return null;
+        // Root route: '/' matches exactly '/'.
+        if ($pattern === '/') {
+            return $path === '/' ? [] : null;
+        }
 
-        $regex = '/' . implode('/', $expressions) . '$/';
+        // Normalise both to the same form for comparison.
+        $segments  = explode('/', trim($pattern, '/'));
+        $parts     = explode('/', trim($path, '/'));
 
-        if (!preg_match($regex, rtrim($path, '/'), $matches)) {
+        if (\count($parts) !== \count($segments)) {
             return null;
         }
 
-        // Extract only named groups, cast values.
+        /** @var array<string,int> */
+        $names = [];
+        $i     = 0;
+        foreach ($segments as $seg) {
+            if (str_contains($seg, '{') && str_contains($seg, '}')) {
+                // Dynamic segment — must align positionally.
+                $name   = substr($seg, 1, -1);
+                if ($parts[$i] === '') {
+                    return null;
+                }
+                $names[$i] = $name;
+            } else {
+                // Literal segment — exact match required.
+                if (strcasecmp($parts[$i], $seg) !== 0) {
+                    return null;
+                }
+            }
+            $i++;
+        }
+
+        // Build the result array from captured names.
         $result = [];
         foreach ($names as $idx => $name) {
-            $value = $matches["{$name}"];
-            // Auto-cast integers where possible (e.g. /users/42).
+            $value = $parts[$idx];
             if (is_numeric($value)) {
                 $value = ctype_digit($value) ? (int)$value : (float)$value;
             }

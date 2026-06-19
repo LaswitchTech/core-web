@@ -42,9 +42,16 @@ final class Request
         $this->method        = strtoupper($method);
         $this->path          = rtrim('/' . ltrim($path, '/'), '/') ?: '/';
         $this->queryString   = $queryString;
-        $this->query         = $query + $_GET;
+
+        // Parse queryString into query array *only* when the caller did not
+        // supply an explicit $_GET-like array (i.e. when using named-arg
+        // construction in isolation rather than fromGlobals()).
+        $this->query         = ($query === [] && $queryString !== '')
+            ? self::parseQueryString($queryString)
+            : $query;
+
         $this->params        = $params;
-        $this->postBody      = $postBody + $_POST;
+        $this->postBody      = $postBody;
     }
 
     /* ─── Required entry point ─────────────────────────────────────── */
@@ -69,9 +76,9 @@ final class Request
             method:          $method,
             path:            $path,
             queryString:     $queryString,
-            query:           [],               // merge handled in __construct
+            query:           $_GET ?? [],
             params:          [],               // filled during dispatch
-            postBody:        [],               // merge handled in __construct
+            postBody:        $_POST ?? [],
         );
     }
 
@@ -98,5 +105,40 @@ final class Request
 
     /** GET / POST body parameters ($_GET, $_POST merged with constructor args). */
     public function post(): array { return $this->postBody; }
+
+    /* ─── Convenience accessors ────────────────────────────────────── */
+
+    /** Shortcut for `$request->params()[$name]`. */
+    public function param(string $name, mixed $default = null): mixed {
+        return $this->params[$name] ?? $default;
+    }
+
+    /** Shortcut for `$request->query()[$name]`. */
+    public function queryParam(string $name, mixed $default = null): mixed {
+        return $this->query[$name] ?? $default;
+    }
+
+    /** Shortcut for `$request->post()[$name]`. */
+    public function postParam(string $name, mixed $default = null): mixed {
+        return $this->postBody[$name] ?? $default;
+    }
+
+    /** Raw query string without leading "?" */
+    public function queryString(): string { return $this->queryString; }
+
+    /* ─── Internal ─────────────────────────────────────────────────── */
+
+    /** Parse a raw query string (without leading "?") into an associative array. */
+    private static function parseQueryString(string $qs): array
+    {
+        $result = [];
+        if ($qs === '') return $result;
+        foreach (explode('&', $qs) as $pair) {
+            if ($pair === '') continue;
+            [$key, $value] = explode('=', $pair, 2) + ['', ''];
+            $result[rawurldecode($key)] = rawurldecode($value);
+        }
+        return $result;
+    }
 }
 

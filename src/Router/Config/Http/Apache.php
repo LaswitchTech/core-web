@@ -74,7 +74,7 @@ HTACCESS;
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase {$trimmed}/
+    RewriteBase {$rewriteBase}
 
 
 
