@@ -1,0 +1,80 @@
+<?php declare(strict_types=1);
+
+namespace Laswitchtech\CoreWeb\Router\Config\Http;
+
+/**
+ * IIS web.config generator for Core-Web routing.
+ *
+ * Emits a <rewrite> rule set that routes all requests to index.php
+ * via IIS URL Rewrite module, supporting both root and subdirectory deployments.
+ *
+ * Usage:
+ *     file_put_contents('web.config', \Laswitchtech\CoreWeb\Router\Config\Http\IIS::generate('/app'));
+ */
+final class IIS
+{
+    public const string FORM_PREFIX = '';
+
+    /**
+     * Generate a web.config snippet for IIS URL Rewrite.
+     *
+     * @param string $subdir Subdirectory path (empty = root deployment).
+     * @return string Complete XML web.config content ready to write to disk.
+     */
+    public static function generate(string $subdir = ''): string
+    {
+        $trimmed = trim($subdir, '/');
+
+        if ($trimmed !== '') {
+            $rewritePath = '/' . $trimmed . '/{R:0}';
+            $actionUrl = '/' . $trimmed . '/index.php';
+        } else {
+            $rewritePath = '{R:0}';
+            $actionUrl = 'index.php';
+        }
+
+        return <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <system.webServer>
+        <rewrite>
+            <rules>
+                <rule name="Core-Web Front Controller" stopProcessing="true">
+                    <match url=".*" />
+                    <conditions logicalGrouping="MatchAll">
+                        <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+                        <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+                    </conditions>
+                    <action type="Rewrite" url="{$actionUrl}" />
+                </rule>
+            </rules>
+        </rewrite>
+    </system.webServer>
+</configuration>
+XML;
+    }
+
+    public static function writeToFile(string $path, string $subdir = ''): ?string
+    {
+        $content   = self::generate($subdir);
+        $tmpDir    = dirname($path);
+
+        if (!is_dir($tmpDir)) {
+            return null;
+        }
+
+        $tmpFile = tempnam($tmpDir, 'iis_');
+
+        if ($tmpFile === false || file_put_contents($tmpFile, $content) === false) {
+            @unlink($tmpFile);
+            return null;
+        }
+
+        if (!rename($tmpFile, $path)) {
+            @unlink($tmpFile);
+            return null;
+        }
+
+        return $path;
+    }
+}

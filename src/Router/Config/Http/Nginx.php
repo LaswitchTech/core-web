@@ -59,7 +59,7 @@ NGINX;
         # Pass everything else to the PHP-FPM backend.
         include fastcgi_params;
         fastcgi_pass   unix:/run/php-fpm/www.sock;
-        fastcgi_param  SCRIPT_FILENAME \$document_root{$trimmed}/index.php;
+        fastcgi_param  SCRIPT_FILENAME \$document_root/{$trimmed}/index.php;
         fastcgi_param  PATH_INFO          \$fastcgi_path_info;
     }
 

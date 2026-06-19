@@ -56,6 +56,7 @@ final class Response
     public function statusCode(): int { return $this->statusCode; }
 
     public function statusMessage(): string {
+        self::initStatusMessages();
         return self::$statusMessages[$this->statusCode] ?? 'Unknown';
     }
 

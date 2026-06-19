@@ -68,8 +68,8 @@ final class Router
      */
     public function add(string $method, string $uri, callable $handler): self
     {
-        // Normalise: ensure single leading slash.
-        $path = '/' . ltrim($uri, '/');
+        // Normalise: ensure single leading slash, strip trailing slash.
+        $path = rtrim('/' . ltrim($uri, '/'), '/') ?: '/';
 
         $entry  = new RoutingEntry(path: $path, handler: $handler);
         $method = strtoupper($method);
@@ -201,7 +201,7 @@ final class Router
                 $names[$i] = $name;
             } else {
                 // Literal segment — exact match required.
-                if (strcasecmp($parts[$i], $seg) !== 0) {
+                if ($parts[$i] !== $seg) {
                     return null;
                 }
             }
