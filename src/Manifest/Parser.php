@@ -162,7 +162,7 @@ final class Parser
         return $trimmed;
     }
 
-    /** Validate hooks array entries — each must be a string (namespace or class::method). */
+    /** Validate hooks array entries — each must be a string. */
     private static function validateHooks(array $hooks): array
     {
         foreach ($hooks as $hook) {
@@ -171,8 +171,14 @@ final class Parser
                     "Manifest 'hooks' entries must be non-empty strings. Got: " . var_export($hook, true)
                 );
             }
-            // Allow dotted namespaces and ClassName::method notation.
-            if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*|::[a-zA-Z_][a-zA-Z0-9_]*)*$/', $hook)) {
+
+            // Allow dotted namespaces, class::method pairs, and fully-qualified
+            // class paths with backslash separators — e.g.:
+            //   layout.header
+            //   plugin.started::Class::method
+            //   plugin.started::Laswitchtech\CoreWeb\Plugin\Class::onStart
+            // Use literal backslash via regex `\\` inside character classes — \x5c is unreliable in [..].
+            if (!preg_match('/^[a-zA-Z0-9_]+(?:[:.\\\\][a-zA-Z0-9_.\\\\:]*[a-zA-Z0-9_])?$/', $hook)) {
                 throw new \InvalidArgumentException(
                     "Manifest 'hooks' entry is invalid: {$hook}"
                 );
