@@ -12,7 +12,7 @@ namespace Laswitchtech\CoreWeb\Manifest;
 final class Parser {
     public const array VALID_MANIFEST_NAMES = ['manifest.json', 'extension.json'];
 
-    public static function discover(string $baseDir): array { ... }
+    public static function discover(string $baseDir): list<Extension> { ... }
     public static function parse(string $filePath): Extension { ... }
     public static function validate(array $data, string $filePath = ''): Extension { ... }
 }
@@ -25,19 +25,19 @@ final class Parser {
 
 ### Required keys (validated during parse/validate)
 
-| Key      | Type   | Constraints                              |
-|----------|--------|------------------------------------------|
-| `type`   | string | Must be `'theme'` or `'plugin'` (case-insensitive). |
-| `name`   | string | Non-empty stripped string.              |
-| `version`| string | X.Y.Z format (prefixes v/V/= stripped). |
+| Key       | Type   | Constraints                              |
+|-----------|--------|------------------------------------------|
+| `type`    | string | Must be `'theme'` or `'plugin'` (case-insensitive). |
+| `name`    | string | Non-empty stripped string.              |
+| `version` | string | X.Y.Z format exactly (prefixes v/V/= stripped, no trailing content). |
 
 ### Optional keys (defaults applied during validate)
 
-| Key      | Type         | Default            | Notes                              |
-|----------|--------------|--------------------|-------------------------------------|
-| `hooks`  | list<string> | `[]`               | Each entry: dotted namespace or `Class::method`. |
-| `layouts`| list<string> | `[]`               | Layout identifiers (themes only).   |
-| `depends`| list<string> | `[]`               | Extension name-slug dependencies; must be non-empty strings. |
+| Key       | Type         | Default  | Notes                                        |
+|-----------|--------------|----------|----------------------------------------------|
+| `hooks`   | list<string> | `[]`     | Each entry: dotted namespace or `Class::method`. |
+| `layouts` | list<string> | `[]`     | Layout identifiers (themes only).            |
+| `depends` | list<string> | `[]`     | Extension name-slug dependencies; must be non-empty strings. |
 
 ## Public API
 
@@ -47,9 +47,7 @@ final class Parser {
 public const array = ['manifest.json', 'extension.json'];
 ```
 
-Defines the two accepted manifest filenames.
-
-> **Note**: Despite this constant, `discover()` currently hardcodes a check for only `manifest.json` (line 51 of Parser.php). The `'extension.json'` option in the constant is never exercised by discovery — manifests named `extension.json` are silently ignored during directory walks. This appears to be incomplete scaffolding.
+Defines the two accepted manifest filenames. `discover()` iterates this constant, checking each candidate in order and taking the first file that exists on disk. If an extension directory contains both filenames, `manifest.json` is preferred.
 
 ### `discover(string $baseDir): list<Extension>`
 
@@ -58,20 +56,37 @@ Finds all extension directories in `$baseDir/themes/*` and `$baseDir/plugins/*`,
 **Walk rules:**
 
 1. Walks exactly two subdirectories: `themes/` and `plugins/`.
-2. For each top-level entry within them, checks the entry is a directory **and** contains a file named `manifest.json`.
-3. Calls `self::parse()` for each candidate — invalid manifests produce a `STDERR` warning but do **not** block others.
+2. For each top-level entry within them, checks the entry is a directory **and** contains **any** filename matching `VALID_MANIFEST_NAMES` (currently `manifest.json` or `extension.json`).
+3. Iterates `VALID_MANIFEST_NAMES` in order; takes the first file found on disk.
+4. Calls `self::parse()` for each candidate — invalid manifests produce a `STDERR` warning but do **not** block others.
 
 ```php
-// Inside: foreach (['themes', 'plugins'] as $typeDir) { ... }
-$extDir = "{$typePath}/{$entry}";
-if (!is_dir($extDir) || !is_file("{$extDir}/manifest.json")) {
-    continue; // silently skip non-manifest directories
-}
+foreach (['themes', 'plugins'] as $typeDir) {
+    $typePath = "{$baseDir}/{$typeDir}";
+    if (!$is_dir($typePath)) continue;
 
-try {
-    $manifests[] = self::parse("{$extDir}/manifest.json");
-} catch (\Throwable $e) {
-    fwrite(STDERR, "Manifest parse error for {$extDir}: {$e->getMessage()}\n");
+    foreach (\scandir($typePath) as $entry) {
+        if ($entry[0] === '.') continue;           // skip . and ..
+        $extDir = "{$typePath}/{$entry}";
+        if (!is_dir($extDir)) continue;
+
+        // Check each valid manifest name in order.
+        $manifestFile = null;
+        foreach (self::VALID_MANIFEST_NAMES as $name) {
+            $candidate = "{$extDir}/{$name}";
+            if (is_file($candidate)) {
+                $manifestFile = $candidate;
+                break;  // take the first match.
+            }
+        }
+        if ($manifestFile === null) continue;
+
+        try {
+            $manifests[] = self::parse($manifestFile);
+        } catch (\Throwable $e) {
+            fwrite(STDERR, "Manifest parse error for {$extDir}: {$e->getMessage()}\n");
+        }
+    }
 }
 ```
 
@@ -91,38 +106,41 @@ Validates a decoded manifest array and produces an `Extension` value object. Cal
 
 **Validation flow:**
 
-1. **Required fields**: `type`, `name`, `version` must be present, non-empty strings.
+1. **Required fields**: `type`, `name`, `version` must be present, non-empty strings. Throws `\InvalidArgumentException` if missing or empty.
 2. **Type enforcement**: Lowercased to `'theme'` or `'plugin'`. Anything else throws `\InvalidArgumentException`.
 3. **Name stripping**: Trimmed (leading/trailing whitespace).
-4. **Version normalization**: Strips leading `v/V=/ ` then validates `/^\d+\.\d+\.\d+/`. Stored as the trimmed string even if it exceeds X.Y.Z format thereafter.
-5. **Optional fields**: `hooks` (validated entries), `layouts`, `depends` — all default to `[]`.
-6. **Dependencies validation**: Each entry must be a non-empty string.
+4. **Version normalization**: Strips leading `v/V=/ ` (via `ltrim(trim($version), 'vV= ')`) then validates `/^\d+\.\d+\.\d+$/` — the entire trimmed string must match exactly with no trailing content (e.g., `"1.2.3-extra"` is invalid).
+5. **Optional fields**: Default to `[]` if not present in JSON. Hooks entries are validated individually; layouts and depends are value-normalized via `array_values()`.
+6. **Dependencies validation**: Each entry must be a non-empty string. Throws `\InvalidArgumentException` otherwise.
 
 **Version normalization:**
 
 ```php
-// 'v1.2.3' → '1.2.3'
-// '= 2.0.1' → '2.0.1'
-// strips leading v/V=/ and spaces
+// 'v1.2.3'     → '1.2.3'  ✓
+// '= 2.0.1'    → '2.0.1'  ✓
+// 'V1.0.0-beta' → error (trailing '-beta' fails /^\d+\.\d+\.\d+$/)
 ```
 
 ## Private Helpers
 
 ### `normalizeVersion(string $version): string`
 
-Strips common SemVer prefixes (`v`, `V`, `=`, whitespace) and validates the remaining portion starts with `\d+\.\d+\.\d+`. Returns the trimmed string (no further validation beyond prefix stripping + leading format check).
+Strips common SemVer prefixes (`v`, `V`, `=`, whitespace) and validates the **entire** remaining string matches `/^\d+\.\d+\.\d+$/`. Returns the trimmed string or throws `\InvalidArgumentException` on any mismatch.
 
 ### `validateHooks(array $hooks): array`
 
 Validates each entry is a non-empty string matching:
 
 ```regex
-/^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*|::[a-zA-Z_][a-zA-Z0-9_]*)*$/
+/^[a-zA-Z0-9_]+(?:[:.\\\\][a-zA-Z0-9_.\\\\:]*[a-zA-Z0-9_])?$/
 ```
 
-This supports both:
-- **Dotted namespaces**: e.g. `layout.header`, `page.before_render`
-- **Class::method notation**: e.g. `App\HeaderPlugin::render`
+This supports:
+- **Dotted namespaces**: `layout.header`, `page.before_render`
+- **Class::method notation**: `App\HeaderPlugin::render`
+- **Fully-qualified class paths with backslashes**: `Laswitchtech\CoreWeb\Plugin\Class::onStart`
+
+Allowed separators between segments: `.`, `:`, or `\`. Each segment must start and end with an alphanumeric or underscore character.
 
 Returns deduplicated (`array_values()`) list or throws `\InvalidArgumentException` on invalid entries.
 
@@ -147,9 +165,9 @@ $ext2 = Parser::validate($decoded, 'test-manifest.json');
 
 Individual manifest failures are logged to STDERR but do not halt discovery. This is intentional: a single corrupted extension should not prevent the rest of the system from starting. The error message on STDERR during bootstrap will surface via Bootstrap's error handler (die() or fwrite).
 
-### Hardcoded Manifest Filename Check
+### Tolerant Manifest Filename Discovery
 
-`discover()` checks `$extDir . '/manifest.json'` directly rather than iterating `VALID_MANIFEST_NAMES`. The constant exists in the class but discovery does not reference it — effectively only `manifest.json` is supported during walks. This may be intentional (standardizing on one filename) or incomplete scaffolding (the `'extension.json'` entry should likely drive discovery iterations).
+`discover()` iterates `VALID_MANIFEST_NAMES` rather than hardcoding a single filename — both `manifest.json` and `extension.json` are treated equally. If both filenames exist in an extension directory, `manifest.json` wins by virtue of appearing first in the constant array.
 
 ### Schema Leniency on Optionals
 

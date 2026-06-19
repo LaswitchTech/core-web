@@ -81,7 +81,7 @@ All values are pre-validated by `Parser::validate()`, so the Extension construct
 ### Accessing from Container
 
 ```php
-$index = Bootstrap::container()->get('extension_index'); // stdClass with name keys
+ $index = Bootstrap::container()->resolve('extension_index'); // stdClass with name keys
 // or typed access via direct property lookup since values are stored as (object) $extIndex
 ```
 

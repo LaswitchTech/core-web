@@ -29,12 +29,14 @@ Configuration files use `.cfg` extension and contain JSON:
 
 | Step | File           | Required? | Purpose                              |
 |------|----------------|-----------|--------------------------------------|
-| 1    | `core.cfg`     | Yes       | Framework-level defaults             |
+| 1    | `core.cfg`     | No*       | Framework-level defaults             |
 | 2    | `local.cfg`    | No        | User/application overrides           |
+
+Config files are **optional** — calling `Config::load([])` or passing non-existent paths silently skips them. However, the bootstrap always resolves at least one of these files if present; if neither exists, it simply doesn't load any config and `$config` remains `null`.
 
 ### Merge Strategy: Deep Override
 
-Later files are **deep-merged** on top of earlier ones. The algorithm recurses into arrays, replacing keys that exist in both. Scalar types (strings, integers, booleans, null) and non-array values always override. `null` as a value in the later file deletes the key entirely:
+Later files are **deep-merged** on top of earlier ones. The algorithm recurses into arrays (treating them as dictionaries by key), replacing keys that exist in both. Scalar types (strings, integers, booleans) and non-array values always override. `null` as a value in the later file deletes the key entirely:
 
 ```php
 // core.cfg  → {"database": {"host": "localhost", "port": 3306}}
@@ -46,24 +48,24 @@ Later files are **deep-merged** on top of earlier ones. The algorithm recurses i
 
 **Deep merge rules:**
 
-| `base[key]` type | `override[key]` type          | Result                                    |
+| `base[key]` type | `override[key]` type           | Result                                    |
 |------------------|-------------------------------|-------------------------------------------|
 | `array`          | `array`                       | Recursive deep merge (both must be arrays)|
-| `scalar/anything` | `null`                       | **Key deleted** from result               |
+| `scalar/anything` | `null`                      | **Key deleted** from result               |
 | `anything`       | `scalar/array/object/partial-null` | **Full override** — no merging        |
 
 This means if a base value is `{ "x": { "a": 1, "b": 2 } }` and the override is `{ "x": null }`, the `x` key is completely removed.
 
 ### Config Path Resolution (via Bootstrap)
 
-The bootstrap resolves config file paths during construction:
+The bootstrap resolves config file paths during construction — see **Bootstrap::resolveConfigPaths()** for the exact algorithm:
 
-1. Check CWD-relative path first (`./config/core.cfg`)
-2. Fall back to framework vendor path (`<vendor>/laswitchtech/core-web/config/core.cfg`)
-3. Stop at the first match for each file — prevents duplicate loading when CWD and vendor point to overlapping locations
-4. `local.cfg` follows the same search order but is optional
+1. Computes `$appRoot` via multiple heuristics (see Bootstrap.md).
+2. Looks for `{appRoot}/config/core.cfg` first.
+3. If found, optionally looks for `{appRoot}/config/local.cfg`.
+4. Each existing file is `realpath()`'d and added to the paths array in order.
 
-This dual-location strategy allows config bundles to live both in user projects and within the framework package itself.
+If neither `core.cfg` nor `local.cfg` exists under the app root's `config/` directory, `$paths` is empty and `Config::load()` does nothing. This is normal for Composer-installed packages that ship without user configuration files.
 
 ## Public API
 
@@ -78,7 +80,9 @@ Config::load([
 ]);
 ```
 
-Throws `\JsonException` if a file fails to decode.
+- Non-existent paths in `$paths` are silently skipped.
+- Throws `\JsonException` if a file exists but contains invalid JSON (`json_last_error()` is checked after decoding).
+- After loading, the merged payload lives in the static private `$config` array (never `null` if at least one file was loaded; remains `null` otherwise).
 
 ### `get(string $key, mixed $default = null): mixed`
 
@@ -93,9 +97,11 @@ Config::get('database.host');   // null (default) — key does not exist
 Config::get('database.host', 'localhost');  // 'localhost' (explicit default)
 ```
 
+If `$config` is `null` (no config loaded), returns `$default` immediately without traversing.
+
 ### `all(): ?array`
 
-Returns the complete configuration payload. Returns `null` if no config has been loaded:
+Returns the complete configuration payload, or `null` if no config has been loaded:
 
 ```php
 $config = Config::all(); // array|null — read-only reference to internal state

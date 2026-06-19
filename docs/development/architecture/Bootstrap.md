@@ -11,6 +11,7 @@ Config → Container → Core Services → Extensions → Mode-Specific Subsyste
 Two modes are supported:
 - **`WEB`**   — HTTP request lifecycle (router dispatch, middleware pipeline, output)
 - **`CLI`**   — Command-line execution (command routing, argument parsing, exit codes)
+- **`ROUTER`** — Legacy alias for `WEB` (not defined as a constant; only `'WEB'` and `'CLI'` are validated).
 
 ## Why This Design
 
@@ -39,69 +40,113 @@ require_once __DIR__ . '/vendor/autoload.php';
 new Laswitchtech\CoreWeb\Bootstrap('CLI');
 ```
 
-The bootstrap runs its full initialization chain inside the constructor, after which all registered services are available via `Bootstrap::container()`.
+The bootstrap runs its full initialization chain inside the constructor, after which all registered services are available via `Bootstrap::container()`. Invalid mode values throw `\InvalidArgumentException` during construction.
+
+## Properties
+
+| Property      | Type              | Purpose                                            |
+|---------------|-------------------|----------------------------------------------------|
+| `$mode`       | `readonly string` | `'WEB'` or `'CLI'`                                 |
+| `$appRoot`    | `readonly string` | Resolved application root directory (absolute path)|
+| `$configPaths`| `readonly list<string>` | Resolved config file paths (`core.cfg`, optional `local.cfg`) |
+
+A static `private static ?Container $instance` holds the DI container reference after initialization, accessible via `Bootstrap::container()`.
 
 ## Initialization Chain
 
-### 1. Config Resolution (`initConfig`)
+### 1. App Root Resolution (`resolveAppRoot`)
 
-Loads configuration files in order:
+Resolves `$appRoot` using a priority chain:
 
-| Step | File          | Purpose                                   |
-|------|---------------|-------------------------------------------|
-| 1    | `core.cfg`    | Framework-level defaults (always required) |
-| 2    | `local.cfg`   | User/application overrides (optional)      |
+1. **Constant override**: If `CORE_WEB_ROOT` is defined, use that value.
+2. **Script filename**: Use `dirname(realpath($_SERVER['SCRIPT_FILENAME']))` (typical WEB deployment).
+3. **Current working directory**: Use `getcwd()` for CLI / simple setups.
+4. **Package fallback**: Use `dirname(__DIR__)` relative to this file — for Composer-installed packages without a user app root.
 
-Config files are searched in this order:
-1. CWD-relative — `./config/core.cfg`
-2. Framework vendor path — `<vendor>/laswitchtech/core-web/config/core.cfg`
+The resulting `$appRoot` drives config path resolution and extension discovery.
 
-The search stops on the first match for each file type, preventing duplicate merges from multiple package copies. See [Config Component](/docs/development/architecture/Config.md) for deep-merge semantics.
+### 2. Config Path Resolution (`resolveConfigPaths`)
 
-### 2. Container Creation (`initContainer`)
+Searches `{appRoot}/config/` for configuration files (only within the app root, not fallback paths):
 
-Instantiates a new `Container` and stores it as a static reference (`Bootstrap::$instance`). The container is the sole DI hub for all framework services and is the only way subsystems communicate after bootstrap completes.
+1. Checks `{$appRoot}/config/core.cfg` — if found, `realpath()`'d and added to `$paths`.
+2. Optionally checks `{$appRoot}/config/local.cfg` — if found, appended as second entry.
 
-### 3. Core Service Registration (`registerCoreServices`)
+Both files are optional; `$paths` may be empty. Each path undergoes `realpath()` for canonical absolute paths. The resulting array is stored in `$this->configPaths`.
+
+### 3. Config Loading (`initConfig`)
+
+Delegates to `Config::load($this->configPaths)`. If `$configPaths` is empty (no `.cfg` files found), the call is skipped entirely and `$config` remains `null`. Deep-merge semantics within `Config::load()` apply when multiple paths are provided. See [Config Component](/docs/development/architecture/Config.md) for details.
+
+### 4. Container Creation (`initContainer`)
+
+Instantiates a new `Container` and stores it as the static reference `Bootstrap::$instance`:
+
+```php
+static::$instance = new Container();
+```
+
+The container is the sole DI hub for all framework services and is the only way subsystems communicate after bootstrap completes.
+
+### 5. Core Service Registration (`registerCoreServices`)
 
 Registers the minimal set of core framework services into the container:
 
-| Key      | Value            | Purpose                                        |
-|----------|------------------|-------------------------------------------------|
-| `config` | `Config::class`  | Reference to the active config instance          |
-| `mode`   | `'WEB'` / `'CLI'`    | Active bootstrap mode for downstream routing  |
+| Key             | Value                  | Purpose                                        |
+|-----------------|------------------------|------------------------------------------------|
+| `config`        | `'Laswitchtech\CoreWeb\Config'` (string class name) | Class reference for downstream introspection (not a loaded instance — Config is static). |
+| `mode`          | `'WEB'` or `'CLI'`     | Active bootstrap mode for downstream routing.  |
+
+**Diagnostic bindings** (always registered):
+
+| Key                | Value                 | Purpose                                        |
+|--------------------|-----------------------|------------------------------------------------|
+| `app_root`         | `$this->appRoot`      | Resolved application root path.                |
+| `extension_base`   | string `null` or path  | First found `ext/` directory, or null.         |
 
 When future subsystems (Database, HookRegistry, Routing) are implemented, their bindings will be added to this method.
 
-### 4. Extensions (`initExtensions`)
+### 6. Extensions (`initExtensions` → `registerExtensions`)
 
-Resolves all extension manifests, validates dependencies, registers hooks and layouts into the Hook Registry, and indexes metadata in the Container. Implementation lives in `registerExtensions()`.
+Resolves all extension manifests, validates dependencies, registers hooks and layouts into the Hook Registry, indexes metadata in the Container, and installs an autoloader. Step-by-step:
 
-**Step-by-step:**
+1. **Resolve base path**: Checks two candidate directories in order:
+   - `{$this->appRoot}/ext` — primary (user's application root)
+   - `dirname(__DIR__) . '/ext'` — fallback (package/vendor install)
+   
+   Stops at the first existing directory; `$extBase` is set. If neither exists, registers empty hook_registry and extension_index, then returns early (normal for Composer installs).
 
-1. **Resolve base path** — `ext/` directory under the framework vendor root (`__DIR__ . '/../../ext'`).
-2. **Discover & parse manifests** — uses `Manifest\Parser::discover()` to walk `ext/{themes,plugins}/{name}/`, producing a list of `Extension` value objects.
-3. **Dependency sanity check (fail fast)** — resolves against the full manifest list; throws `\RuntimeException` if any declared dependency is unresolved.
-4. **Register hooks / layouts / metadata:**
-   - For each hook definition: if it contains `::` attempts class-based invocation via `Registry::addClassCall()`, falling back to a no-op callable for dotted namespaces (e.g. `layout.header`).
-   - Layouts are registered as callbacks on the convention `layout.<name>`.
-   - Each extension's metadata (`type`, `version`, `directory`, `depends`) is indexed in `$extIndex`.
-5. **Bind into container:**
-   | Key               | Value                  | Purpose                                     |
-   |-------------------|------------------------|----------------------------------------------|
-   | `hook_registry`   | `Hook\Registry`        | Shared hook registry instance                |
-   | `extension_index` | `(object) $extIndex`   | Extension metadata keyed by name (stdClass)  |
+2. **Discover & parse manifests**: Calls `Manifest\Parser::discover($extBase)` to walk `ext/{themes,plugins}/{name}/`, producing `list<Extension>` value objects. Individual malformed manifests are logged to STDERR and skipped — the parser is tolerant by design.
 
-### 5. Mode-Specific Boot (`bootWeb` or `bootCli`)
+3. **Early return if no manifests**: If `$manifests` is empty (all extensions misconfigured or no extensions installed), registers a fresh `Hook\Registry()` and `(object)[]` as extension_index, returns silently.
+
+4. **Dependency sanity check** (fail fast): For each manifest with non-empty `depends`, checks that every dependency name exists in `$knownNames = array_column($manifests, 'name')`. Throws `\RuntimeException` on unresolved dependencies. Uses the known names from all successfully parsed manifests.
+
+5. **Extension autoloader registration**: Collects `src/` directories from all extensions (`{$manifest->directory}/src`). Installs a custom `spl_autoload_register` that handles classes under `Laswitchtech\CoreWeb\Plugin\*` and `Laswitchtech\CoreWeb\Theme\*` namespaces. For each such class, strips the namespace prefix, replaces `\` with `/`, appends `.php`, and checks each extension's `src/` directory for the file. Uses `require_once` to prevent duplicate loading.
+
+6. **Hook processing**: Creates a new `Hook\Registry()` and iterates all manifests:
+   - **Hooks**: Each `$hookDef` is checked for `::`:
+     - No `::`: Registered as dotted namespace with empty callback `static fn () => []`. This allows downstream subsystems to inspect which hooks are claimed (even without registered callbacks).
+     - With `::`: Splits hook name from class::method (on first `::`), then extracts class FQCN and method name (from last `::`). Calls `$hookRegistry->addClassCall($hookName, "{$classFqcn}::{$methodNm}", 0)`. The autoloader (step 5) must be in place so `class_exists()` inside `addClassCall()` can load the class.
+   - **Layouts**: Each layout identifier registers a callback on the pattern `layout.{$layoutDef}` with empty callback `static fn () => []`.
+   - **Indexing**: Extension metadata (`type`, `version`, `directory`, `depends`) is stored in `$extIndex[$manifest->name]`.
+
+7. **Bind into container**:
+   | Key                 | Value                     | Purpose                                      |
+   |---------------------|---------------------------|----------------------------------------------|
+   | `hook_registry`     | `Hook\Registry` instance  | Shared hook registry                         |
+   | `extension_index`   | `(object) $extIndex`      | Extension metadata keyed by name (stdClass)  |
+
+### 7. Mode-Specific Boot (`bootWeb` or `bootCli`)
 
 Executes the chain appropriate to the mode:
 
 | Chain   | Key Steps                                          |
 |---------|-----------------------------------------------------|
-| **WEB**    | Create Router → detect server type → load core routes → dispatch request → output response |
-| **CLI**    | Create CLIRouter → register commands → parse `$_SERVER['argv']` → resolve handler → execute → exit code |
+| **WEB**    | Trigger `plugin.started` hook with `['mode' => 'web']` → (TODO: Router boot, server detection, route loading, dispatch, output) |
+| **CLI**    | Trigger `plugin.started` hook with `['mode' => 'cli']` → (TODO: CLIRouter boot, command loading, argv parsing, dispatch, exit) |
 
-Both chains are currently stubbed; their TODO annotations detail the implementation contract.
+Both chains currently fire the `plugin.started` hook first so test plugins can run bootstrap-time logic. The actual subsystem implementations (Router, CLIRouter) are stubbed with TODO annotations in the source code.
 
 ## Bootstrap Lifecycle
 
@@ -115,21 +160,22 @@ sequenceDiagram
 
     App->>B: new Bootstrap('WEB' / 'CLI')
     B->>B: resolveConfigPaths()
-    B->>C: new Container()
-    C-->>B: $instance stored statically
-    B->>Config: load($paths)
-    Config-->>B: configuration merged & loaded
-    B->>C: registerCoreServices(c)
+    B->>C: new Container() → stored in Bootstrap::$instance
     B->>B: initExtensions()
+         note over B: discovers manifests, registers hooks,<br/>installs autoloader, stores index
     B->>S: bootWeb() / bootCli()
-    S-->>App: response or exit code
+    S-->>B: triggers plugin.started hook
+    S-->>App: response (WEB) or exit code (CLI) — both stubbed
 ```
 
 ## Error Handling
 
-Bootstrap errors terminate execution immediately via `die()` (web) or `fwrite` + error output (CLI). This is intentional: a broken bootstrap indicates a hard configuration or dependency problem that cannot be recovered from.
+The bootstrap wraps `run()` in a try-catch for `\Throwable`. Errors terminate execution immediately:
 
-When the PHP built-in development server defines `PHP_CLI_SERVER_WORKERS`, verbose stderr output avoids corrupting normal stdout in worker processes.
+- **Web / standard CLI**: `die("Bootstrap failure: " . $e->getMessage() . "\n")`
+- **PHP built-in server** (`PHP_CLI_SERVER_WORKERS` defined): `fwrite(STDERR, "Bootstrap failure: {$e->getMessage()}\n")` to avoid corrupting normal stdout in worker processes.
+
+This is intentional: a broken bootstrap indicates a hard configuration or dependency problem that cannot be recovered from.
 
 ## Static Container Access
 
@@ -154,12 +200,12 @@ $container = Bootstrap::container();
 
 ### Static Container Reference Instead of Class-Level Singleton
 
-Using `private static ?Container $instance` (avoiding the `readonly` modifier on static properties) provides a simple, low-overhead way for any subsystem to access the DI hub without requiring bootstrap object references. There is only ever one instance during a bootstrap lifetime because:
-1. The constructor calls `$this->run()` synchronously
+Using `private static ?Container $instance` provides a simple, low-overhead way for any subsystem to access the DI hub without requiring bootstrap object references. There is only ever one instance during a bootstrap lifetime because:
+1. The constructor calls `$this->run()` synchronously — no separate init step required
 2. A new Bootstrap instance replaces the previous `$instance` reference on construction
 3. No re-initialization path exists after completion
 
-This makes the container *effectively* singleton without using PHP's `Singleton` pattern, which is often considered an anti-pattern for testability reasons.
+This makes the container *effectively* singleton without using PHP's Singleton pattern, which is often considered an anti-pattern for testability reasons.
 
 ### Constructor Drives Instant Boot
 
@@ -170,4 +216,12 @@ The bootstrap does a runtime boot inside the constructor rather than requiring e
 
 ### Config Path Deduplication
 
-The dedup check (`in_array($real, $paths, true)`) prevents the same physical configuration file from being loaded twice when CWD and vendor resolve to overlapping directories.
+The bootstrap uses `realpath()` on config paths to ensure canonical absolute paths, preventing the same physical file from being loaded twice when CWD and vendor resolve to overlapping directories. No explicit dedup check is needed because realpath normalizes symlinks and path components.
+
+### App Root Resolution Priority Chain
+
+Multiple heuristics for `$appRoot` allow flexible deployment: `CORE_WEB_ROOT` constant gives external overrides, `SCRIPT_FILENAME` handles standard web hosting, `getcwd()` covers CLI usage, and the package-relative fallback works for Composer-installed packages without a user project root. In practice most deployments hit only the first or second rule.
+
+### Early Returns When No Extensions
+
+If no `ext/` directory exists or no valid manifests are found, bootstrap completes normally — it's not considered an error to ship with zero extensions. This allows Composer-installed packages to function as framework-only installations without requiring users to create dummy extension directories.
