@@ -24,10 +24,13 @@ class Bootstrap
     const MODE_WEB  = 'WEB';
     const MODE_CLI  = 'CLI';
 
-    private readonly string        $mode;
+    private readonly string $mode;
+
+    /** Resolved application root directory (used by config, extensions, etc.). */
+    private readonly string $appRoot;
 
     /** Resolved config file paths: core.cfg (+ optional local.cfg on top). */
-    private readonly array         $configPaths;
+    private readonly array $configPaths;
 
     /* ------------------------------------------------------------------ --/
      /  Constructor                                                         */
@@ -42,6 +45,7 @@ class Bootstrap
         }
 
         $this->mode        = $mode;
+        $this->appRoot     = $this->resolveAppRoot();
         $this->configPaths = $this->resolveConfigPaths();
         $this->run();
     }
@@ -76,9 +80,44 @@ class Bootstrap
         }
     }
 
-    /* ------------------------------------------------------------------ --/
-     /  Config                                                              */
+     /* ------------------------------------------------------------------ --/
+      /  Config                                                              */
     /* ------------------------------------------------------------------ */
+
+    /**
+     * Resolve the application root directory.
+     *
+     * Search order (priority descending):
+     *   1. Constant CORE_WEB_ROOT (if defined)
+     *   2. SCRIPT_FILENAME of the executing script
+     *   3. Current working directory
+     *   4. Relative to this file (__DIR__/.. — fallback for CLI / package installs)
+     */
+    private function resolveAppRoot(): string
+    {
+        // Allow external override.
+        if (defined('CORE_WEB_ROOT')) {
+            return (string) CORE_WEB_ROOT;
+        }
+
+        // Try the executing script's directory (typical WEB deployment).
+        $script = $_SERVER['SCRIPT_FILENAME'] ?? null;
+        if (is_string($script) && $script !== '') {
+            $resolved = realpath($script);
+            if ($resolved !== false) {
+                return dirname($resolved);
+            }
+        }
+
+        // Fallback to getcwd() for CLI / simple setups.
+        $cwd = getcwd();
+        if ($cwd !== false) {
+            return $cwd;
+        }
+
+        // Ultimate fallback -- relative to this file (package/vendor installs).
+        return dirname(__DIR__);
+    }
 
     private function initConfig(): void
     {
@@ -91,45 +130,28 @@ class Bootstrap
     /**
      * Locate core.cfg then append local.cfg if present.
      *
-     * Search order (same for both):
-     *   1. CWD-relative       -> ./config/core.cfg
-     *   2. Framework vendor   -> __DIR__/../../config/core.cfg
+     * Search order (same for both config files):
+     *   1. App-root         -> {appRoot}/config/core.cfg
      */
     private function resolveConfigPaths(): array
     {
         $paths = [];
-        $cwd   = @getcwd();
 
-        // Find core.cfg.
-        foreach ([
-            $cwd !== false ? "{$cwd}/config/core.cfg" : null,
-            __DIR__ . '/../../config/core.cfg',
-        ] as $candidate) {
-            if ($candidate === null || !is_file($candidate)) {
-                continue;
-            }
+        // Find core.cfg in app-root only.
+        $candidate = "{$this->appRoot}/config/core.cfg";
+        if (is_file($candidate)) {
             $real = realpath($candidate);
-            if ($real === false) {
-                continue;
-            }
-            if (!in_array($real, $paths, true)) {
+            if ($real !== false) {
                 $paths[] = $real;
-                break;  // core.cfg found -- stop searching.
             }
         }
 
         // Append local.cfg (optional override).
-        foreach ([
-            $cwd !== false ? "{$cwd}/config/local.cfg" : null,
-            __DIR__ . '/../../config/local.cfg',
-        ] as $candidate) {
-            if ($candidate === null || !is_file($candidate)) {
-                continue;
-            }
+        $candidate = "{$this->appRoot}/config/local.cfg";
+        if (is_file($candidate)) {
             $real = realpath($candidate);
             if ($real !== false) {
-                $paths[] = $real;  // local.cfg merges on top inside Config::load().
-                break;
+                $paths[] = $real;  // merges on top inside Config::load().
             }
         }
 
@@ -180,8 +202,26 @@ class Bootstrap
             throw new \RuntimeException('Container not yet initialised when initExtensions() runs.');
         }
 
-        // ── 1. Resolve ext/ base directory (framework vendor path) ────────────
-        $extBase = __DIR__ . '/../../ext';
+        // Resolve extension base directories — app root first, then vendor fallback.
+        $candidates = [
+            "{$this->appRoot}/ext",                              // primary: user's application root
+            __DIR__ . '/../../ext',                              // fallback: package/vendor install
+        ];
+
+        $extBase = null;
+        foreach ($candidates as $dir) {
+            if (is_dir($dir)) {
+                $extBase = $dir;
+                break;
+            }
+        }
+
+        if ($extBase === null) {
+            throw new \RuntimeException(
+                "Extension base directory not found. Searched: "
+                . implode(', ', array_map(fn ($d) => realpath($d) ?: $d, $candidates))
+            );
+        }
 
         // ── 2. Discover & parse every manifest ────────────────────────────────
         $manifests = Manifest\Parser::discover($extBase);
