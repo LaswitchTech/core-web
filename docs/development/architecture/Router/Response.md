@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Response component represents an HTTP or CLI response, encapsulating status code, body content, and headers.
+The Response component is a lightweight response representation — an HTTP or CLI response encapsulating status code, body content, and headers.
 
 ## Responsibilities
 
@@ -42,20 +42,25 @@ __construct(int $statusCode = self::STATUS_OK): void
 
 ### Instance Mutators (chainable `self`)
 
+All mutators modify the current instance and return `$this` for chaining.
+
 | Signature                          | Return Type | Description                  |
 | ---------------------------------- | ----------- | ---------------------------- |
-| `withStatus(int $code): self`      | `self`      | Set HTTP status code         |
-| `withBody(string $content): self`  | `self`      | Set response body            |
-| `withHeaders(array $headers): self`| `self`      | Replace all headers          |
-| `setHeader(string $name, string $value): self` | `self` | Set a single header value    |
+| `withStatus(int $code): self`      | `self`      | Set HTTP status code on this instance, returns `$this` |
+| `withBody(string $content): self`  | `self`      | Set response body on this instance, returns `$this` |
+| `withHeaders(array $headers): self`| `self`      | Replace all headers on this instance, returns `$this` |
+| `setHeader(string $name, string $value): self` | `self` | Set a single header value on this instance, returns `$this` |
 
 ### Instance Send
 
 ```php
 send(): void
 ```
-- Skips HTTP header emission when running under CLI SAPI.
-- Sets `$this->sent = true` after sending (no-op on repeated calls).
+- **Idempotent** — returns immediately if `$this->sent` is already `true`.
+- Skips all `header()` calls when `PHP_SAPI === 'cli'`.
+- In WEB mode, sends `HTTP/1.1 <code> <message>` status line (status code and message come from `statusMessage()`).
+- Calls `header("{$name}: {$value}", false)` for each stored header (replace mode).
+- Echoes the body via `echo`.
 
 ### Static Factories
 
@@ -71,10 +76,9 @@ send(): void
 
 ### Static Status Helpers
 
-| Signature                                   | Return Type           | Description                   |
-| ------------------------------------------- | --------------------- | ----------------------------- |
-| `initStatusMessages(): void`                | `(void)`              | Lazily populates status map   |
-| `getStatusMessage(int $code): ?string`      | `?string`             | Look up a status description  |
+| Signature                                 | Return Type           | Description                |
+| ----------------------------------------- | --------------------- | -------------------------- |
+| `getStatusMessage(int $code): ?string`    | `?string`             | Look up a status description |
 
 ## Internal Architecture
 
@@ -82,12 +86,12 @@ send(): void
 
 | Field | Type | Visibility | Purpose |
 |-------|------|------------|---------|
-| `$statusCode` | `int` | private (promoted via constructor) | Current HTTP status code |
-| `$headers` | `array<string,string>` | private raw array (no type hint on declaration) | Response header storage, keyed by header name |
+| `$statusCode` | `int` | private (constructor-promoted) | Current HTTP status code |
+| `$headers` | `array` | private | Response header storage, keyed by header name (PHPDoc-refined as `@var array<string,string>`) |
 | `$body` | `string` | private | Response body content |
 | `$sent` | `bool` | private | Send guard — repeated calls to `send()` are no-ops |
 
-All four fields are initialized via the constructor (constructor parameter promotion for `$statusCode`). The remaining three (`$headers`, `$body`, `$sent`) are declared as plain properties with default initialization (`[]`, `''`, `false` respectively).
+All four fields are **not** initialized via the constructor — only `$statusCode` is a constructor-promoted parameter (set from the argument). The remaining three (`$headers`, `$body`, `$sent`) are declared at class scope with default values (`[]`, `''`, `false` respectively) and do not appear in the constructor parameter list.
 
 ### Status Message Map
 
@@ -107,7 +111,7 @@ Both `getHeader()` and `hasHeader()` use manual iteration with `strtolower()` co
 
 All static factories (`json()`, `html()`, `notFound()`, `methodNotAllowed()`, `internalError()`, `redirect()`, `text()`) follow the same pattern:
 1. Instantiate a new `Response` with a status code.
-2. Set one or more headers/body via mutators.
+2. Assign headers/body directly to `$response->headers[...]` and/or `$response->body`.
 3. Return the instance to the caller (never assigned to any property).
 
 ### send() Method

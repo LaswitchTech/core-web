@@ -10,7 +10,22 @@ _(none)_
 
 ## Public API
 
-_(none)_
+### `generate(string $subdir = ''): string`
+
+Generate an .htaccess file with mod_rewrite rules that route all non-static-file requests to the application entry point.
+
+**Behavior**:
+- Takes a `$subdir` parameter (relative to DocumentRoot). Empty string (`''`) means root deployment, any path means subdirectory under `/DocumentRoot/subdir/`.
+- Root deployment: outputs `RewriteEngine On` with conditions that skip real files/directories and route everything else to `index.php`.
+- Subdirectory deployment (e.g. `$subdir = '/app'`): adds `RewriteBase /app/` so routing is relative to the subdirectory URL prefix. The RewriteBase value is derived as `/{$trimmed}/` where `$trimmed = trim($subdir, '/')`, defaulting to `/` when empty.
+- Both modes include a mod_rewrite block and an autoindex-blocking block (`Options -Indexes`).
+- Multiple consecutive blank lines between `RewriteEngine On` and the first comment are intentional (from template formatting).
+
+### `writeToFile(string $path, string $subdir = ''): ?string`
+
+Write the generated .htaccess content to disk atomically (temp file + rename).
+
+Returns the written path on success, `null` on failure.
 
 ## Generated Output Examples
 

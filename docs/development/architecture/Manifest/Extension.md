@@ -10,14 +10,17 @@
 namespace Laswitchtech\CoreWeb\Manifest;
 
 final readonly class Extension {
-    public string   $file;       // absolute path to manifest.json
-    public string   $type;       // 'theme' or 'plugin' (lowercased by parser)
-    public string   $name;       // display name/slug (trimmed whitespace)
-    public string   $version;    // semver X.Y.Z (stripped of v/V=/ prefixes by parser)
-    public array    $hooks;      // list<string> hook definitions from manifest
-    public array    $layouts;    // list<string> layout identifiers (themes only)
-    public string   $directory;  // absolute directory containing the manifest
-    public array    $depends;    // list<string> extension dependencies (default: [])
+    // PHP 8.2+: readonly class — all properties implicitly immutable after construction
+    public function __construct(
+        string $file,       // required
+        string $type,       // required — validated by parser
+        string $name,       // required — trimmed by parser
+        int|string $version,   // required — normalized by parser
+        array  $hooks,      // required — defaults to [] inside parser, but passed explicitly here
+        array  $layouts,    // required — same
+        string $directory,  // required — dirname of the manifest file
+        array  $depends = [], // only optional parameter (rightmost)
+    ) {
 }
 ```
 
@@ -26,7 +29,7 @@ final readonly class Extension {
 
 ## Constructor Parameter Order
 
-Parameters are ordered to satisfy PHP 8.4+ rules: **all required parameters must precede optional ones**. Currently only `$depends` has a default (`[]`).
+Parameters are ordered to satisfy PHP 8.0+ rules: **all required parameters must precede optional ones**. Currently only `$depends` has a default (`[]`).
 
 ```php
 public function __construct(
@@ -128,7 +131,7 @@ The class has no setter methods and is declared `readonly`. This means:
 
 ### Public Properties Over Getters
 
-All eight fields are declared inline as public properties in the constructor parameter list (`public string $file`, etc.). This is a PHP 8.4 feature (named constructor arguments / PTPs) that eliminates boilerplate:
+All eight fields are declared inline as public properties in the constructor parameter list (`public string $file`, etc.). This is a PHP 8.0 feature (named constructor arguments / PTPs) that eliminates boilerplate:
 - No need for separate `$this->file = $file;` assignments in the constructor body.
 - Property access is as cheap as direct field reads.
 - Serialization/unserialization behavior matches standard public property layouts via `__serialize()`.
