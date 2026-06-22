@@ -367,6 +367,25 @@ class Bootstrap
             $registry->trigger('plugin.started', ['mode' => 'web']);
         }
 
+        // Create renderer registry and renderer -- resolve hook registry once.
+        $rendererRegistry = new \Laswitchtech\CoreWeb\Renderer\Registry();
+        $renderer = new \Laswitchtech\CoreWeb\Renderer\Renderer($rendererRegistry);
+        if (static::$instance !== null) {
+            static::$instance->set('renderer_registry', $rendererRegistry);
+            static::$instance->set('renderer', $renderer);
+        }
+
+        // Fire renderer.register hook so plugins can register layouts, templates, views.
+        $hookRegistry = static::$instance->resolve('hook_registry');
+        if ($hookRegistry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
+            $hookRegistry->trigger('renderer.register', [
+                'registry'  => $rendererRegistry,
+                'renderer'  => $renderer,
+                'container' => static::$instance,
+                'mode'      => 'web',
+            ]);
+        }
+
         // Create router in WEB mode and fire the route-registration hook.
         $router = new Router(Router::MODE_WEB);
         if (static::$instance !== null) {
@@ -392,6 +411,25 @@ class Bootstrap
         $registry = static::$instance->resolve('hook_registry');
         if ($registry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
             $registry->trigger('plugin.started', ['mode' => 'cli']);
+        }
+
+        // Create renderer registry and renderer -- resolve hook registry once.
+        $rendererRegistry = new \Laswitchtech\CoreWeb\Renderer\Registry();
+        $renderer = new \Laswitchtech\CoreWeb\Renderer\Renderer($rendererRegistry);
+        if (static::$instance !== null) {
+            static::$instance->set('renderer_registry', $rendererRegistry);
+            static::$instance->set('renderer', $renderer);
+        }
+
+        // Fire renderer.register hook so plugins can register layouts, templates, views.
+        $hookRegistry = static::$instance->resolve('hook_registry');
+        if ($hookRegistry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
+            $hookRegistry->trigger('renderer.register', [
+                'registry'  => $rendererRegistry,
+                'renderer'  => $renderer,
+                'container' => static::$instance,
+                'mode'      => 'cli',
+            ]);
         }
 
         // Create router in CLI mode and fire the route-registration hook.

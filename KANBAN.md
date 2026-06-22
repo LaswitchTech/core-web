@@ -104,31 +104,30 @@
   - Views provide page-specific data, fragments, and controller-facing content.
   - Layouts, templates, and views should be registered through a renderer registry instead of discovered only by fixed folder conventions.
   - Plugins, themes, applications, and core may all provide registered layouts, templates, and views.
-  - [ ] Renderer Registry <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - Central registry for layouts, templates, and views provided by core, application code, themes, and plugins.
+  - [x] Implement `Renderer\Registry` for named layout/template/view registrations <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
+    - Immutable `Entry` value object with type/provider constants, readonly properties, `providerRank()`, and immutability helpers.
+    - Stores multiple entries per (name, type) pair; resolution precedence by highest priority → provider rank (app > theme > plugin > core) → lowest order.
+    - Explicit validation in `add()` and `register()`: non-empty name/type/provider, valid type/provider values, absolute path required but validated at render time only.
+    - `listByName()` preserves insertion order with deterministic sort; `all()` returns read-only store snapshot; duplicates handled by full override (provider rank + priority breaks ties).
     - Tags: feature, registry
-    - [ ] Implement `Renderer\Registry` for named layout/template/view registrations <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - [ ] Support explicit resource registration with name, type, path, provider, and priority <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - [ ] Support lookup precedence for app overrides, active theme, plugin resources, and core fallbacks <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - [ ] Add duplicate-name handling and deterministic override rules <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
-  - [ ] Layout Engine <!-- created_at: 2026-06-18T11:50:00-04:00 priority: high -->
-    - Main render shell for application chrome such as panel, sidebar, topbar, footer, assets, and global hook slots.
-    - Tags: feature, layout
-    - [ ] Implement Layout class with named slots and render pipeline with before/after hooks <!-- created_at: 2026-06-18T10:55:00-04:00 priority: high -->
-    - [ ] Resolve layouts through the Renderer Registry instead of hard-coded paths <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - [ ] Allow plugins and themes to provide additional layouts via registry entries <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-  - [ ] Template Engine <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - Reusable page-pattern layer between layouts and views, such as CRUD index, form, detail, and dashboard templates.
-    - Tags: feature, template
-    - [ ] Implement template resolution through the Renderer Registry <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - [ ] Support passing view data into reusable templates without duplicating page structure <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - [ ] Allow plugins and themes to provide reusable templates via registry entries <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
-  - [ ] View Layer <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - Page-specific content/data layer rendered inside a template and layout.
-    - Tags: feature, view
-    - [ ] Implement view resolution through the Renderer Registry <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - [ ] Support page-specific data and fragments for controller/plugin output <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
-    - [ ] Allow plugins and themes to provide views via registry entries <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+    - Completed: renderer.register hook fires in both WEB and CLI modes after extension discovery; HelloWorld example plugin registers layout/template/view into registry; syntax clean on all 6 Source files; `php cli hello.render` returns valid composed HTML.
+  - [x] Support explicit resource registration with name, type, path, provider, and priority <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
+    - `add(string $name, string $type, string $path, string $provider, int $priority, array $metadata): self` registers all fields; `order` assigned automatically by registry.
+    - `register(Entry $entry): self` re-validates and copies entry with fresh assigned order so tie-breaking is correct for externally-created entries.
+    - No filesystem checks at registration time — validation deferred to render phase in Renderer where missing/unreadable paths throw RenderException.
+  - [x] Support lookup precedence for app overrides, active theme, plugin resources, and core fallbacks <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
+    - Lowest rank wins ties: app=0 → theme=1 → plugin=2 → core=3. Highest numeric priority wins before provider rank comparison. Equal priority + equal rank → earliest order wins.
+    - `resolve(string $name, string $type): ?Entry` scans all entries for pair and applies precedence rules deterministically.
+    - Unknown providers map to `\PHP_INT_MAX` rank so they lose against known providers in all tie-breaking paths.
+  - [x] Add duplicate-name handling and deterministic override rules <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: normal -->
+    - New registrations replace entire (type, name) bucket — no partial merging. Provider rank + priority breaks ties; equal → order breaks tie (earliest registration wins).
+    - `register(Entry)` creates a new Entry with assigned order so externally-created entries get deterministic ordering instead of potentially stale orders.
+  - [x] Layout Engine basic registry resolution <!-- created_at: 2026-06-18T11:50:00-04:00 completed_at: 2026-06-22 priority: high -->
+    - Layouts register as `type=layout` through Registry; Renderer resolves via `Entry::TYPE_LAYOUT`; rendered layout wraps `$templateContent`. HelloWorld `/hello-render` validates full pipeline.
+  - [x] Template Engine basic registry resolution <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
+    - Templates register as `type=template`; Renderer resolves via `Entry::TYPE_TEMPLATE`; receives `$data + ['viewContent' => ...]` via array_merge so renderer-reserved vars always win.
+  - [x] View Layer basic registry resolution <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
+    - Views register as `type=view`; Renderer resolves via `Entry::TYPE_VIEW`; innermost pipeline layer passes raw `$data` and outputs into `$viewContent`.
   - [ ] Renderer Integration <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
     - Integrate renderer services with Bootstrap, Container, Router responses, and extension hooks.
     - Tags: integration
