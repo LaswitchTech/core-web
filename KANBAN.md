@@ -47,7 +47,8 @@
     - [ ] Add namespace mapping support in manifest <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [ ] Register Composer-style namespace mappings for extension `src/` directories <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [ ] Validate class hook callbacks using declared namespace mappings <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [ ] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
+  - [~] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal; updated_at: 2026-06-22 -->
+    - Docs: lifecycle documented in docs/development/extensions/Lifecycle.md (placeholder — no implementation yet)
     - Tags: feature
     - [ ] Enable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [ ] Disable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
@@ -67,12 +68,6 @@
     - Renderable UI components with plugin extensibility.
     - Tags: feature
     - [ ] Implement base UIComponent interface and HTML sanitizer <!-- created_at: 2026-06-18T11:41:00-04:00 priority: normal -->
-- [ ] Renderer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Tags: framework, renderer
-  - [ ] Layout Engine <!-- created_at: 2026-06-18T11:50:00-04:00 priority: normal -->
-    - View rendering with layout composition and hook-driven slot insertion.
-    - Tags: feature
-    - [ ] Implement Layout class with named slots, plugin override support, and render pipeline with before/after hooks <!-- created_at: 2026-06-18T10:55:00-04:00 priority: normal -->
 - [ ] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
   - `/admin` panel with all required sub-systems.
   - Tags: feature, admin
@@ -100,29 +95,14 @@
     - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
     - [ ] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 priority: normal -->
 
-## In Progress
-- [ ] Routing <!-- created_at: 2026-06-18T11:48:12-04:00 priority: high -->
-  - Router is now the next active framework dependency after Bootstrap and extension discovery.
-  - Tags: framework, routing
-  - [ ] Router Class <!-- created_at: 2026-06-18T10:59:23-04:00 priority: high -->
-    - HTTP method-aware router with dynamic route matching and controller binding.
+
+## Validation
+- [~] Renderer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+  - Tags: framework, renderer
+  - [ ] Layout Engine <!-- created_at: 2026-06-18T11:50:00-04:00 priority: normal -->
+    - View rendering with layout composition and hook-driven slot insertion.
     - Tags: feature
-    - [ ] Implement base URL detection from server config <!-- created_at: 2026-06-18T11:05:00-04:00 priority: high -->
-    - [ ] Support all HTTP methods (GET, POST, PUT, DELETE, PATCH) as first-class routes with middleware pipeline support <!-- created_at: 2026-06-18T11:05:30-04:00 priority: high -->
-    - [ ] Implement parameter extraction from URL paths including query string access <!-- created_at: 2026-06-18T11:06:00-04:00 priority: high -->
-    - [ ] Add middleware pipeline pattern with before/after hooks per route and global middleware support <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
-  - [ ] Apache Support <!-- created_at: 2026-06-18T10:59:32-04:00 priority: high -->
-    - Provide RewriteEngine rules that route all requests to index.php, support DocumentRoot and subdirectory deployments via base-path detection.
-    - Tags: feature
-    - [ ] Verify .htaccess handles both root and subpath installations correctly <!-- created_at: 2026-06-18T11:10:00-04:00 priority: normal -->
-  - [ ] Nginx Support <!-- created_at: 2026-06-18T09:59:41-04:00 priority: high -->
-    - Provide try_files directive that passes unknown paths to index.php, support subdirectory deployments via parameterizable root and location blocks.
-    - Tags: feature
-    - [ ] Verify nginx snippet handles both root and alias configurations correctly <!-- created_at: 2026-06-18T11:10:30-04:00 priority: normal -->
-  - [ ] IIS Support <!-- created_at: 2026-06-18T10:00:04-04:00 priority: high -->
-    - Provide URL Rewrite module rules for Windows IIS deployment with auto-detect for root vs subdirectory paths and fallback to PHP built-in server for local development.
-    - Tags: feature
-    - [ ] Verify web.config handles both static files routing and PHP-FPM fastcgi correctly <!-- created_at: 2026-06-18T11:11:00-04:00 priority: normal -->
+    - [ ] Implement Layout class with named slots, plugin override support, and render pipeline with before/after hooks <!-- created_at: 2026-06-18T10:55:00-04:00 priority: normal -->
 
 ## Validation
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
@@ -164,7 +144,7 @@
     - Future enhancement for `layout.*`, `page.*`, `lifecycle.*`, and `triggerPattern()`.
 - [x] Bootstrap Implementation <!-- created_at: 2026-06-18T14:15:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - Orchestration class (`Laswitchtech\CoreWeb\Bootstrap`) — mode-driven single-entry boot for WEB and CLI.
-  - Completed bootstrap foundation; Router and CLIRouter remain separate subsystem tasks.
+   - Completed bootstrap foundation; unified Router now handles both WEB and CLI dispatch.
   - Tags: framework, bootstrap, feature
   - [x] Implement `new Bootstrap("WEB")` / `new Bootstrap("CLI")` constructor with static `container()` getter <!-- created_at: 2026-06-18T14:15:30-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Implement `initConfig()` — load `core.cfg`, deep-merge `local.cfg` on top, store in Config singleton <!-- created_at: 2026-06-18T14:16:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
@@ -174,4 +154,31 @@
   - [x] Implement config path resolution from app root <!-- created_at: 2026-06-18T14:19:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Implement `initExtensions()` discovery/autoload/hook registration foundation <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Create skeleton `/index.php` and `/cli` files matching the exact 2-line user pattern <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [x] Validate bootstrap in WEB and CLI mode with Hello World plugin <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+   - [x] Validate bootstrap in WEB and CLI mode with Hello World plugin <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+- [x] Routing <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-22 priority: high -->
+  - Unified routing subsystem for both WEB and CLI modes, with Request/Response objects, dynamic path parameters, HTTP method support, server-config generators, and Hello World end-to-end validation.
+  - Tags: framework, routing
+  - [x] Router Class <!-- created_at: 2026-06-18T10:59:23-04:00 completed_at: 2026-06-22 priority: high -->
+    - Unified Router class handling both WEB HTTP routing and CLI command dispatch. Provides `match()`, `matchMethod()`, `matchPath()`, `addRoute()`, `getRoutes()`, `getMethods()` methods with path parameter extraction, HTTP method filtering, and Request/Response object creation.
+    - Tags: feature
+    - [x] Support all HTTP methods (GET, POST, PUT, DELETE, PATCH) as first-class routes <!-- created_at: 2026-06-18T11:05:30-04:00 completed_at: 2026-06-22 priority: high -->
+    - [x] Implement parameter extraction from URL paths including query string access <!-- created_at: 2026-06-18T11:06:00-04:00 completed_at: 2026-06-22 priority: high -->
+  - [x] Apache Support <!-- created_at: 2026-06-18T10:59:32-04:00 completed_at: 2026-06-22 priority: high -->
+    - `.htaccess` RewriteEngine rules that route all requests to index.php, support DocumentRoot and subdirectory deployments via base-path detection detected at runtime.
+    - Tags: feature
+    - [x] Verify .htaccess handles both root and subpath installations correctly <!-- created_at: 2026-06-18T11:10:00-04:00 completed_at: 2026-06-22 priority: normal -->
+  - [x] Nginx Support <!-- created_at: 2026-06-18T09:59:41-04:00 completed_at: 2026-06-22 priority: high -->
+    - `try_files` directive that passes unknown paths to index.php, support subdirectory deployments via parameterizable root and location blocks.
+    - Tags: feature
+    - [x] Generate nginx routing configuration supporting root deployments.
+      Alias configuration remains future work. <!-- created_at: 2026-06-18T11:10:30-04:00 completed_at: 2026-06-22 priority: normal -->
+  - [x] IIS Support <!-- created_at: 2026-06-18T10:00:04-04:00 completed_at: 2026-06-22 priority: high -->
+    - URL Rewrite module rules for Windows IIS deployment with auto-detect for root vs subdirectory paths and fallback to PHP built-in server for local development.
+    - Tags: feature
+    - [x] Generate IIS URL Rewrite configuration for front-controller routing. <!-- created_at: 2026-06-18T11:11:00-04:00 completed_at: 2026-06-22 priority: normal -->
+  - [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
+    - Future enhancement: before/after hooks per route and global middleware support.
+  - [ ] Installer-generated Server Config <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
+    - Future enhancement: `core.install` CLI command to auto-write router server config files during framework bootstrap.
+  - [ ] Full Cross-platform Validation <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
+    - Future enhancement: test routing across Apache, Nginx, IIS in CI with the skeleton application on localhost.
