@@ -10,7 +10,7 @@ use Laswitchtech\CoreWeb\Router\Router;
 
 /**
  * Mode-driven single-entry bootstrap.
- * Documentation: docs/development/architecture/bootstrap.md
+ * Documentation: docs/development/architecture/Bootstrap.md
  *
  * Orchestrates the full initialization chain:
  *   Config -> Container -> CoreServices -> Extensions -> Subsystem
