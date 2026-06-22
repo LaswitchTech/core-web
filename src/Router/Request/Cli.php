@@ -10,6 +10,8 @@ final class Cli
     private readonly string $command;
     /** @var list<string> */
     private readonly array $args;
+    /** @var array<string,bool|string> */
+    private readonly array $flags;
 
     /**
      * Parse argv into command + positional args + flag map.

@@ -370,10 +370,14 @@ class Bootstrap
         // Create router in WEB mode and fire the route-registration hook.
         $router = new Router(Router::MODE_WEB);
         if (static::$instance !== null) {
-            static::$instance->set('router', fn () => $router);
+            static::$instance->set('router', $router);
         }
         if ($registry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
-            $registry->trigger('router.register', ['router' => $router]);
+            $registry->trigger('router.register', [
+                'router'    => $router,
+                'container' => static::$instance,
+                'mode'      => 'web',
+            ]);
         }
 
         // Dispatch the request and send response.
@@ -393,10 +397,14 @@ class Bootstrap
         // Create router in CLI mode and fire the route-registration hook.
         $router = new Router(Router::MODE_CLI);
         if (static::$instance !== null) {
-            static::$instance->set('router', fn () => $router);
+            static::$instance->set('router', $router);
         }
         if ($registry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
-            $registry->trigger('router.register', ['router' => $router]);
+            $registry->trigger('router.register', [
+                'router'    => $router,
+                'container' => static::$instance,
+                'mode'      => 'cli',
+            ]);
         }
 
         // Dispatch the request and exit with the response code.
