@@ -17,7 +17,7 @@ use Laswitchtech\CoreWeb\Router\Router;
  *
  * Two modes are supported:
  *   "WEB"    -- HTTP request lifecycle (Router, middleware, dispatch, output)
- *   "CLI"    -- CLI command lifecycle (CLIRouter, arguments, execute, exit)
+ *   "CLI"    -- CLI command lifecycle (Router in CLI mode, arguments, execute, output)
  */
 class Bootstrap
 {

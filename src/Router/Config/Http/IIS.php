@@ -26,14 +26,9 @@ final class IIS
      */
     public static function generate(string $subdir = ''): string
     {
-        $trimmed = trim($subdir, '/');
-
-        if ($trimmed !== '') {
-            $rewritePath = '/' . $trimmed . '/{R:0}';
-        } else {
-            $rewritePath = '{R:0}';
-        }
-
+        // subdirectory support is deferred to the future installer task.
+        // For now the action URL is always "index.php" and deployment context
+        // (reverse-proxy headers) handles subdirectory routing on IIS.
         return <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>

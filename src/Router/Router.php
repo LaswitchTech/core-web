@@ -24,9 +24,6 @@ final class Router
     private array $deleteRoutes   = [];
     private array $patchRoutes    = [];
 
-    /** @var array<string, string[]> All registered paths → allowed methods (for 405). */
-    private array $methodMap = [];
-
     /** HTTP methods to check when scanning for method-not-allowed. */
     private const ALL_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 
@@ -116,9 +113,6 @@ final class Router
             'PATCH'   => $this->patchRoutes[]   = $entry,
             default   => throw new \InvalidArgumentException("Unsupported HTTP method: {$method}"),
         };
-
-        // Track which methods are allowed for this path (for 405 handling).
-        $this->methodMap[$path][] = $method;
 
         return $this;
     }
