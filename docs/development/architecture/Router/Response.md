@@ -1,115 +1,129 @@
-# Response Class
+# Response
 
-## Overview
+## Purpose
 
-The `Response` class is a final value object representing an HTTP or CLI response. It stores a status code (default 200), the body content (a string), and an optional associative array of headers. Every instance is created via either direct constructor usage or one of the static factory methods. There are no public constructors for end users that bypass the factories — all creation goes through `new Response($code)` where `$code` defaults to 200, or through a named factory.
+The Response component represents an HTTP or CLI response, encapsulating status code, body content, and headers.
 
 ## Responsibilities
 
-- **Encapsulation** of HTTP status code, body string, and an associative header name → value map.
-- **Immutable construction with chainable setters** — state is set at instantiation but can be modified via `with*` chainable methods that return `$this`. Each setter mutates the current instance in-place rather than creating a copy.
-- **Static factory methods** for common response patterns (JSON, HTML, text, redirect, and standard error responses).
-- **Output to stream** via `send()`, which is idempotent (safe to call multiple times).
+_(none)_
 
-### Supported Factory Methods
+## Public API
 
-| Factory Method | Arguments | Status | Content-Type | Returns |
-|----------------|-----------|--------|--------------|---------|
-| `json(mixed $data, int $code = self::STATUS_OK)` | JSON-serializable value | 200 (or `$code`) | `application/json; charset=UTF-8` | `Response` |
-| `html(string $body, int $code = self::STATUS_OK)` | HTML markup string | 200 (or `$code`) | `text/html; charset=UTF-8` | `Response` |
-| `text(string $body, int $code = self::STATUS_OK)` | Raw text body | 200 (or `$code`) | `text/plain; charset=UTF-8` | `Response` |
-| `redirect(string $url, int $code = 302)` | Target URL + optional status code | 302 (or `$code`)| `Location: <url>` | `Response` |
-| `notFound(string $body = '<h1>404 Not Found</h1>')` | Optional HTML body | 404 | `text/html; charset=UTF-8` | `Response` |
-| `methodNotAllowed()` | — | 405 | `text/html; charset=UTF-8` | `Response` |
-| `internalError(string $message = 'Internal Server Error')` | Optional message | 500 | `text/html; charset=UTF-8` | `Response` |
+### Class Constants
 
-Note: Each factory method creates a **new** Response instance with the specified body and headers, then returns it. The default status code is `200 OK` for all methods except where noted (`redirect` defaults to `302`, `notFound` to `404`, `methodNotAllowed` to `405`, `internalError` to `500`).
+| Constant                | Value | Description              |
+| ----------------------- | ----- | ------------------------ |
+| `STATUS_CONTINUE`       | `100` | Continue                 |
+| `STATUS_OK`             | `200` | OK                       |
+| `STATUS_CREATED`        | `201` | Created                  |
+| `STATUS_ACCEPTED`       | `202` | Accepted                 |
+| `STATUS_NOT_FOUND`      | `404` | Not Found                |
+| `STATUS_METHOD_NOT_ALLOWED` | `405` | Method Not Allowed     |
+| `STATUS_INTERNAL_ERROR` | `500` | Internal Server Error    |
 
-## Architecture
-
-### Internal Storage (private fields)
+### Constructor
 
 ```php
-final class Response {
-    private int    $statusCode;              // HTTP status code (200 default)
-    private string $body;                    // The response body string
-    private array  $headers = [];            // Associative header name → value map
-    private bool   $sent = false;            // Guard against duplicate send() calls
-    
-    /** @var array<int,string> statusMessages indexed by code */
-    private static array $statusMessages = [];  // Lazily initialized cache of standard messages
-}
+__construct(int $statusCode = self::STATUS_OK): void
 ```
 
-Status code `100 Continue` maps to message `'Continue'`, `200 OK` → `'OK'`, `201 Created` → `'Created'`, `301 Moved Permanently` → `'Moved Permanently'`, `302 Found` → `'Found'`, `304 Not Modified` → `'Not Modified'`, `307 Temporary Redirect` → `'Temporary Redirect'`, `404 Not Found` → `'Not Found'`, `405 Method Not Allowed` → `'Method Not Allowed'`, `500 Internal Server Error` → `'Internal Server Error'`. Additional codes are populated lazily via the `initStatusMessages()` method at first access to any of these lookup methods.
+### Instance Getters
 
-### Constructor & Instantiation
+| Signature                            | Return Type           | Description                          |
+| ------------------------------------ | --------------------- | ------------------------------------ |
+| `statusCode(): int`                  | `int`                 | Current HTTP status code             |
+| `statusMessage(): string`            | `string`              | Human-readable status message        |
+| `body(): string`                     | `string`              | Response body content                |
+| `headers(): array`                   | `array<string,string>`| All response headers                 |
+| `getHeader(string $name): ?string`   | `?string`             | Header value (case-insensitive)      |
+| `hasHeader(string $name): bool`      | `bool`                | Whether a header exists              |
+| `isSent(): bool`                     | `bool`                | Whether the response has been sent   |
+
+### Instance Mutators (chainable `self`)
+
+| Signature                          | Return Type | Description                  |
+| ---------------------------------- | ----------- | ---------------------------- |
+| `withStatus(int $code): self`      | `self`      | Set HTTP status code         |
+| `withBody(string $content): self`  | `self`      | Set response body            |
+| `withHeaders(array $headers): self`| `self`      | Replace all headers          |
+| `setHeader(string $name, string $value): self` | `self` | Set a single header value    |
+
+### Instance Send
 
 ```php
-public function __construct(
-    int $statusCode = self::STATUS_OK  // 200
-) {}
+send(): void
+```
+- Skips HTTP header emission when running under CLI SAPI.
+- Sets `$this->sent = true` after sending (no-op on repeated calls).
+
+### Static Factories
+
+| Signature                                      | Return Type | Description                  |
+| ---------------------------------------------- | ----------- | ---------------------------- |
+| `json(mixed $data, int $code = 200): self`     | `self`      | JSON response                |
+| `html(string $body, int $code = 200): self`    | `self`      | HTML response                |
+| `notFound(string $body = ...): self`           | `self`      | 404 Not Found                |
+| `methodNotAllowed(): self`                     | `self`      | 405 Method Not Allowed       |
+| `internalError(string $message = ...): self`   | `self`      | 500 Internal Server Error    |
+| `redirect(string $url, int $code = 302): self` | `self`      | Redirect response            |
+| `text(string $body, int $code = 200): self`    | `self`      | Plain-text response          |
+
+### Static Status Helpers
+
+| Signature                                   | Return Type           | Description                   |
+| ------------------------------------------- | --------------------- | ----------------------------- |
+| `initStatusMessages(): void`                | `(void)`              | Lazily populates status map   |
+| `getStatusMessage(int $code): ?string`      | `?string`             | Look up a status description  |
+
+## Internal Architecture
+
+### Storage Fields
+
+| Field | Type | Visibility | Purpose |
+|-------|------|------------|---------|
+| `$statusCode` | `int` | private (promoted via constructor) | Current HTTP status code |
+| `$headers` | `array<string,string>` | private raw array (no type hint on declaration) | Response header storage, keyed by header name |
+| `$body` | `string` | private | Response body content |
+| `$sent` | `bool` | private | Send guard — repeated calls to `send()` are no-ops |
+
+All four fields are initialized via the constructor (constructor parameter promotion for `$statusCode`). The remaining three (`$headers`, `$body`, `$sent`) are declared as plain properties with default initialization (`[]`, `''`, `false` respectively).
+
+### Status Message Map
+
+```php
+private static array $statusMessages = []
 ```
 
-The constructor defaults to status 200 with an empty body and empty headers. Users can instantiate a Response directly: `$response = new Response(404)` creates a response with status code 404 but no body content.
+- Populated lazily by `initStatusMessages()` the first time it is called.
+- Contains 11 entries: 7 status codes (100, 200, 201, 202, 404, 405, 500) for which constants exist plus 4 supplemental codes (301, 302, 304, 307).
+- `statusMessage()` delegates to this map; returns `'Unknown'` as sentinel when a code has no entry.
 
-### Method Signature Summary
+### Header Lookup Implementation
 
-| Method | Arguments | Return Type | Description |
-|--------|-----------|-------------|-------------|
-| `statusCode(): int` | — | `int` | Accessor for the status code |
-| `statusMessage(): string` | — | `string` | Human-readable message for the code (e.g., 'OK', 'Not Found') |
-| `body(): string` | — | `string` | Returns the body content of this Response instance |
-| `headers(): array<string,string>` | — | `array` | Returns a copy of all headers |
-| `getHeader(string $name): ?string` | HTTP header name | `?string` | Gets a single header value by name (case-insensitive lookup) |
-| `hasHeader(string $name): bool` | HTTP header name | `bool` | Checks if the response has a specific header set |
-| `isSent(): bool` | — | `bool` | Indicates whether send() has already been called on this instance |
-| `withStatus(int $code): self` | Status code | `self` (chainable) | Sets status code, returns `$this` |
-| `withBody(string $content): self` | Body string | `self` (chainable) | Replaces body content, returns `$this` |
-| `withHeaders(array<string,string> $headers): self` | Header array | `self` (chainable) | Overwrites all headers, returns `$this` |
-| `setHeader(string $name, string $value): self` | Name + value | `self` (chainable) | Sets a single header, returns `$this` |
+Both `getHeader()` and `hasHeader()` use manual iteration with `strtolower()` comparison — the `$headers` array is **not** stored in lower-case internally. This means lookups are O(n) and case-insensitive despite the underlying storage being case-sensitive.
+
+### Factory Pattern
+
+All static factories (`json()`, `html()`, `notFound()`, `methodNotAllowed()`, `internalError()`, `redirect()`, `text()`) follow the same pattern:
+1. Instantiate a new `Response` with a status code.
+2. Set one or more headers/body via mutators.
+3. Return the instance to the caller (never assigned to any property).
 
 ### send() Method
 
-The `send(): void` method outputs HTTP status line, headers, and body. It is **idempotent** — calling it twice does nothing on the second call. The implementation also checks that PHP is not running under CLI SAPI (`PHP_SAPI !== 'cli'`) before emitting any `header()` calls, because there are no HTTP headers to target when running from the command line.
+- Skips all PHP `header()` calls when `PHP_SAPI === 'cli'`.
+- Emits HTTP response line in format: `"HTTP/1.1 <code> <message>"`.
+- Iterates `$headers` and calls `header($name: $value, false)` for each (replace mode).
 
-```php
-$response = Response::json(['message' => 'ok']);
-$response->send();  // Outputs headers + body
-$response->send();  // No-op — already sent ($sent === true)
-```
+## Dependencies
 
-### Generated Output Examples
+---
 
-Root deployment (`$subdir = ''`):
+## Lifecycle
 
-```apache
-RewriteEngine On
-# Serve existing files and directories directly
-RewriteCond %{REQUEST_FILENAME} !-f  
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [QSA, L]
-```
-
-Subdirectory deployment (`$subdir = 'myapp'`):
-
-```apache
-RewriteEngine On
-# Serve existing files and directories directly
-RewriteCond %{REQUEST_FILENAME} !-f  
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^myapp/(.*)$ myapp/index.php [QSA, L]
-```
-
-## Limitations
-
-- **Content-Type negotiation** is manual; factory methods set defaults but there is no automatic sniffing or MIME-type mapping for file downloads. Extension code must explicitly call the appropriate factory method to set correct headers.
-- **No chunked transfer support** — Response bodies are always the full string available at construction time. Streaming is achieved by setting `Transfer-Encoding: chunked` header manually (future work).
-- **One-shot construction** — headers and body cannot be modified after instantiation; extensions seeking to inject additional headers must create a new Response from the old one.
+---
 
 ## Future Enhancements
 
-- Add a mutable builder API (`Response::create()->withHeader()->withBody()->build()`) for cases where headers evolve after content is determined (e.g., compression or signing).
-- Support PSR-7 compatible interface so Responses can interoperate with middleware libraries and adapters.
-- Built-in Content-Disposition header support for file downloads.
-- Automatic cookie serialization via `Response::withCookies(array)`.
+---
