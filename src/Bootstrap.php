@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Laswitchtech\CoreWeb;
 
+use Laswitchtech\CoreWeb\Router\Request\Web;
+use Laswitchtech\CoreWeb\Router\Request\Cli;
+use Laswitchtech\CoreWeb\Router\Router;
+
 /**
  * Mode-driven single-entry bootstrap.
  * Documentation: docs/development/architecture/bootstrap.md
@@ -354,7 +358,7 @@ class Bootstrap
      /  Subsystems (mode-specific)                                          */
     /* ------------------------------------------------------------------ */
 
-    /** BOOTSTRAP WEB CHAIN. Stubbed until Router & middleware exist. */
+    /** BOOTSTRAP WEB CHAIN. */
     private function bootWeb(): void
     {
         // Fire plugin-started hook so test plugins can run bootstrap-time.
@@ -363,16 +367,21 @@ class Bootstrap
             $registry->trigger('plugin.started', ['mode' => 'web']);
         }
 
-        // TODO: $router = new Router(static::$instance);
-        //       $router->detectServerType();     -> Apache / Nginx / IIS / built-in
-        //       $router->loadCoreRoutes();       -> framework-level routes (/admin etc.)
-        //       $response = $router->dispatch($_SERVER);
-        //       echo (string)$response->getBody();
+        // Create router in WEB mode and fire the route-registration hook.
+        $router = new Router(Router::MODE_WEB);
+        if (static::$instance !== null) {
+            static::$instance->set('router', fn () => $router);
+        }
+        if ($registry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
+            $registry->trigger('router.register', ['router' => $router]);
+        }
 
-        // Graceful early return for now -- no subsystem to serve this request.
+        // Dispatch the request and send response.
+        $response = $router->dispatch(Web::fromGlobals());
+        $response->send();
     }
 
-    /** BOOTSTRAP CLI CHAIN. Stubbed until CLIRouter & commands exist. */
+    /** BOOTSTRAP CLI CHAIN. */
     private function bootCli(): void
     {
         // Fire plugin-started hook so test plugins can run bootstrap-time.
@@ -381,10 +390,18 @@ class Bootstrap
             $registry->trigger('plugin.started', ['mode' => 'cli']);
         }
 
-        // TODO: $cli = new CLIRouter(static::$instance);
-        //       $cli->loadRegisteredCommands();  -> core + plugin commands
-        //       $exitCode = $cli->dispatch($_SERVER['argv']);
-        //       exit($exitCode);
+        // Create router in CLI mode and fire the route-registration hook.
+        $router = new Router(Router::MODE_CLI);
+        if (static::$instance !== null) {
+            static::$instance->set('router', fn () => $router);
+        }
+        if ($registry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
+            $registry->trigger('router.register', ['router' => $router]);
+        }
+
+        // Dispatch the request and exit with the response code.
+        $response = $router->dispatch(Cli::fromArgv($_SERVER['argv'] ?? []));
+        $response->send();
     }
 
     /* ------------------------------------------------------------------ --/

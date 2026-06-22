@@ -2,28 +2,52 @@
 
 namespace Laswitchtech\CoreWeb\Router;
 
+use Laswitchtech\CoreWeb\Router\Request\Web;
+use Laswitchtech\CoreWeb\Router\Request\Cli;
+
 /**
- * HTTP method-aware router with path parameter matching.
+ * Unified mode-aware router supporting both HTTP routes and CLI commands.
  * Documentation: docs/development/architecture/Router/Router.md
  */
 final class Router
 {
-    /** @var array<string, RoutingEntry[]> Routes grouped by method (indexed). */
+    /* ─── Modes ────────────────────────────────────────────────── */
+    public const MODE_WEB = 'WEB';
+    public const MODE_CLI = 'CLI';
+
+    private string $mode;
+
+    /** @var array<string, RoutingEntry[]> Routes grouped by HTTP method (indexed). */
     private array $getRoutes      = [];
     private array $postRoutes     = [];
     private array $putRoutes      = [];
     private array $deleteRoutes   = [];
     private array $patchRoutes    = [];
 
-    /** @var array<string, string[]> All registered paths → methods (for 405 detection). */
+    /** @var array<string, string[]> All registered paths → allowed methods (for 405). */
     private array $methodMap = [];
 
     /** HTTP methods to check when scanning for method-not-allowed. */
     private const ALL_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 
-    /* ─── Public API — route registration ───────────────────────────── */
+    /* ─── CLI command storage ──────────────────────────────────── */
+    /** @var array<string, callable> Registered CLI commands. */
+    private array $commands = [];
 
-    /** Register a GET route: /users/{id} → callable(Request): Response. */
+    /* ─── Constructor / mode setup ─────────────────────────────── */
+
+    public function __construct(
+        string $mode = self::MODE_WEB,
+    ) {
+        if (!in_array($mode, [self::MODE_WEB, self::MODE_CLI], true)) {
+            throw new \InvalidArgumentException("Invalid router mode: {$mode}");
+        }
+        $this->mode = $mode;
+    }
+
+    /* ─── Public API — HTTP route registration ─────────────────── */
+
+    /** Register a GET route: /users/{id} → callable(Web|Cli): Response. */
     public function get(string $uri, callable $handler): self {
         return $this->add('GET', $uri, $handler);
     }
@@ -48,18 +72,28 @@ final class Router
         return $this->add('PATCH', $uri, $handler);
     }
 
-    /**
-     * Route any HTTP method to the same handler (shortcut for add()).
-     */
+    /** Register any HTTP method to the same handler (shortcut for add()). */
     public function any(string $uri, callable $handler): self {
-        $methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
-        foreach ($methods as $m) {
+        foreach (self::ALL_METHODS as $m) {
             $this->add($m, $uri, $handler);
         }
         return $this;
     }
 
-    /* ─── Internal route storage ────────────────────────────────────── */
+    /* ─── CLI command registration ─────────────────────────────── */
+
+    /**
+     * Register a CLI command: `hello.world` → callable(CliRequest): Response|string.
+     * Command names use dot-notation (e.g. "hello.world", "core.config.show").
+     */
+    public function command(string $name, callable $handler): self {
+        $name = trim($name);
+        if ($name === '') {
+            throw new \InvalidArgumentException('Command name cannot be empty.');
+        }
+        $this->commands[$name] = $handler;
+        return $this;
+    }
 
     /**
      * Register a route for a specific HTTP method.
@@ -109,14 +143,34 @@ final class Router
     /* ─── Dispatch — entry point ───────────────────────────────────── */
 
     /**
-     * Match a Request to the best route, extract path parameters, call handler.
+     * Route a request by mode.  Accepted types:
+     *   Web  (WEB mode) -- HTTP routes, dynamic params, method matching
+     *   Cli  (CLI mode) -- dot-command lookup
      *
-     * Returns:
-     *   • Response from matching route handler        (2xx)
-     *   • 405 if path exists but wrong method         (405)
-     *   • 404 if no path matches at all               (404)
+     * Throws InvalidArgumentException if the wrong Request type is passed for the current mode.
      */
-    public function dispatch(Request $request): Response
+    public function dispatch(Web|Cli $request): Response
+    {
+        if ($this->mode === static::MODE_CLI) {
+            if (!$request instanceof Cli) {
+                throw new \InvalidArgumentException(
+                    'CLI mode requires a Cli request; got ' . get_class($request)
+                );
+            }
+            return $this->dispatchCli($request);
+        }
+
+        // WEB mode — default path
+        if (!$request instanceof Web) {
+            throw new \InvalidArgumentException(
+                'WEB mode requires a Web request; got ' . get_class($request)
+            );
+        }
+        return $this->dispatchWeb($request);
+    }
+
+    /** Handle HTTP dispatch: match routes, inject path params, call handler. */
+    private function dispatchWeb(Web $request): Response
     {
         $path   = $request->path();
         $method = $request->method();
@@ -131,7 +185,7 @@ final class Router
 
             // Step 2: pattern matched — enrich the Request with route params
             // while preserving query/queryString/post body state.
-            $withParams = new Request(
+            $withParams = new Web(
                 method:      $method,
                 path:        $path,
                 queryString: $request->queryString(),
@@ -159,6 +213,26 @@ final class Router
 
         // Step 4: no route matched at all → 404.
         return Response::notFound();
+    }
+
+    /** Handle CLI dispatch: lookup command, invoke handler. */
+    private function dispatchCli(Cli $request): Response
+    {
+        if ($this->mode !== static::MODE_CLI) {
+            throw new \InvalidArgumentException('dispatchCli() called in non-CLI mode');
+        }
+
+        $command = $request->command();
+
+        if ($command === '' || !isset($this->commands[$command])) {
+            return Response::text("Command not found: {$command}\n", Response::STATUS_NOT_FOUND);
+        }
+
+        $result = ($this->commands[$command])($request);
+
+        return $result instanceof Response
+            ? $result
+            : Response::text((string) $result);
     }
 
     /* ─── Param matching helper ────────────────────────────────────── */

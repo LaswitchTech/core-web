@@ -142,19 +142,32 @@ final class Response
         return $response;
     }
 
+    /** Return plain-text response (default Content-Type: text/plain). */
+    public static function text(string $body, int $code = self::STATUS_OK): self {
+        $response = new self($code);
+        $response->headers['Content-Type'] = 'text/plain; charset=UTF-8';
+        $response->body = $body;
+        return $response;
+    }
+
     /* ─── Send to output stream ────────────────────────────────────── */
 
     public function send(): void {
         if ($this->sent) { return; }
 
-        header(
-            sprintf('HTTP/%s %d %s', '1.1', $this->statusCode, $this->statusMessage()),
-            true,
-            $this->statusCode,
-        );
+        // Skip HTTP headers when running under the CLI SAPI — there is no
+        // HTTP protocol for them to target anyway.  (The body may still be
+        // piped / redirected by the shell.)
+        if (PHP_SAPI !== 'cli') {
+            header(
+                sprintf('HTTP/%s %d %s', '1.1', $this->statusCode, $this->statusMessage()),
+                true,
+                $this->statusCode,
+            );
 
-        foreach ($this->headers as $name => $value) {
-            header("{$name}: {$value}", false);
+            foreach ($this->headers as $name => $value) {
+                header("{$name}: {$value}", false);
+            }
         }
 
         echo $this->body;

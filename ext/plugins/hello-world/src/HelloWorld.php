@@ -2,18 +2,27 @@
 
 namespace Laswitchtech\CoreWeb\Plugin;
 
-/**
- * Hello world extension — registers a callback on the `plugin.started` hook.
- *
- * WEB mode prints an HTML heading; CLI mode prints plain text to STDOUT.
- */
+use Laswitchtech\CoreWeb\Router\Request\Cli;
+use Laswitchtech\CoreWeb\Router\Router;
+use Laswitchtech\CoreWeb\Router\Response;
+use Laswitchtech\CoreWeb\Router\Request\Web;
+
 final class HelloWorld
 {
-    /** Run when boot completes (fired by bootstrap via plugin.started hook). */
-    public static function onStartup(array $context): void
+    /** Register routes: /hello (web) + hello.world (cli). */
+    public static function registerRoutes(array $context): void
     {
-        echo \PHP_SAPI === 'cli'
-            ? "Hello World!\n"
-            : '<h1>Hello World!</h1>' . \PHP_EOL;
+        if (!isset($context['router']) || !$context['router'] instanceof Router) {
+            // Router not ready — skip.
+            return;
+        }
+
+        /** @var Router $router */
+        $router = $context['router'];
+        $router->get('/hello', fn (Web $request) => Response::html('<h1>Hello World!</h1>'));
+
+        $router->command('hello.world', function (Cli $request): Response {
+            return Response::text('Hello ' . $request->arg(0, 'World') . "!\n");
+        });
     }
 }

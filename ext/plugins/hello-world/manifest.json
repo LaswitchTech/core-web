@@ -4,6 +4,6 @@
     "version": "1.0.0",
     "description": "Testing harness — Hello World extension.",
     "hooks": [
-        "plugin.started::Laswitchtech\\CoreWeb\\Plugin\\HelloWorld::onStartup"
+        "router.register::Laswitchtech\\CoreWeb\\Plugin\\HelloWorld::registerRoutes"
     ]
 }

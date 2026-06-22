@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Laswitchtech\CoreWeb\Router;
+namespace Laswitchtech\CoreWeb\Router\Request;
 
 /**
  * Immutable HTTP request representation.
@@ -9,7 +9,7 @@ namespace Laswitchtech\CoreWeb\Router;
  * Wraps $_SERVER / $_GET / $_POST so handlers receive a clean value object
  * rather than raw globals.
  */
-final class Request
+final class Web
 {
     private readonly string $method;
     private readonly string $path;
@@ -141,4 +141,3 @@ final class Request
         return $result;
     }
 }
-
