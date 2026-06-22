@@ -2,10 +2,10 @@
 
 namespace Laswitchtech\CoreWeb\Plugin;
 
-use Laswitchtech\CoreWeb\Router\Request\Cli;
 use Laswitchtech\CoreWeb\Router\Router;
 use Laswitchtech\CoreWeb\Router\Response;
 use Laswitchtech\CoreWeb\Router\Request\Web;
+use Laswitchtech\CoreWeb\Router\Request\Cli;
 
 final class HelloWorld
 {
