@@ -2,7 +2,7 @@
 
 ## Todo
 - [ ] Database <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - [~] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+  - [ ] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, database, config
   - [ ] SQLite Driver <!-- created_at: 2026-06-18T10:52:22-04:00 priority: high -->
     - Zero-config database backend, file-based storage
@@ -19,7 +19,7 @@
     - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 priority: normal -->
       - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
 - [ ] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - [~] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
+  - [ ] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
   - Tags: framework, extensions
   - [x] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - Discover, parse, and validate extension manifests (`manifest.json` and `extension.json`).
@@ -47,7 +47,7 @@
     - [ ] Add namespace mapping support in manifest <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [ ] Register Composer-style namespace mappings for extension `src/` directories <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [ ] Validate class hook callbacks using declared namespace mappings <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [~] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal; updated_at: 2026-06-22 -->
+  - [ ] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal; updated_at: 2026-06-22 -->
     - Docs: lifecycle documented in docs/development/extensions/Lifecycle.md (placeholder — no implementation yet)
     - Tags: feature
     - [ ] Enable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
@@ -96,7 +96,7 @@
 
 
 ## In Progress
-- [~] Renderer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+- [ ] Renderer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, renderer
   - [ ] Layout Engine <!-- created_at: 2026-06-18T11:50:00-04:00 priority: normal -->
     - View rendering with layout composition and hook-driven slot insertion.
