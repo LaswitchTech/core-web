@@ -2,7 +2,7 @@
 
 ## Todo
 - [ ] Database <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - [ ] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+  - [~] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, database, config
   - [ ] SQLite Driver <!-- created_at: 2026-06-18T10:52:22-04:00 priority: high -->
     - Zero-config database backend, file-based storage
@@ -19,7 +19,7 @@
     - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 priority: normal -->
       - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
 - [ ] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - [ ] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
+  - [~] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
   - Tags: framework, extensions
   - [x] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - Discover, parse, and validate extension manifests (`manifest.json` and `extension.json`).
@@ -47,7 +47,7 @@
     - [ ] Add namespace mapping support in manifest <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [ ] Register Composer-style namespace mappings for extension `src/` directories <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [ ] Validate class hook callbacks using declared namespace mappings <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [ ] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal; updated_at: 2026-06-22 -->
+  - [~] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal; updated_at: 2026-06-22 -->
     - Docs: lifecycle documented in docs/development/extensions/Lifecycle.md (placeholder — no implementation yet)
     - Tags: feature
     - [ ] Enable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
@@ -81,7 +81,7 @@
   - [ ] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
     - Command infrastructure built on top of the unified Router. Responsible for command discovery, argument parsing, command metadata, help output, and extension command registration.
     - Tags: feature
-    - [ ] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 priority: normal -->
+     - [ ] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 priority: normal -->
     - [ ] Implement plugin discovery for CLI commands alongside core kernel commands <!-- created_at: 2026-06-18T13:03:00-04:00 priority: high -->
   - [ ] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 priority: normal -->
     - Bootstrap commands for testing, configuring, and managing the framework.
@@ -96,12 +96,45 @@
 
 
 ## In Progress
-- [ ] Renderer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+- [~] Renderer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, renderer
-  - [ ] Layout Engine <!-- created_at: 2026-06-18T11:50:00-04:00 priority: normal -->
-    - View rendering with layout composition and hook-driven slot insertion.
-    - Tags: feature
-    - [ ] Implement Layout class with named slots, plugin override support, and render pipeline with before/after hooks <!-- created_at: 2026-06-18T10:55:00-04:00 priority: normal -->
+  - Renderer design uses three layers: layout → template → view.
+  - Layouts provide the application shell/chrome such as panel, sidebar, topbar, footer, and global structure.
+  - Templates provide reusable page patterns such as CRUD index tables, forms, detail pages, and dashboard grids.
+  - Views provide page-specific data, fragments, and controller-facing content.
+  - Layouts, templates, and views should be registered through a renderer registry instead of discovered only by fixed folder conventions.
+  - Plugins, themes, applications, and core may all provide registered layouts, templates, and views.
+  - [ ] Renderer Registry <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+    - Central registry for layouts, templates, and views provided by core, application code, themes, and plugins.
+    - Tags: feature, registry
+    - [ ] Implement `Renderer\Registry` for named layout/template/view registrations <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+    - [ ] Support explicit resource registration with name, type, path, provider, and priority <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+    - [ ] Support lookup precedence for app overrides, active theme, plugin resources, and core fallbacks <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+    - [ ] Add duplicate-name handling and deterministic override rules <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+  - [ ] Layout Engine <!-- created_at: 2026-06-18T11:50:00-04:00 priority: high -->
+    - Main render shell for application chrome such as panel, sidebar, topbar, footer, assets, and global hook slots.
+    - Tags: feature, layout
+    - [ ] Implement Layout class with named slots and render pipeline with before/after hooks <!-- created_at: 2026-06-18T10:55:00-04:00 priority: high -->
+    - [ ] Resolve layouts through the Renderer Registry instead of hard-coded paths <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+    - [ ] Allow plugins and themes to provide additional layouts via registry entries <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+  - [ ] Template Engine <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+    - Reusable page-pattern layer between layouts and views, such as CRUD index, form, detail, and dashboard templates.
+    - Tags: feature, template
+    - [ ] Implement template resolution through the Renderer Registry <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+    - [ ] Support passing view data into reusable templates without duplicating page structure <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+    - [ ] Allow plugins and themes to provide reusable templates via registry entries <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+  - [ ] View Layer <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+    - Page-specific content/data layer rendered inside a template and layout.
+    - Tags: feature, view
+    - [ ] Implement view resolution through the Renderer Registry <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+    - [ ] Support page-specific data and fragments for controller/plugin output <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+    - [ ] Allow plugins and themes to provide views via registry entries <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+  - [ ] Renderer Integration <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+    - Integrate renderer services with Bootstrap, Container, Router responses, and extension hooks.
+    - Tags: integration
+    - [ ] Bind renderer registry and renderer service into the Container during bootstrap <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+    - [ ] Add extension hook for registering layouts, templates, and views <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+    - [ ] Add simple smoke route using layout → template → view rendering <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
 
 ## Validation
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
@@ -143,7 +176,7 @@
     - Future enhancement for `layout.*`, `page.*`, `lifecycle.*`, and `triggerPattern()`.
 - [x] Bootstrap Implementation <!-- created_at: 2026-06-18T14:15:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - Orchestration class (`Laswitchtech\CoreWeb\Bootstrap`) — mode-driven single-entry boot for WEB and CLI.
-  - Completed bootstrap foundation; unified Router now handles both WEB and CLI dispatch.
+   - Completed bootstrap foundation; unified Router now handles both WEB and CLI dispatch.
   - Tags: framework, bootstrap, feature
   - [x] Implement `new Bootstrap("WEB")` / `new Bootstrap("CLI")` constructor with static `container()` getter <!-- created_at: 2026-06-18T14:15:30-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Implement `initConfig()` — load `core.cfg`, deep-merge `local.cfg` on top, store in Config singleton <!-- created_at: 2026-06-18T14:16:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
@@ -153,17 +186,17 @@
   - [x] Implement config path resolution from app root <!-- created_at: 2026-06-18T14:19:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Implement `initExtensions()` discovery/autoload/hook registration foundation <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Create skeleton `/index.php` and `/cli` files matching the exact 2-line user pattern <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [x] Validate bootstrap in WEB and CLI mode with Hello World plugin <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+   - [x] Validate bootstrap in WEB and CLI mode with Hello World plugin <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
 - [x] Routing <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-22 priority: high -->
   - Unified routing subsystem for both WEB and CLI modes, with Request/Response objects, dynamic path parameters, HTTP method support, server-config generators, and Hello World end-to-end validation.
   - Tags: framework, routing
   - [x] Router Class <!-- created_at: 2026-06-18T10:59:23-04:00 completed_at: 2026-06-22 priority: high -->
-    - Unified Router supporting HTTP routing, CLI command dispatch, path parameter extraction, Request/Response abstractions, and extension route registration.
+     - Unified Router supporting HTTP routing, CLI command dispatch, path parameter extraction, Request/Response abstractions, and extension route registration.
     - Tags: feature
     - [x] Support all HTTP methods (GET, POST, PUT, DELETE, PATCH) as first-class routes <!-- created_at: 2026-06-18T11:05:30-04:00 completed_at: 2026-06-22 priority: high -->
     - [x] Implement parameter extraction from URL paths including query string access <!-- created_at: 2026-06-18T11:06:00-04:00 completed_at: 2026-06-22 priority: high -->
   - [x] Apache Support <!-- created_at: 2026-06-18T10:59:32-04:00 completed_at: 2026-06-22 priority: high -->
-    - `.htaccess` RewriteEngine rules that route all requests to index.php and support configurable subdirectory deployments.
+    - `.htaccess` RewriteEngine rules that route all requests to index.php, support DocumentRoot and subdirectory deployments via base-path detection detected at runtime.
     - Tags: feature
     - [x] Verify .htaccess handles both root and subpath installations correctly <!-- created_at: 2026-06-18T11:10:00-04:00 completed_at: 2026-06-22 priority: normal -->
   - [x] Nginx Support <!-- created_at: 2026-06-18T09:59:41-04:00 completed_at: 2026-06-22 priority: high -->
@@ -172,7 +205,7 @@
     - [x] Generate nginx routing configuration supporting root deployments.
       Alias configuration remains future work. <!-- created_at: 2026-06-18T11:10:30-04:00 completed_at: 2026-06-22 priority: normal -->
   - [x] IIS Support <!-- created_at: 2026-06-18T10:00:04-04:00 completed_at: 2026-06-22 priority: high -->
-    - URL Rewrite module rules for Windows IIS deployment with front-controller routing to index.php.
+    - URL Rewrite module rules for Windows IIS deployment with auto-detect for root vs subdirectory paths and fallback to PHP built-in server for local development.
     - Tags: feature
     - [x] Generate IIS URL Rewrite configuration for front-controller routing. <!-- created_at: 2026-06-18T11:11:00-04:00 completed_at: 2026-06-22 priority: normal -->
   - [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
