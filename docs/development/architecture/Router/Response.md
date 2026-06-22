@@ -1,129 +1,104 @@
-# Response Component
+# Response Class
 
 ## Overview
 
-The `Response` class is a minimal, immutable HTTP response value object returned by route handlers across the framework (WEB mode) or CLI dispatchers. It encapsulates status code, body content, and optional headers, providing static factory constructors for every common response pattern so that handler code stays declarative rather than imperative.
+The `Response` class is a final value object representing an HTTP or CLI response. It stores a status code (default 200), the body content (a string), and an optional associative array of headers. Every instance is created via either direct constructor usage or one of the static factory methods. There are no public constructors for end users that bypass the factories — all creation goes through `new Response($code)` where `$code` defaults to 200, or through a named factory.
 
 ## Responsibilities
 
-- **Encapsulation** of HTTP status code, raw body string, and an optional associative header array.
-- **Immutable construction** — all state is set at instantiation; no public mutators exist.
-- **Static factory methods** for the most frequent response types (HTML, JSON, text, redirect, stream output).
-- **Response serialization** to a PSR-style `getBody()` that returns the raw body string ready for echoing or buffering.
+- **Encapsulation** of HTTP status code, body string, and an associative header name → value map.
+- **Immutable construction with chainable setters** — state is set at instantiation but can be modified via `with*` chainable methods that return `$this`. Each setter mutates the current instance in-place rather than creating a copy.
+- **Static factory methods** for common response patterns (JSON, HTML, text, redirect, and standard error responses).
+- **Output to stream** via `send()`, which is idempotent (safe to call multiple times).
 
-### Supported Response Types
+### Supported Factory Methods
 
-Each factory method produces an identical immutable `Response` with the same internal fields but different defaults:
+| Factory Method | Arguments | Status | Content-Type | Returns |
+|----------------|-----------|--------|--------------|---------|
+| `json(mixed $data, int $code = self::STATUS_OK)` | JSON-serializable value | 200 (or `$code`) | `application/json; charset=UTF-8` | `Response` |
+| `html(string $body, int $code = self::STATUS_OK)` | HTML markup string | 200 (or `$code`) | `text/html; charset=UTF-8` | `Response` |
+| `text(string $body, int $code = self::STATUS_OK)` | Raw text body | 200 (or `$code`) | `text/plain; charset=UTF-8` | `Response` |
+| `redirect(string $url, int $code = 302)` | Target URL + optional status code | 302 (or `$code`)| `Location: <url>` | `Response` |
+| `notFound(string $body = '<h1>404 Not Found</h1>')` | Optional HTML body | 404 | `text/html; charset=UTF-8` | `Response` |
+| `methodNotAllowed()` | — | 405 | `text/html; charset=UTF-8` | `Response` |
+| `internalError(string $message = 'Internal Server Error')` | Optional message | 500 | `text/html; charset=UTF-8` | `Response` |
 
-| Factory Method      | Status | Body Format          | Content-Type           |
-|---------------------|--------|----------------------|------------------------|
-| `html(string)`    | 200    | `<h1>...</h1>`       | `text/html`           |
-| `json(mixed)`     | 200    | `json_encode()`      | `application/json`    |
-| `ok()`              | 200    | (empty)              | —                     |
-| `created(string)` | 201    | user-provided text   | —                     |
-| `notFound(string)`| 404    | `<h1>404</h1>`       | `text/html`           |
-| `forbidden(string)`| 403   | `<h1>403</h1>`       | `text/html`           |
-| `methodNotAllowed()`| 405  | `<h1>405</h1>`       | `text/html`           |
-| `unauthorized(string)`| 401 | `<h1>401</h1>`     | `text/html`           |
-| `redirect(int, int)`| 3XX   | (empty)              | `Location: <url>`     |
-| `stream(string)`    | 200   | stream-ready content | —                     |
-| `text(string, int)` | varies| raw text body       | `text/plain`          |
+Note: Each factory method creates a **new** Response instance with the specified body and headers, then returns it. The default status code is `200 OK` for all methods except where noted (`redirect` defaults to `302`, `notFound` to `404`, `methodNotAllowed` to `405`, `internalError` to `500`).
 
 ## Architecture
 
-### Internal Structure
-
-The Response class uses three private readonly fields established at construction time and accessible only through getters:
-
-- **`$statusCode: int`** — HTTP status code (200 default).
-- **`$headers: array<string,string>`** — associative header name → value map, initialized empty.
-- **`$body: string`** — the final response body; set once at construction time.
-
-All factory methods follow the same internal pattern: they instantiate a new Response with the requested status code, set any special headers (e.g., `Location` for redirects), apply an appropriate Content-Type header when content is returned (not for redirects or plain-ok responses), encode JSON via json_encode() if the payload isn't already a string, then return `$this`.
-
-### Method Signature Summary
+### Internal Storage (private fields)
 
 ```php
 final class Response {
-    private int $statusCode;          // HTTP status code, set at construction
-    private array $headers;            // associative header name → value map
-    private string $body;              // response body content, immutable
+    private int    $statusCode;              // HTTP status code (200 default)
+    private string $body;                    // The response body string
+    private array  $headers = [];            // Associative header name → value map
+    private bool   $sent = false;            // Guard against duplicate send() calls
+    
+    /** @var array<int,string> statusMessages indexed by code */
+    private static array $statusMessages = [];  // Lazily initialized cache of standard messages
 }
 ```
 
-Static factory constructors:
+Status code `100 Continue` maps to message `'Continue'`, `200 OK` → `'OK'`, `201 Created` → `'Created'`, `301 Moved Permanently` → `'Moved Permanently'`, `302 Found` → `'Found'`, `304 Not Modified` → `'Not Modified'`, `307 Temporary Redirect` → `'Temporary Redirect'`, `404 Not Found` → `'Not Found'`, `405 Method Not Allowed` → `'Method Not Allowed'`, `500 Internal Server Error` → `'Internal Server Error'`. Additional codes are populated lazily via the `initStatusMessages()` method at first access to any of these lookup methods.
 
-| Method | Arguments | Returns | Purpose |
-|--------|-----------|---------|---------|
-| `html(string)` | HTML content | Response 200/4xx with HTML body | Standard HTML responses for pages and error pages |
-| `json(mixed)` | PHP value (auto-encodes) | Response 200 | API/json endpoints returning structured data |
-| `ok()` | none | Response 200, empty body | Simple confirmation response (no content returned) |
-| `created(string)` | string text | Response 201 with body | Resource creation confirmation |
-| `notFound(string)` | string message | Response 404 with HTML error page | Missing routes/resources |
-| `forbidden(string)` | string message | Response 403 with HTML | Access denied scenarios |
-| `methodNotAllowed()` | none — | Response 405 with HTML | Request method not supported on route |
-| `unauthorized(string)` | string message | Response 401 with HTML authentication required | Unauthenticated access |
-| `stream(int)` | target HTTP status (3XX) + URL | Response 3XX with Location header | Permanent redirects or browser redirections |
-| `redirect()` | status code, URL | Response 3XX via Location header | Standard HTTP redirects (301, 302, etc.) |
-| `text(string, int)` | text body + optional status | Response with text/plain body | Plain-text responses for CLI output or simple APIs |
-
-### Usage in Handler Code
-
-Route handlers return a Response by calling one of the static factories:
+### Constructor & Instantiation
 
 ```php
-$router->get('/user/{id}', function($req) {
-    $user = getUserById($req->param('id'));
-    if ($user === null) {
-        return Response::notFound("User not found");
-    }
-    return Response::json(['name' => $user['name'], 'email' => $user['email']]);
-});
-
-$router->post('/register', function($req) {
-    registerUser($req->post()); // side-effect only
-    return Response::redirect(302, '/dashboard');
-});
+public function __construct(
+    int $statusCode = self::STATUS_OK  // 200
+) {}
 ```
 
-### Response Flow Through the Application
+The constructor defaults to status 200 with an empty body and empty headers. Users can instantiate a Response directly: `$response = new Response(404)` creates a response with status code 404 but no body content.
 
-The response travels through a fixed chain during request processing:
+### Method Signature Summary
 
-| Step | Action | Detail | Handler returns a Response → | | `Bootstrap` or Router receives it → | Passes to framework output layer (echo stream or buffer) → | Headers are set on PHP's native headers, then echoed/streamed to the client. |
-|------|--------|--------|---|---|---|---|
+| Method | Arguments | Return Type | Description |
+|--------|-----------|-------------|-------------|
+| `statusCode(): int` | — | `int` | Accessor for the status code |
+| `statusMessage(): string` | — | `string` | Human-readable message for the code (e.g., 'OK', 'Not Found') |
+| `body(): string` | — | `string` | Returns the body content of this Response instance |
+| `headers(): array<string,string>` | — | `array` | Returns a copy of all headers |
+| `getHeader(string $name): ?string` | HTTP header name | `?string` | Gets a single header value by name (case-insensitive lookup) |
+| `hasHeader(string $name): bool` | HTTP header name | `bool` | Checks if the response has a specific header set |
+| `isSent(): bool` | — | `bool` | Indicates whether send() has already been called on this instance |
+| `withStatus(int $code): self` | Status code | `self` (chainable) | Sets status code, returns `$this` |
+| `withBody(string $content): self` | Body string | `self` (chainable) | Replaces body content, returns `$this` |
+| `withHeaders(array<string,string> $headers): self` | Header array | `self` (chainable) | Overwrites all headers, returns `$this` |
+| `setHeader(string $name, string $value): self` | Name + value | `self` (chainable) | Sets a single header, returns `$this` |
 
-### Example: Error Handling Response Chain
+### send() Method
+
+The `send(): void` method outputs HTTP status line, headers, and body. It is **idempotent** — calling it twice does nothing on the second call. The implementation also checks that PHP is not running under CLI SAPI (`PHP_SAPI !== 'cli'`) before emitting any `header()` calls, because there are no HTTP headers to target when running from the command line.
 
 ```php
-// When a route throws an exception during dispatch:
-try {
-    $response = $handler($request);
-} catch (\InvalidArgumentException $e) {
-    $response = Response::forbidden($e->getMessage()); // 403
-} catch (\RuntimeException $e) {
-    $response = Response::text("Internal error", 500);
-}
-
-// The framework then outputs headers + body to the client.
+$response = Response::json(['message' => 'ok']);
+$response->send();  // Outputs headers + body
+$response->send();  // No-op — already sent ($sent === true)
 ```
 
-### Example: API Endpoint Pattern
+### Generated Output Examples
 
-```php
-$router->get('/api/users', function() {
-    return Response::json(['users' => []]);     // 200, application/json
-});
+Root deployment (`$subdir = ''`):
 
-$router->post('/api/users', function($req) {
-    createUser($req->post());                    // side-effect
-    return Response::created('User created');    // 201
-});
+```apache
+RewriteEngine On
+# Serve existing files and directories directly
+RewriteCond %{REQUEST_FILENAME} !-f  
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA, L]
+```
 
-$router->delete('/api/users/{id}', function($req) {
-    deleteUser($req->param('id'));               // side-effect
-    return Response::ok();                       // 200, no body
-});
+Subdirectory deployment (`$subdir = 'myapp'`):
+
+```apache
+RewriteEngine On
+# Serve existing files and directories directly
+RewriteCond %{REQUEST_FILENAME} !-f  
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^myapp/(.*)$ myapp/index.php [QSA, L]
 ```
 
 ## Limitations

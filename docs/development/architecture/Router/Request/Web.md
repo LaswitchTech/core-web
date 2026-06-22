@@ -2,107 +2,88 @@
 
 ## Overview
 
-The `Web` class is an immutable value object representing a single HTTP request. It is constructed from global state (`$_GET`, `$_POST`, `$_COOKIE`, `$_FILES`, `$_SERVER`) and exposes typed getters for the most common request attributes — uri, method, headers, content type, body, query parameters, cookies, and file uploads. It is used by the Router to provide route handlers with a clean, framework-native request object rather than raw globals.
+The `Web` class is an immutable value object representing a single HTTP request. It wraps `$_SERVER['REQUEST_METHOD']`, `$_SERVER['REQUEST_URI']`, `$_GET`, and `$_POST` state into typed properties accessible only through public getters — no public mutators. Used by the Router to provide route handlers with a clean, framework-native request object rather than raw globals.
 
 ## Responsibilities
 
-- **Immutable encapsulation of HTTP request data** — all values are read once at construction and never mutated afterward.
-- **Header access** via `header()`, which normalizes case (case-insensitive lookups on the original array) and returns `null` when no header is present.
-- **Content-type derivation** from the `Content-Type` server entry or a default of `'application/octet-stream'`.
-- **Body decoding** — parses `$_POST` body content by inspecting Content-Type (JSON decodes to associative array; x-www-form-urlencoded merges into post data).
-- **Query parameter access** via `query()`, with an opt-in type coercion argument (`int`, `float`, `bool`).
-- **Cookie and file upload accessors** returning the raw global values.
+- **Immutable encapsulation** of HTTP method, URL path, query string, `$_GET` data, route path parameters (injected during dispatch), and `$_POST` body data.
+- **Static factory via `fromGlobals()`** — reads the current server state at construction time and normalises URL paths to a single leading slash with no trailing slash.
 
-### Supported Accessor Methodss
+### Supported Public Methods
 
 | Method | Return Type | Description |
 |--------|-------------|-------------|
-| `uri()` | string | Request URI path (e.g., '/users/me') |
-| `method()` | string | HTTP method in uppercase ('GET', 'POST', 'PUT', etc.) |
-| `header(string)` | ?string | Specific header with case-insensitive lookup |
-| `contentType()`  | string | Inferred MIME type of request body (default octet-stream) |
-| `body()`  | mixed | Decoded raw POST/PUT/PATCH payload as an associative array or JSON object |
-| `query(string, ?type)` | mixed | Single query parameter with optional int/float/bool type coercion; returns null when not present |
-| `cookies()` | array | All cookies from $_COOKIE in associative array form |
-| `files()`  | array | Upload information from $_FILES as structured upload metadata |
+| `__construct(string $method, string $path, string $queryString = '', array $query = [], array $params = [], array $postBody = [])` | — | Immutable value-object constructor (named-args) |
+| `static fromGlobals(): self` | `self` | Class that creates a Web instance directly reads current `$_SERVER['REQUEST_METHOD']`, `$_SERVER['REQUEST_URI']`, `$_GET`, and `$_POST` state |
+| `path(): string` | `string` | URL path segment without query (e.g., `/users/42`) — single leading slash, no trailing slash |
+| `method(): string` | `string` | Normalised HTTP method in uppercase ('GET', 'POST', 'PUT', 'DELETE', 'PATCH') |
+| `queryString(): string` | `string` | Raw query string without the leading ':' character |
+| `query(): array` | `array` | All query parameters (from `$_GET`) as an associative array |
+| `params(): array` | `array` | Route path parameters filled by the dispatcher (e.g., `['id' => 42]`) |
+| `post(): array` | `array` | Raw `$_POST` data as an associative array |
+| `isGet(): bool`, `isPost(): bool`, `isPut(): bool`, `isDelete(): bool`, `isPatch(): bool` | `bool` | Boolean shortcuts for the current HTTP method |
+| `param(string $name, mixed $default): mixed` | mixed | Shortcut for `$this->params()[$name]` with optional fallback default (route path parameter) |
+| `queryParam(string $name, mixed $default): mixed` | mixed | Shortcut for `$this->query[$name]` with optional fallback default (individual query string value) |
+| `postParam(string $name, mixed $default): mixed` | mixed | Shortcut for `$this->postBody[$name]` with optional fallback default (individual post body field) |
 
 ## Architecture
 
-### Internal Structure
-`Web` class uses the immutable value object pattern: all state is constructed at instantiation via a static factory and accessible only through typed getters (no public mutators). The private readonly fields are populated once from raw HTTP globals.
+### Internal Storage (private readonly properties)
 
-### Method Signature Summary
+| Property | Type | Source |
+|----------|------|--------|
+| `$method` | string | Upper-cased value of `$_SERVER['REQUEST_METHOD']` or `'GET'` as default | 
+| `$path` | string | URI path without query, normalised to one leading slash, no trailing slash |
+| `$queryString` | string | Raw query portion of `$_SERVER['REQUEST_URI']`, stripped of the initial '?' character |
+| `$query`  | array | Value of `$_GET` (when provided explicitly) or an empty array | 
+| `$params` | array | Route path parameters injected during dispatch, merged from constructor arguments | 
+| `$postBody` | array | Value of `$_POST` (from global state at construction) or an empty array from constructor args |
 
-Static Constructor:
+### Construction Flow
 
-```php
-static ::fromGlobals(): Web // creates instance from \$_GET, \$\\_POST, etc.
-```
+`Web::fromGlobals()` is the standard entry point; it performs three normalisation steps before creating a new instance:
 
-Getter methods available on created instances:
+1. **Read method** — extracts `$_SERVER['REQUEST_METHOD']`, upper-cases it; defaults to `'GET'`.
+2. **Parse path + query string** — splits `$_SERVER['REQUEST_URI']` on the first '?' character into `$uri` and `$query_string`.
+3. **Normalise** — strips any initial slashes, prepends a single leading slash, then right-trims any trailing slashes; if the result would be empty the path is set to `'/'.
 
-| Getter | Return Type | Description |
-|--------|-------------|-------------|
-| `uri()`  | string     | Request URI path (e.g., '/users/me') |
-| `method() | string     | Upper-case HTTP method ('GET', 'POST', etc.) |
-| `header(string)` | ?string | Specific header value with case-insensitive lookup | 
-| `contentType()`   | string      | Detected request MIME type (defaults to octet-stream) |
-| `body(  mixed      Decoded POST/PUT/PATCH payload as associative array or object from JSON content |
-| `query(string, ?string)` | mixed Single query parameter with optional int/float/bool coercion; null when absent |
-| `cookies()`  | array        All cookies from \$_COOKIE in associative form | 
-| `files()`   array         Upload information from \$_FILES as structured metadata |
+### Internal Helpers
 
-### Request Accessor Details
+| Method | Arguments | Access | Purpose |
+|--------|-----------|--------|---------|
+| `parseQueryString(string $qs): array` | `$qs` — raw query string without leading `'?'` character | `private static` | Splits on '&', then '=' on each pair, URL-decodes both key and value; returns an associative array |
 
-Headers use the **normalize key** (hyphens preserved, first letter of each segment capitalized) for case-insensitive lookups — e.g., `'content-type' → 'Content-Type'` works with any server-provided casing (`CONTENT_TYPE`, `Http_Content_Type`).
-
-Query parameters are retrieved from `$_GET` with an optional type coercion. For integer or float types, the method returns the native PHP int/float value; for boolean strings ('1', 'true', 'yes') coerce to true, others falsy; if absent it returns null. When multiple query keys share the same name only the last one is returned (single-value mode); multi-value arrays are not supported by this single accessor method but `$_GET` directly contains the full data.
-
-### Usage Example — Handler Pattern
+## Usage Example — Handler Pattern
 
 ```php
-$router->post('/profile', static fn($req) => {
-    // Typed access to common request values:
-    $contentType = $req->contentType();     // string | 'application/json'
-    $userId = (int)$req->param('user_id');  | int type cast from query/uri params
-    
-    // Raw header access with case-insensitivity:
-    $authHeader = $req->header('authorization);  | ?string
-    $xForwardedFor = $req->header('x-forwarded-for');  | ?string
-});
+$router->get('/users/{id}', function (Web $req): Response {
+    // Access route path parameters:
+    // `$req->params()` → ['id' => 42]
+    $userId = $req->param('id');     // shortcut: same as $req->params()['id']
 
-// Multi-value parameter support (if \$_GET['tags'] = ['php', 'framework']):
-foreach ($req->query('tags') as $tag) { /* ... */ }
-```
+    // Access query parameters:
+    // `$req->query()` → ['page' => '1', 'sort' => 'name']
+    $page = $req->queryParam('page', 0);   // int or fallback default
 
-### Example: Complete Request Inspection Pattern
+    // Access post body in POST requests:
+    if ($req->isPost()) {
+        $email = $req->postParam('email'); // string field from $_POST['email']
+    }
 
-```php
-$router->any('/debug/echo', function(Web $request): Response {
-    return Response::json([
-        'uri'       => $request->uri(),
-        'method'    => $request->method(),
-        'content_type'  => $request->contentType(),
-        'headers'   => $this->serverToHeadersMap($_SERVER), 
-        'body'      => json_encode($request->body()),  
-        'query_params'  => $request->queryParams() ?? [], 
-        'cookies'     => $request->cookies(), 
-        'files'      => count($request->files()) ? array_map(function ($f) { return ['name' => $f['name']]; }, $request->files()) : [],
-    ]);
+    return Response::html('<h1>User ' . e($userId) . '</h1>');
 });
 ```
 
 ## Limitations
 
-- **No multi-value query parameter support** via the single `query()` getter. While `$_GET` may contain arrays for repeated keys (e.g., `?tags=php&tags=lisp`), this accessor always returns a scalar string or coerced value, discarding the array form.
-- **Body decoding is naive** — JSON-only parsing with no stream-based reader or size limits; large bodies are decoded in-memory via json_decode(). The content-type detection relies solely on `$_SERVER['CONTENT_TYPE']`, which can be absent for GET requests (where body reading should return empty/`null`).
-- **Raw access to raw globals** — cookies and file uploads expose the raw \$_COOKIE and \$_FILES data without any sanitization or validation. Extensions must apply their own validation logic before trusting uploaded files.
-- **No PSR-7 compatibility** — the interface is framework-specific (`uri()`, `body()`, `method()`, etc.) and does not implement PSR-7's ServerRequestInterface, meaning it cannot interoperate with middleware expecting that contract without a wrapper.
+- **No header or server variable access** — the Web class only wraps method, path, query string `query params`, route path parameters, and post body data. There is no mechanism to read HTTP headers (Content-Type, Authorization, etc.) or `$_SERVER` beyond the two values used for construction (`_REQUEST_METHOD`, `_REQUEST_URI`).
+- **No file upload representation** — `__FILES` is never read; code that needs upload information must access $_FILES directly.
+- **No cookie access** — `$_COOKIE` is not included in this value object; if needed, use `$request->query()` which reflects the raw query from the current HTTP request state rather than being a separate global state.
 
 ## Future Enhancements
 
-- Add `query(string|array|null $key = null)` overloaded to accept an array key list for batch multi-value query parameter retrieval (e.g., `$req->query(['tags', 'filters'])`).
-- Support PSR-7 ServerRequestInterface so the framework's response can interoperate with middleware libraries and adapters. 
-Body decoding should support multipart/form-data in addition to JSON content types, allowing full parsing of file uploads from POST bodies directly through the request object rather than via raw $_FILES access. Add stream-based body reading for large payloads.
-- Built-in cookie validation (signed, encrypted) and CSRF token validation utilities accessible from the Web instance itself rather than requiring separate middleware.
-- Response caching headers via a `cacheControl(string)` or TTL getter so extensions can set HTTP cache headers declaratively.
+- Add a `header(string $name)` method to allow reading individual headers (Content-Type, Authorization, etc.) as needed by middleware and plugins.
+- Add file upload support that wraps `$_FILES` in a structured representation with validation helpers.
+- Provide more convenience methods for common use cases such as CSRF token extraction from hidden form fields.
+
+(End of page 143)

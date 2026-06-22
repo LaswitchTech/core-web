@@ -1,242 +1,210 @@
-# Router Component
+# Router Class
 
 ## Overview
 
-The `Router` class is a unified, mode-aware routing subsystem that serves two purposes: HTTP URI routing (WEB mode) and CLI command dispatch (CLI mode). It is constructed with a mode, registered with routes and/or commands, then dispatched against a request object. Extensions can register routes or commands during the `router.register` hook fired by Bootstrap before dispatch.
+The unified mode-aware router supporting both HTTP routes and CLI commands.
+Documentation: docs/development/architecture/Router/Router.md
+
+It is a non-singleton `final class` instantiated as `new Router($mode)` where `$mode` is one of `MODE_WEB` or `MODE_CLI`. The router manages route tables separately for each HTTP method (GET, POST, PUT, DELETE, PATCH) and maintains a CLI command map. It **never** interacts with the DI container — all handler resolution is done via plain callables directly bound during registration, and path-parameter values are embedded into a fresh Web request object before dispatch to invoke handlers as `Route::dispatch(Web $req)` or equivalent.
+
+## Mode-driven construction
+
+```php
+$router = new Router(Router::MODE_WEB);  // web mode (default)
+$cli    = new Router(Router::MODE_CLI);  // cli mode
+```
+
+The constructor throws `\InvalidArgumentException` if mode is not one of the two allowed constants:
+
+```php
+new Router('FAKE');  // InvalidArgumentException
+```
+
+Mode determines how `dispatch()` behaves. WEB expects a Web request, CLI expects Cli. Incompatible type → `InvalidArgumentException`. The constant values are defined on-class.
 
 ## Responsibilities
 
-- **Route registration** for HTTP methods (GET, POST, PUT, DELETE, PATCH) with dynamic parameter patterns.
-- **Command registration** for CLI subcommands using dot-notation names (e.g. `core.config.show`).
-- **Request dispatch** — matches the incoming request (Web or Cli) against registered routes/commands.
-- **Default responses** — returns 404 and 405 HTML responses when no route/command matches.
-- **Dynamic parameter extraction** — extracts `{name}` path segments from URI patterns, auto-type-casting numeric values to int/float.
+- **Route registration** — Stores registered route handlers organized by HTTP method bucket (five private indexed arrays) or CLI command name keys.
+- **Pattern matching + param extraction** — Converts URI patterns like `/users/{id}` into a callable match using dynamic segment parsing with numeric type coercion, returning extracted path params as an associative array that gets injected back into a fresh Web request object before invoking the handler.
+- **Method-not-allowed fallback** — When no route matches the requested method+path pair, scans other methods' routes for the same pattern; if it finds a match on another method, returns a 405 response instead of 404.
 
-### Supported Modes
+## Public API
 
-| Constant | String   | Dispatch Input Type      | Matches Against     |
-|----------|----------|-------------------------|---------------------|
-| `MODE_WEB` | `'WEB'` | `Web` (from globals)    | HTTP routes by method + path |
-| `MODE_CLI` | `'CLI'` | `Cli` (from argv)       | CLI command names              |
+### HTTP Route registration (fluent return)
 
-## Architecture
-
-### Internal Layout
-
-```
-Router
-├── getRoutes     : RoutingEntry[]  — registered via ->get() or ->add('GET', …)
-├── postRoutes    : RoutingEntry[]  — registered via ->post() or ->add('POST', …)
-├── putRoutes     : RoutingEntry[]  — registered via ->put() or ->add('PUT', …)
-├── deleteRoutes  : RoutingEntry[]  — registered via ->delete() or ->add('DELETE', …)
-├── patchRoutes   : RoutingEntry[]  — registered via ->patch() or ->add('PATCH', …)
-├── commands      : array<string, callable> — CLI command name → handler
-├── matchParams() : private static method — pattern matching for {name} segments
-└── RoutingEntry  : internal value object (path + handler callable)
-```
-
-Each route category is a simple indexed array of `RoutingEntry` objects. Routes are iterated in registration order — first match wins. The all-methods array constant `ALL_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']` drives 405 detection.
-
-### Route Registration
-
-Route registration methods return `$this` for chaining:
+Each helper accepts `(string $uri, callable $handler)` and returns `$this` for chaining:
 
 ```php
-$router->get('/hello', function($request) { /* ... */ });
-$router->post('/users', function($request) { /* ... */ });
-$router->put('/users/{id}', fn($req) => Response::ok());  // chaining example
-$router->patch('/users/{slug}/profile', fn() => Response::json([]));
-
-// Any HTTP method to the same handler:
-$router->any('/debug/echo', function($req) { /* responds to all methods */ });
+$router->get(string|callable): self     // GET route
+$router->post(string|callable): self    // POST route
+$router->put(string|callable): self     // PUT route
+$router->delete(string|callable): self  // DELETE route
+$router->patch(string|callable): self   // PATCH route
+$router->any(string $uri, callable $handler): self  // registers on ALL five methods at once
 ```
 
-The `add()` method normalizes URIs (leading slash, strip trailing slash) and stores entries in the appropriate bucket based on the uppercase HTTP method. Unsupported methods throw `\InvalidArgumentException`.
+Each helper internally normalizes the URI (leading single slash, no trailing slash) then stores it in the matching route array as a `RoutingEntry`.
 
-### Command Registration
-
-CLI commands use dot-notation names with `command()`:
+**Examples:**
 
 ```php
-$router->command('hello.world', function($request) {
-    return Response::text("Hello, {$request->arg(0)}\n");
+$router = new Router(Router::MODE_WEB);
+$router->get('/', static function (Web $req): Response {
+    return Response::html('<h1>Hello</h1>');
 });
 
-$router->command('core.config.show', function($request) {
-    // command logic
-    return 'showing config';
+// POST routes are registered separately:
+$router->post('/users', static fn (Web $req): Response => ...);
+
+// Dynamic params in URI → injected into new Web() before dispatch:
+$router->get('/users/{id}', static function (Web $req): Response {
+    // $req->param('id') is accessible here after injection step.
+    return Response::html("User {$req->param('id')}");
+});
+
+// Registers the same handler on all HTTP methods:
+$router->any('/fallback', static fn (Web $req): Response => Response::notFound());
+```
+
+### CLI command registration
+
+Registers named commands (dot-separated string + callable, returns `$this`):
+
+```php
+$router = new Router(Router::MODE_CLI);
+$router->command('core.install', static function (Cli $req): Response {
+    return Response::text("Installing...\n");
 });
 ```
 
-Command names are trimmed and validated (empty name throws `\InvalidArgumentException`). No validation is performed on the handler — it must be callable.
+CLI command names must not be empty strings. Dispatch in CLI mode looks up the exact command name string in the commands map and invokes its handler if found; not-found returns a 404 text response rather than throwing.
 
-### Dynamic Parameter Matching
+### `add()` — core route registration
 
-Path patterns use `{name}` for dynamic segments:
+Registers any HTTP method to a handler: `(string $method, string $uri, callable $handler): self`. Normalizes the URI (leading slash, strip trailing) and stores it in the appropriate bucket. Returns `$this` for chaining.
 
-```php
-// Pattern /users/{id}/posts/{slug} matches:
-//   /users/42/posts/hello-world → ['id' => 42, 'slug' => 'hello-world']
-//   /users/foo/posts/bar        → ['id' => 'foo', 'slug' => 'bar']
-```
+This is the shared implementation behind all shortcut helpers (`get()`, `post()`, etc.).
 
-Matching algorithm (inside `matchParams()`):
+### `dispatch()` — routing entry point
 
-1. Trailing-slash normalization on the request path.
-2. Segment-by-segment comparison between pattern and URL.
-3. `{name}` segments become named keys in the result array.
-4. Numeric string values are cast to `(int)` if all digits, else `(float)`.
-5. Literal segments require exact case-sensitive match.
-6. Segment count mismatch returns `null` (no match).
+Signature: `dispatch(Web|Cli $request): Response`. Accepts one of two Request types depending on mode (Web in WEB mode, Cli in CLI mode). Throws `InvalidArgumentException` when the request type mismatches. **Always** returns exactly one `Response` instance.
 
-### Dispatch Lifecycle — WEB Mode
+WEB mode (`new Router(Router::MODE_WEB)`):
+- Iterates routes registered for the exact current HTTP method using `matchParams()` for dynamic segment detection.
+- When a pattern matches, injects extracted params into a fresh Web request preserving query/queryString/postBody state via new Web object constructor, then invokes the matched handler closure and returns its Response directly (no wrapping).
+- If no route on the requested method matches: scans routes registered under OTHER methods for the same path pattern. Any hit → `Response::methodNotAllowed()`; no hits at all → `Response::notFound()`.
 
-```php
-// Inside dispatchWeb(Web $request):
-$router->get('/users/{id}', fn($req) => Response::html("User {$req->param('id')}"));
-$response = $router->dispatch(Web::fromGlobals());
-```
+CLI mode (`new Router(Router::MODE_CLI)`):
+- Looks up command name in commands map keyed by dot-string; invokes `$handler($request)`. If result is not already a Response, wraps as plain `Response::text("$result")`.
 
-Full dispatch lifecycle:
+## Implementation details
 
-| Step | Action | Detail |
-|------|--------|--------|
-| 1 | Method lookup | Retrieve routes for `$request->method()` (GET bucket, POST bucket, etc.) |
-| 2 | URI matching | Iterate routes in registration order; `matchParams()` extracts path params on match. First match wins — handler is invoked with an enriched Web object containing the params + query + postBody from the original request. |
-| 3 | Method resolution (405 scan) | If step 2 finds nothing for the *current* method, scans ALL method buckets for routes matching the same URI pattern. If found under a different method → `Response::methodNotAllowed()` (405). |
-| 4 | No match (404) | If no routes matched in any method bucket → `Response::notFound()` (404 HTML response). |
-
-### Dispatch Lifecycle — CLI Mode
+### Route storage (internal private properties)
 
 ```php
-$router->command('hello.world', fn($req) => "Hello, {$req->arg(0)}");
-$response = $router->dispatch(Cli::fromArgv(['cli', 'hello.world', 'Louis']));
-$response->send(); // outputs: Hello, Louis
+private string $mode;                                   // MODE_WEB or MODE_CLI
+/** @var list<RoutingEntry> */
+private array $getRoutes      = [];  // GET routes indexed
+private array $postRoutes     = [];  // POST routes indexed
+private array $putRoutes      = [];  // PUT routes indexed
+private array $deleteRoutes   = [];  // DELETE routes indexed
+private array $patchRoutes    = [];  // PATCH routes indexed
+/** @var array<string, callable> */
+private array $commands       = [];  // CLI commands keyed by name
 ```
 
-Full dispatch lifecycle:
+The five HTTP method arrays each store `RoutingEntry` objects (a private non-readonly final class) with public `$path` and `$handler` properties. Each registered route is stored in the bucket corresponding to its method type.
 
-| Step | Action | Detail |
-|------|--------|--------|
-| 1 | Command lookup | Exact-key lookup in `$this->commands`. Empty command name or missing key → `Response::text("Command not found: {$command}\n", 404)`. |
-| 2 | Handler invocation | Calls the registered callable with the Cli request object as argument. The handler may return a `Response` (passed through directly) or any scalar (cast to string, wrapped in `text()` response at OK status). |
+### Pattern matching algorithm (`matchParams()`)
 
-### `router.register` Hook Integration
+Private static method that converts a URI pattern (e.g., `/users/{id}/posts/{slug}`) into extracted parameters for an incoming URL path, or `null` on mismatch:
 
-Bootstrap fires the `router.register` hook after creating the Router instance but before dispatch:
+1. Strip trailing slash from the path; fallback root to `'/'`
+2. Root route — `/` matches only `/`. Returns `[]` if matched, `null` otherwise.
+3. Split both pattern and path by `/`, trimming slashes off both sides. If segment counts differ → `null`.
+4. Iterate segments positionaly (same index):
+   - **Dynamic segment** (`{name}`) — extract name from braces; must align positionally with a non-empty string in the matched path. Record name→value pair.
+   - **Literal segment** — exact string match required at same index.
+5. On success, build an associative array from captured `{name}` → value pairs. If `ctype_digit($value)` is true, cast to `(int)`.
 
-```php
-$registry->trigger('router.register', [
-    'router'    => $router,     // Router instance — call ->get(), ->command(), etc.
-    'container' => static::$instance,  // DI hub full of bootstrapped services
-    'mode'      => 'web',       // or 'cli'
-]);
-```
+No wildcards or regex patterns are supported — only positional alignment and brace-delimited dynamic parameters.
 
-Extensions use this hook to register routes or commands:
+### Method-not-allowed detection
 
-```php
-// Inside a plugin / theme registration callback for 'router.register':
-$registry->trigger('router.register', static function(array $ctx): void {
-    $router = $ctx['router'];
-    if ($ctx['mode'] === 'web') {
-        $router->get('/hello.plugin', fn() => Response::html('<h1>From Plugin</h1>'));
-    } else {
-        $router->command('plugin.greet', static fn($req) => "Greeting from {$req->arg(0)}!");
-    }
-});
-```
+When no route matches the requested method+path in step 1:
+1. For each remaining HTTP method (other than the request's), test `matchParams()` on every alternate-method route against the path at its current index.
+2. If any alternative-method route matches the pattern → return `Response::methodNotAllowed()`.
+3. If none match either → fall through to `Response::notFound()`.
 
-### Example: Complete WEB Route Setup
+### CLI dispatch algorithm
 
-```php
-// During bootstrap — before router.register fires, or in plugin hooks:
-(new Bootstrap('WEB'));  // Bootstrap creates Router internally
+In CLI mode, retrieves the command name from `Cli::command()` and looks it up in `$this->commands`:
+- Empty string or not-found → 404 text response with `"Command not found: {$command}\n"`.
+- Found → invoke `$handler($request)`; if result is a Response return it directly, otherwise coerce to `Response::text((string)$result)`.
 
-// In a plugin's router.register handler or post-bootstrap:
-$router = Bootstrap::container()->resolve('router');
-$router->get('/', fn() => Response::html('<h1>Home</h1>'));
-$router->get('/users/{id}', static function(Web $req) {
-    return Response::json(['user' => $req->param('id')]);
-});
-$router->post('/users', static function(Web $req) {
-    // body handling via $req->post()
-    return Response::json(['created' => true], 201);
-});
-```
+## Public methods (summary table)
 
-### Example: Complete CLI Command Setup
-
-```php
-// During bootstrap:
-(new Bootstrap('CLI'));
-
-// In a plugin's router.register handler or post-bootstrap:
-$router = Bootstrap::container()->resolve('router');
-$router->command('hello', fn() => "Hello World");
-$router->command('hello.world', static function(Cli $req) {
-    return sprintf("Hello, %s! Flags: %s\n", 
-        $req->arg(0) ?: 'stranger', 
-        json_encode($req->flags())
-    );
-});
-```
-
-CLI invocation examples on the installed binary:
-
-```bash
-php cli hello.world Louis          # → Hello, Louis! Flags: {}
-php cli hello.world Louis --upper  # → Hello, Louis! Flags: {upper: true}
-php cli hello.world --format=json  # → Hello, stranger! Flags: {format: "json"}
-```
-
-### Future Middleware Support
-
-The Router currently has no middleware layer. Planned evolution includes:
-
-- **Global middleware** — error handling, CSRF checking (when enabled), and session start are conceptually separate concerns that will be wired into the dispatch chain. 
-- **Route-level middleware groups** — e.g., `->get('/admin', $handler, ['auth'])`.
-- **Priority ordering for hooks** — extensions may register routes during `router.register` at different times; priority control is future work.
-
-## Examples
-
-### Route registration
-
-```php
-$router->get('/hello', function(Web $r) {
-    return Response::html('<h1>Hello World</h1>');
-});
-
-// Chained registration:
-$router->delete('/items/{id}', fn() => Response::ok())
-       ->patch('/items/{slug}', fn() => Response::ok());
-```
-
-### Command registration
-
-```php
-$router->command('core.config.show', function(Cli $r) {
-    return Config::toArray();   // assuming container resolution later
-});
-
-// Multi-command setup:
-$router->command('core.version', fn() => '1.0.0')
-       ->command('core.install', function(Cli $r) {
-           return "Installing to {$r->arg(0)}";
-       });
-```
+| Method | Arguments | Return | Description |
+|--------|-----------|--------|-------------|
+| `__construct(string $mode = MODE_WEB)` | Mode constant (`Router::MODE_WEB` or `Router::MODE_CLI`) | — | Validates mode, stores it. Throws for invalid input. |
+| `add(string $method, string $uri, callable $handler): self` | HTTP method, URI pattern, Callable handler | `$this` | Normalizes path, adds to appropriate bucket. Chainable fluent return. |
+| `get(string $uri, callable $handler): self` | URI, handler | `$this` | Shorthand for add('GET', ...) |
+| `post(string $uri, callable $handler): self` | URI, handler | `$this` | Shorthand for add('POST', ...) |
+| `put(string $uri, callable $handler): self` | URI, handler | `$this` | Shorthand for add('PUT', ...) |
+| `delete(string $uri, callable $handler): self` | URI, handler | `$this` | Shorthand for add('DELETE', ...) |
+| `patch(string $uri, callable $handler): self` | URI, handler | `$this` | Shorthand for add('PATCH', ...) |
+| `any(string $uri, callable $handler): self` | URI, handler | `$this` | Registers on ALL five HTTP methods at once |
+| `command(string $name, callable $handler): self` | Command name, handler closure | `$this` | Registers named CLI command (dot-notation). Name cannot be empty. |
+| `dispatch(Web|Cli $request): Response` | Web request or Cli request depending on mode | `Response` | Matches route(s), injects path params, invokes handler, returns a Response always never null or error codes or void. In WEB matches routes by method first then alternate-methods as fallback; CLI does string-lookup command name dispatch. |
+| `getMethodRoutes(string $method): array` | HTTP method (internal access) | `array<int,RoutingEntry>` (or empty []) | Returns the bucket of registered routes for a given HTTP method. Used internally by dispatch() to select the correct route source array |
 
 ## Limitations
 
-- **No query-string parameter extraction** — routing only matches on the URI path; `$_GET` data is available in `Web::query()` but not used for route matching.
-- **Exact segment count required** — no wildcard segments (e.g. `{path*}`). A pattern with 2 segments won't match a URL with 3 segments, even if the extra parts are static.
-- **No regex patterns** — dynamic parameters use fixed `{name}` placeholders only; no character-class constraints on parameter values. No support for optional segments (`/users/{id}?`) or sub-patterns like `/api/v[1-2]/users`.
-- **Method matching is manual, not auto-discovered** — 405 detection scans all method buckets but does so only when the current method has zero matches; it won't fire if multiple methods match.
+### Dynamic parameter format only
 
-## Future Enhancements
+Only `{name}` braces work; no glob, regex, or wildcards are supported. Pattern matching is purely positional — all segments in the pattern must align exactly with path parts by count and index. This means `/users/{id}` matches `/users/42` but NOT `/users/42/posts` (different segment count).
 
-- Wildcard segments (`{path*}`) for catch-all routes.
-- Regex patterns on dynamic parameters (e.g. `{id:\d+}`).
-- Route groups with shared prefixes and middleware.
-- Named routes with reverse lookup (`$router->named('users.show', '/users/{id}')`).
-- Request lifecycle hooks that extensions can attach to (pre-dispatch, post-match, pre-output).
+### No middleware chain
+
+There is no middleware stack or pipeline system built into the Router class. Each handler closure executes directly without any pre-processing hooks — only a Response return from each matched route. Extensions wanting to wrap handlers must do so at registration time.
+
+## Example — Full WEB usage pattern
+
+```php
+$router = new Router(Router::MODE_WEB);
+
+// Static pages:
+$router->get('/',     static fn (Web $req): Response => Response::html('<h1>Home</h1>'));
+$router->get('/about', static fn (Web $req): Response => Response::html('<h1>About</h1>'));
+
+// Dynamic routes with params:
+$router->get('/users/{id}',
+    static function (Web $req): Response {
+        // $req->params()['id'] is accessible here via the injection step above.
+        return Response::json(['user_id' => $req->param('id')]);
+    }
+);
+
+// POST form submission:
+$router->post('/users',
+    static fn (Web $req): Response => ..., // ... = actual handler body not shown here for brevity.
+);
+
+// Dispatch (WEB mode expects Web request):
+$request = Web::fromGlobals();
+$response = $router->dispatch($request);  // matches routes → executes handler → Response return.
+```
+
+## RoutingEntry structure (internal helper value object)
+
+Non-readonly final class `RoutingEntry` with two public properties:
+
+```php
+final class RoutingEntry {
+    public string     $path;       // normalised URI path pattern 
+    public callable   $handler;    // The matched handler callback    
+    public function __construct(string $path, callable $handler) {}
+}
+```
+
+All routes are stored as `RoutingEntry` objects in typed arrays indexed by HTTP method (the five route arrays: get, post, put, delete, patch). Each entry stores the URI path and the callable bound at registration. The property names are `$path` and `$handler`.
