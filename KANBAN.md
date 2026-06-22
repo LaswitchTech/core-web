@@ -78,10 +78,9 @@
   - [ ] Theme Preview (test against all UI components) <!-- created_at: 2026-06-18T12:15:00-04:00 priority: normal -->
 - [ ] CLI System <!-- created_at: 2026-06-18T13:00:00-04:00 priority: normal -->
   - Tags: framework, cli
-  - [ ] CLI Router <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
-    - Dispatcher for plugin and core CLI commands with same interface pattern as HTTP router (`php cli <source>.<command> <arguments>`).
+  - [ ] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
+    - Command infrastructure built on top of the unified Router. Responsible for command discovery, argument parsing, command metadata, help output, and extension command registration.
     - Tags: feature
-    - [ ] Implement command routing to `source.command` handlers <!-- created_at: 2026-06-18T13:01:00-04:00 priority: high -->
     - [ ] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 priority: normal -->
     - [ ] Implement plugin discovery for CLI commands alongside core kernel commands <!-- created_at: 2026-06-18T13:03:00-04:00 priority: high -->
   - [ ] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 priority: normal -->
@@ -96,7 +95,7 @@
     - [ ] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 priority: normal -->
 
 
-## Validation
+## In Progress
 - [~] Renderer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, renderer
   - [ ] Layout Engine <!-- created_at: 2026-06-18T11:50:00-04:00 priority: normal -->
@@ -144,7 +143,7 @@
     - Future enhancement for `layout.*`, `page.*`, `lifecycle.*`, and `triggerPattern()`.
 - [x] Bootstrap Implementation <!-- created_at: 2026-06-18T14:15:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - Orchestration class (`Laswitchtech\CoreWeb\Bootstrap`) — mode-driven single-entry boot for WEB and CLI.
-   - Completed bootstrap foundation; unified Router now handles both WEB and CLI dispatch.
+  - Completed bootstrap foundation; unified Router now handles both WEB and CLI dispatch.
   - Tags: framework, bootstrap, feature
   - [x] Implement `new Bootstrap("WEB")` / `new Bootstrap("CLI")` constructor with static `container()` getter <!-- created_at: 2026-06-18T14:15:30-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Implement `initConfig()` — load `core.cfg`, deep-merge `local.cfg` on top, store in Config singleton <!-- created_at: 2026-06-18T14:16:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
@@ -154,17 +153,17 @@
   - [x] Implement config path resolution from app root <!-- created_at: 2026-06-18T14:19:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Implement `initExtensions()` discovery/autoload/hook registration foundation <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Create skeleton `/index.php` and `/cli` files matching the exact 2-line user pattern <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-   - [x] Validate bootstrap in WEB and CLI mode with Hello World plugin <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Validate bootstrap in WEB and CLI mode with Hello World plugin <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
 - [x] Routing <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-22 priority: high -->
   - Unified routing subsystem for both WEB and CLI modes, with Request/Response objects, dynamic path parameters, HTTP method support, server-config generators, and Hello World end-to-end validation.
   - Tags: framework, routing
   - [x] Router Class <!-- created_at: 2026-06-18T10:59:23-04:00 completed_at: 2026-06-22 priority: high -->
-    - Unified Router class handling both WEB HTTP routing and CLI command dispatch. Provides `match()`, `matchMethod()`, `matchPath()`, `addRoute()`, `getRoutes()`, `getMethods()` methods with path parameter extraction, HTTP method filtering, and Request/Response object creation.
+    - Unified Router supporting HTTP routing, CLI command dispatch, path parameter extraction, Request/Response abstractions, and extension route registration.
     - Tags: feature
     - [x] Support all HTTP methods (GET, POST, PUT, DELETE, PATCH) as first-class routes <!-- created_at: 2026-06-18T11:05:30-04:00 completed_at: 2026-06-22 priority: high -->
     - [x] Implement parameter extraction from URL paths including query string access <!-- created_at: 2026-06-18T11:06:00-04:00 completed_at: 2026-06-22 priority: high -->
   - [x] Apache Support <!-- created_at: 2026-06-18T10:59:32-04:00 completed_at: 2026-06-22 priority: high -->
-    - `.htaccess` RewriteEngine rules that route all requests to index.php, support DocumentRoot and subdirectory deployments via base-path detection detected at runtime.
+    - `.htaccess` RewriteEngine rules that route all requests to index.php and support configurable subdirectory deployments.
     - Tags: feature
     - [x] Verify .htaccess handles both root and subpath installations correctly <!-- created_at: 2026-06-18T11:10:00-04:00 completed_at: 2026-06-22 priority: normal -->
   - [x] Nginx Support <!-- created_at: 2026-06-18T09:59:41-04:00 completed_at: 2026-06-22 priority: high -->
@@ -173,7 +172,7 @@
     - [x] Generate nginx routing configuration supporting root deployments.
       Alias configuration remains future work. <!-- created_at: 2026-06-18T11:10:30-04:00 completed_at: 2026-06-22 priority: normal -->
   - [x] IIS Support <!-- created_at: 2026-06-18T10:00:04-04:00 completed_at: 2026-06-22 priority: high -->
-    - URL Rewrite module rules for Windows IIS deployment with auto-detect for root vs subdirectory paths and fallback to PHP built-in server for local development.
+    - URL Rewrite module rules for Windows IIS deployment with front-controller routing to index.php.
     - Tags: feature
     - [x] Generate IIS URL Rewrite configuration for front-controller routing. <!-- created_at: 2026-06-18T11:11:00-04:00 completed_at: 2026-06-22 priority: normal -->
   - [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
