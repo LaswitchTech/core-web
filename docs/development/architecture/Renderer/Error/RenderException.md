@@ -1,8 +1,8 @@
 # Error\RenderException — Renderer Phase 1 Documentation
 
-**Class**: `Laswitchtech\CoreWeb\RendererError\RenderException`  
+**Class**: `Laswitchtech\CoreWeb\Renderer\Error\RenderException`    
 **File**: `src/Renderer/Error/RenderException.php`  
-**Namespace**: `Laswitchtech\CoreWeb\RendererError`
+**Namespace**: `Laswitchtech\CoreWeb\Renderer\Error`
 
 ---
 
