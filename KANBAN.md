@@ -155,6 +155,13 @@
     - [x] Add simple smoke route using layout → template → view rendering <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
       - HelloWorld plugin validates both PHP and Latte rendering pipelines through WEB and CLI routes.
     - [ ] Add renderer configuration hooks for selecting the default template engine and cache path <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+  - [ ] Renderer Configuration <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+    - Centralize renderer runtime settings so the application can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
+    - Tags: feature, renderer, config
+    - [ ] Configure default rendering engine through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+    - [ ] Configure Latte cache path through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+    - [ ] Configure Latte strict mode / debug mode <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+    - [ ] Allow application-level engine registration overrides <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
 
 ## Validation
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
