@@ -78,7 +78,6 @@ final class Registry
             $this->store[$type][$name] = [];
         }
 
-        $order = $this->nextOrder++;
         // @phpstan-ignore-next-line — store declared as nested arrays; phpstan cannot infer nested generic types
         $this->store[$entry->type][$entry->name][$order] = $entry;
 

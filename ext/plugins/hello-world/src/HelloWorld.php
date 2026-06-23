@@ -91,9 +91,9 @@ final class HelloWorld
             return;
         }
 
-        $registry->add('hello.layout', 'layout', "{$dir}/layouts/hello-view.php", 'app');
-        $registry->add('hello.template', 'template', "{$dir}/templates/hello-view.php", 'app');
-        $registry->add('hello.view', 'view',   "{$dir}/views/hello-view.php",     'app');
+        $registry->add('hello.layout', 'layout', "{$dir}/layouts/hello-view.php", 'plugin');
+        $registry->add('hello.template', 'template', "{$dir}/templates/hello-view.php", 'plugin');
+        $registry->add('hello.view', 'view',   "{$dir}/views/hello-view.php",     'plugin');
     }
 
     /** Return the plugin directory (lazily resolved). */
