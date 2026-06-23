@@ -13,10 +13,12 @@ use Laswitchtech\CoreWeb\Renderer\Resource\Entry;
 final class Renderer
 {
     private Registry $registry;
+    private Engine\Registry $engineRegistry;
 
-    public function __construct(Registry $registry)
+    public function __construct(Registry $registry, Engine\Registry $engineRegistry)
     {
-        $this->registry = $registry;
+        $this->registry       = $registry;
+        $this->engineRegistry = $engineRegistry;
     }
 
     /**
@@ -40,7 +42,7 @@ final class Renderer
         }
 
         // 2. Render view file into $viewContent.
-        $viewContent = $this->renderFile($viewEntry, $data);
+        $viewContent = $this->engineRegistry->resolve($viewEntry)->render($viewEntry, $data);
 
         // 3. Resolve template entry.
         $templateEntry = $this->registry->resolve($template, Entry::TYPE_TEMPLATE);
@@ -54,7 +56,7 @@ final class Renderer
         $templateData = array_merge($data, [
             'viewContent' => $viewContent,
         ]);
-        $templateContent = $this->renderFile($templateEntry, $templateData);
+        $templateContent = $this->engineRegistry->resolve($templateEntry)->render($templateEntry, $templateData);
 
         // 5. Resolve layout entry.
         $layoutEntry = $this->registry->resolve($layout, Entry::TYPE_LAYOUT);
@@ -70,115 +72,23 @@ final class Renderer
             'viewContent'     => $viewContent,
         ]);
 
-        return $this->renderFile($layoutEntry, $layoutData);
+        return $this->engineRegistry->resolve($layoutEntry)->render($layoutEntry, $layoutData);
     }
 
     /**
      * Render a single resource Entry directly.
-     *
-     * Uses output buffering: extract data into scope and require the file.
      */
     public function renderResource(Entry $entry, array $data = []): string
     {
-        return $this->renderFile($entry, $data);
-    }
-
-    /**
-     * Render a single entry with buffered output protection.
-     *
-     * Detects Latte templates via Entry::metadata['engine'] and delegates accordingly.
-     *
-     * @throws RenderException if the file does not exist, is not readable, or throws during require.
-     */
-    private function renderFile(Entry $entry, array $data): string
-    {
         // Validate file before rendering.
         if (!is_file($entry->path)) {
-            throw new RenderException(
-                "Render path does not exist: {$entry->path}"
-            );
+            throw new RenderException("Render path does not exist: {$entry->path}");
         }
 
         if (!is_readable($entry->path)) {
-            throw new RenderException(
-                "Render path is not readable: {$entry->path}"
-            );
+            throw new RenderException("Render path is not readable: {$entry->path}");
         }
 
-        // Latte engine dispatch.
-        if (($entry->metadata['engine'] ?? null) === 'latte') {
-            return $this->renderLatte($entry, $data);
-        }
-
-        // Plain PHP rendering (default path).
-        ob_start();
-
-        try {
-            extract($data, EXTR_SKIP);
-            require $entry->path;
-            return (string) ob_get_clean();
-        } catch (\Throwable $e) {
-            if (ob_get_level() > 0) {
-                ob_end_clean();
-            }
-
-            throw new RenderException(
-                "Failed to render resource '{$entry->name}': {$e->getMessage()}",
-                0,
-                $e
-            );
-        }
-    }
-
-    /**
-     * Render a Latte template file and return the string output.
-     *
-     * @throws RenderException if Latte class is not available or rendering fails.
-     */
-    private function renderLatte(Entry $entry, array $data): string
-    {
-        if (!class_exists(\Latte\Engine::class)) {
-            throw new RenderException('Latte is unavailable but requested for resource: '.$entry->name);
-        }
-
-        try {
-            // Determine cache directory with fallback chain.
-            $cacheBase = dirname(__DIR__, 2) . '/storage/cache/renderer/latte';
-
-            if (!is_dir($cacheBase) && !mkdir($cacheBase, 0755, true) && !is_dir($cacheBase)) {
-                $cacheBase = sys_get_temp_dir() . '/core-web-latte';
-
-                if (!is_dir($cacheBase) && !mkdir($cacheBase, 0755, true) && !is_dir($cacheBase)) {
-                    throw new RenderException('Unable to create Latte cache directory.');
-                }
-            }
-
-            $engine = new \Latte\Engine();
-            $engine->setTempDirectory($cacheBase);
-
-            ob_start();
-
-            try {
-                $engine->render($entry->path, $data);
-                return (string) ob_get_clean();
-            } catch (\Throwable $e) {
-                if (ob_get_level() > 0) {
-                    ob_end_clean();
-                }
-                throw new RenderException(
-                    "Failed to render Latte resource '{$entry->name}': {$e->getMessage()}",
-                    0,
-                    $e
-                );
-            }
-        } catch (RenderException $re) {
-            throw $re; // pass through already-render-exception cases.
-        } catch (\Throwable $e) {
-            throw new RenderException(
-                "Failed to initialize Latte engine for '{$entry->name}': {$e->getMessage()}",
-                0,
-                $e
-            );
-        }
+        return $this->engineRegistry->resolve($entry)->render($entry, $data);
     }
 }

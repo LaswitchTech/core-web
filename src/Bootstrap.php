@@ -367,11 +367,18 @@ class Bootstrap
             $registry->trigger('plugin.started', ['mode' => 'web']);
         }
 
-        // Create renderer registry and renderer -- resolve hook registry once.
+        // Create renderer registry, engine registry and renderer.
         $rendererRegistry = new \Laswitchtech\CoreWeb\Renderer\Registry();
-        $renderer = new \Laswitchtech\CoreWeb\Renderer\Renderer($rendererRegistry);
+        $engineRegistry   = new \Laswitchtech\CoreWeb\Renderer\Engine\Registry();
+        $engineRegistry->register(new \Laswitchtech\CoreWeb\Renderer\Engine\PhpEngine());
+        $engineRegistry->register(new \Laswitchtech\CoreWeb\Renderer\Engine\LatteEngine(
+            sys_get_temp_dir(),
+            'web'
+        ));
+        $renderer = new \Laswitchtech\CoreWeb\Renderer\Renderer($rendererRegistry, $engineRegistry);
         if (static::$instance !== null) {
             static::$instance->set('renderer_registry', $rendererRegistry);
+            static::$instance->set('renderer_engine_registry', $engineRegistry);
             static::$instance->set('renderer', $renderer);
         }
 
@@ -413,11 +420,18 @@ class Bootstrap
             $registry->trigger('plugin.started', ['mode' => 'cli']);
         }
 
-        // Create renderer registry and renderer -- resolve hook registry once.
+        // Create renderer registry, engine registry and renderer.
         $rendererRegistry = new \Laswitchtech\CoreWeb\Renderer\Registry();
-        $renderer = new \Laswitchtech\CoreWeb\Renderer\Renderer($rendererRegistry);
+        $engineRegistry   = new \Laswitchtech\CoreWeb\Renderer\Engine\Registry();
+        $engineRegistry->register(new \Laswitchtech\CoreWeb\Renderer\Engine\PhpEngine());
+        $engineRegistry->register(new \Laswitchtech\CoreWeb\Renderer\Engine\LatteEngine(
+            sys_get_temp_dir(),
+            'cli'
+        ));
+        $renderer = new \Laswitchtech\CoreWeb\Renderer\Renderer($rendererRegistry, $engineRegistry);
         if (static::$instance !== null) {
             static::$instance->set('renderer_registry', $rendererRegistry);
+            static::$instance->set('renderer_engine_registry', $engineRegistry);
             static::$instance->set('renderer', $renderer);
         }
 
