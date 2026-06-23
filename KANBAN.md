@@ -128,23 +128,32 @@
     - Layouts register as `type=layout` through Registry; Renderer resolves via `Entry::TYPE_LAYOUT`; rendered layout wraps `$templateContent`. HelloWorld `/hello-render` validates full pipeline.
   - [x] Template Engine basic registry resolution <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
     - Templates register as `type=template`; Renderer resolves via `Entry::TYPE_TEMPLATE`; receives `$data + ['viewContent' => ...]` via array_merge so renderer-reserved vars always win.
-  - [ ] Latte Template Engine Integration <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+  - [~] Latte Template Engine Integration <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
     - Integrate Latte as the preferred template engine for layouts, templates, and views while keeping the current plain-PHP renderer as the baseline fallback.
     - Tags: feature, renderer, template, latte
-    - [ ] Add Latte dependency and confirm Composer install path for framework/package usage <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - [ ] Add renderer support for engine-aware resource rendering (`php` vs `latte`) <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+    - [x] Add Latte dependency and confirm Composer install path for framework/package usage <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+    - [x] Add renderer support for engine-aware resource rendering (`php` vs `latte`) <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+      - Introduced `Renderer\Engine\EngineInterface`, `PhpEngine`, `LatteEngine`, and `Engine\Registry`.
+      - Engine resolution is metadata-driven via `Entry::metadata['engine']` with `php` fallback.
+      - `renderer.engine.register` hook allows extensions to register additional rendering engines.
     - [ ] Extend renderer resource metadata to declare template engine, cache directory, and optional strict-mode settings <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
-    - [ ] Implement Latte rendering path for layout → template → view composition <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - [ ] Preserve plain PHP rendering as fallback for minimal installs and simple plugins <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - [ ] Add Hello World Latte smoke resources and route/CLI validation <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+    - [x] Implement Latte rendering path for layout → template → view composition <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+      - Latte rendering delegated to `Renderer\Engine\LatteEngine`.
+      - Cache directory defaults to `storage/cache/renderer/latte` under the application root with temporary-directory fallback.
+    - [x] Preserve plain PHP rendering as fallback for minimal installs and simple plugins <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+    - [x] Add Hello World Latte smoke resources and route/CLI validation <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
   - [x] View Layer basic registry resolution <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
     - Views register as `type=view`; Renderer resolves via `Entry::TYPE_VIEW`; innermost pipeline layer passes raw `$data` and outputs into `$viewContent`.
-  - [ ] Renderer Integration <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+  - [~] Renderer Integration <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
     - Integrate renderer services with Bootstrap, Container, Router responses, and extension hooks.
     - Tags: integration
-    - [ ] Bind renderer registry and renderer service into the Container during bootstrap <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
-    - [ ] Add extension hook for registering layouts, templates, and views <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
-    - [ ] Add simple smoke route using layout → template → view rendering <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+    - [x] Bind renderer registry and renderer service into the Container during bootstrap <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+      - Bootstrap now registers `renderer_registry`, `renderer_engine_registry`, and `renderer` services.
+      - Renderer initialization is shared across WEB and CLI boot paths.
+    - [x] Add extension hook for registering layouts, templates, and views <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+      - `renderer.register` and `renderer.engine.register` hooks are available for extension integration.
+    - [x] Add simple smoke route using layout → template → view rendering <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+      - HelloWorld plugin validates both PHP and Latte rendering pipelines through WEB and CLI routes.
     - [ ] Add renderer configuration hooks for selecting the default template engine and cache path <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
 
 ## Validation
