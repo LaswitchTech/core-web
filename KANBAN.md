@@ -68,6 +68,14 @@
     - Renderable UI components with plugin extensibility.
     - Tags: feature
     - [ ] Implement base UIComponent interface and HTML sanitizer <!-- created_at: 2026-06-18T11:41:00-04:00 priority: normal -->
+
+- [ ] Renderer Configuration <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+  - Centralize renderer runtime settings so applications can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
+  - Tags: framework, renderer, config
+  - [ ] Configure default rendering engine through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+  - [ ] Configure Latte cache path through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+  - [ ] Configure Latte strict mode / debug mode <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+  - [ ] Allow application-level engine registration overrides <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
 - [ ] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
   - `/admin` panel with all required sub-systems.
   - Tags: feature, admin
@@ -81,7 +89,7 @@
   - [ ] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
     - Command infrastructure built on top of the unified Router. Responsible for command discovery, argument parsing, command metadata, help output, and extension command registration.
     - Tags: feature
-     - [ ] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 priority: normal -->
+    - [ ] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 priority: normal -->
     - [ ] Implement plugin discovery for CLI commands alongside core kernel commands <!-- created_at: 2026-06-18T13:03:00-04:00 priority: high -->
   - [ ] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 priority: normal -->
     - Bootstrap commands for testing, configuring, and managing the framework.
@@ -95,73 +103,60 @@
     - [ ] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 priority: normal -->
 
 
-## In Progress
-- [~] Renderer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Tags: framework, renderer
-  - Renderer design uses three layers: layout → template → view.
-  - Layouts provide the application shell/chrome such as panel, sidebar, topbar, footer, and global structure.
+## Done
+- [x] Renderer <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-23 priority: normal -->
+  - Three-layer renderer pipeline: layout → template → view.
+  - Layouts provide application chrome such as panel, sidebar, topbar, footer, and global structure.
   - Templates provide reusable page patterns such as CRUD index tables, forms, detail pages, and dashboard grids.
   - Views provide page-specific data, fragments, and controller-facing content.
-  - Phase 1 uses plain PHP files for rendering so the pipeline stays minimal and testable.
-  - Planned template engine: Latte, to provide safer templates, inheritance, blocks, escaping helpers, and cleaner reusable templates.
-  - Layouts, templates, and views should be registered through a renderer registry instead of discovered only by fixed folder conventions.
+  - Renderer resources are registered through a registry instead of fixed folder-only discovery.
   - Plugins, themes, applications, and core may all provide registered layouts, templates, and views.
+  - Tags: framework, renderer
   - [x] Implement `Renderer\Registry` for named layout/template/view registrations <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
     - Immutable `Entry` value object with type/provider constants, readonly properties, `providerRank()`, and immutability helpers.
     - Stores multiple entries per (name, type) pair; resolution precedence by highest priority → provider rank (app > theme > plugin > core) → lowest order.
-    - Explicit validation in `add()` and `register()`: non-empty name/type/provider, valid type/provider values, absolute path required but validated at render time only.
-    - `listByName()` preserves insertion order with deterministic sort; `all()` returns read-only store snapshot; duplicates handled by full override (provider rank + priority breaks ties).
+    - Explicit validation in `add()` and `register()`: non-empty name/type/provider, valid type/provider values, path provided but validated at render time.
+    - `listByName()` preserves insertion order with deterministic sort; `all()` returns an inspection snapshot; duplicates resolved by priority/provider/order rules.
     - Tags: feature, registry
-    - Completed: renderer.register hook fires in both WEB and CLI modes after extension discovery; HelloWorld example plugin registers layout/template/view into registry; syntax clean on all 6 Source files; `php cli hello.render` returns valid composed HTML.
-  - [x] Support explicit resource registration with name, type, path, provider, and priority <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
+  - [x] Support explicit resource registration with name, type, path, provider, priority, and metadata <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
     - `add(string $name, string $type, string $path, string $provider, int $priority, array $metadata): self` registers all fields; `order` assigned automatically by registry.
-    - `register(Entry $entry): self` re-validates and copies entry with fresh assigned order so tie-breaking is correct for externally-created entries.
-    - No filesystem checks at registration time — validation deferred to render phase in Renderer where missing/unreadable paths throw RenderException.
+    - `register(Entry $entry): self` re-validates and copies entries with fresh assigned order so tie-breaking is correct for externally-created entries.
+    - No filesystem checks at registration time — validation is deferred to render phase where missing/unreadable paths throw `RenderException`.
   - [x] Support lookup precedence for app overrides, active theme, plugin resources, and core fallbacks <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
     - Lowest rank wins ties: app=0 → theme=1 → plugin=2 → core=3. Highest numeric priority wins before provider rank comparison. Equal priority + equal rank → earliest order wins.
-    - `resolve(string $name, string $type): ?Entry` scans all entries for pair and applies precedence rules deterministically.
-    - Unknown providers map to `\PHP_INT_MAX` rank so they lose against known providers in all tie-breaking paths.
+    - `resolve(string $name, string $type): ?Entry` scans entries for the pair and applies precedence rules deterministically.
   - [x] Add duplicate-name handling and deterministic override rules <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: normal -->
-    - New registrations replace entire (type, name) bucket — no partial merging. Provider rank + priority breaks ties; equal → order breaks tie (earliest registration wins).
+    - Provider rank + priority breaks ties; equal priority + equal provider rank uses earliest registration order.
     - `register(Entry)` creates a new Entry with assigned order so externally-created entries get deterministic ordering instead of potentially stale orders.
   - [x] Layout Engine basic registry resolution <!-- created_at: 2026-06-18T11:50:00-04:00 completed_at: 2026-06-22 priority: high -->
-    - Layouts register as `type=layout` through Registry; Renderer resolves via `Entry::TYPE_LAYOUT`; rendered layout wraps `$templateContent`. HelloWorld `/hello-render` validates full pipeline.
+    - Layouts register as `type=layout`; Renderer resolves via `Entry::TYPE_LAYOUT`; rendered layout wraps `$templateContent`.
   - [x] Template Engine basic registry resolution <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
-    - Templates register as `type=template`; Renderer resolves via `Entry::TYPE_TEMPLATE`; receives `$data + ['viewContent' => ...]` via array_merge so renderer-reserved vars always win.
-  - [~] Latte Template Engine Integration <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - Integrate Latte as the preferred template engine for layouts, templates, and views while keeping the current plain-PHP renderer as the baseline fallback.
+    - Templates register as `type=template`; Renderer resolves via `Entry::TYPE_TEMPLATE`; receives `$data + ['viewContent' => ...]` via `array_merge()` so renderer-reserved vars win.
+  - [x] View Layer basic registry resolution <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
+    - Views register as `type=view`; Renderer resolves via `Entry::TYPE_VIEW`; innermost pipeline layer receives raw `$data` and outputs into `$viewContent`.
+  - [x] Latte Template Engine Integration <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-23 priority: high -->
+    - Latte is integrated as a supported renderer engine while plain PHP remains the default fallback.
     - Tags: feature, renderer, template, latte
-    - [x] Add Latte dependency and confirm Composer install path for framework/package usage <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - [x] Add renderer support for engine-aware resource rendering (`php` vs `latte`) <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
+    - [x] Add Latte dependency and confirm Composer install path for framework/package usage <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
+    - [x] Add renderer support for engine-aware resource rendering (`php` vs `latte`) <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-23 priority: high -->
       - Introduced `Renderer\Engine\EngineInterface`, `PhpEngine`, `LatteEngine`, and `Engine\Registry`.
       - Engine resolution is metadata-driven via `Entry::metadata['engine']` with `php` fallback.
       - `renderer.engine.register` hook allows extensions to register additional rendering engines.
-    - [ ] Extend renderer resource metadata to declare template engine, cache directory, and optional strict-mode settings <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
-    - [x] Implement Latte rendering path for layout → template → view composition <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-      - Latte rendering delegated to `Renderer\Engine\LatteEngine`.
+    - [x] Implement Latte rendering path for layout → template → view composition <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-23 priority: high -->
+      - Latte rendering is delegated to `Renderer\Engine\LatteEngine`.
       - Cache directory defaults to `storage/cache/renderer/latte` under the application root with temporary-directory fallback.
-    - [x] Preserve plain PHP rendering as fallback for minimal installs and simple plugins <!-- created_at: 2026-06-22T00:00:00-04:00 priority: high -->
-    - [x] Add Hello World Latte smoke resources and route/CLI validation <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
-  - [x] View Layer basic registry resolution <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
-    - Views register as `type=view`; Renderer resolves via `Entry::TYPE_VIEW`; innermost pipeline layer passes raw `$data` and outputs into `$viewContent`.
-  - [~] Renderer Integration <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
-    - Integrate renderer services with Bootstrap, Container, Router responses, and extension hooks.
+    - [x] Preserve plain PHP rendering as fallback for minimal installs and simple plugins <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-23 priority: high -->
+    - [x] Add Hello World Latte smoke resources and route/CLI validation <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-23 priority: normal -->
+  - [x] Renderer Integration <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-23 priority: normal -->
+    - Renderer services are integrated with Bootstrap, Container, Router responses, and extension hooks.
     - Tags: integration
-    - [x] Bind renderer registry and renderer service into the Container during bootstrap <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
-      - Bootstrap now registers `renderer_registry`, `renderer_engine_registry`, and `renderer` services.
+    - [x] Bind renderer registry and renderer service into the Container during bootstrap <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-23 priority: normal -->
+      - Bootstrap registers `renderer_registry`, `renderer_engine_registry`, and `renderer` services.
       - Renderer initialization is shared across WEB and CLI boot paths.
-    - [x] Add extension hook for registering layouts, templates, and views <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+    - [x] Add extension hook for registering layouts, templates, views, and renderer engines <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-23 priority: normal -->
       - `renderer.register` and `renderer.engine.register` hooks are available for extension integration.
-    - [x] Add simple smoke route using layout → template → view rendering <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
+    - [x] Add simple smoke route using layout → template → view rendering <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-23 priority: normal -->
       - HelloWorld plugin validates both PHP and Latte rendering pipelines through WEB and CLI routes.
-    - [ ] Add renderer configuration hooks for selecting the default template engine and cache path <!-- created_at: 2026-06-22T00:00:00-04:00 priority: normal -->
-  - [ ] Renderer Configuration <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
-    - Centralize renderer runtime settings so the application can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
-    - Tags: feature, renderer, config
-    - [ ] Configure default rendering engine through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
-    - [ ] Configure Latte cache path through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
-    - [ ] Configure Latte strict mode / debug mode <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
-    - [ ] Allow application-level engine registration overrides <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
 
 ## Validation
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
@@ -203,7 +198,7 @@
     - Future enhancement for `layout.*`, `page.*`, `lifecycle.*`, and `triggerPattern()`.
 - [x] Bootstrap Implementation <!-- created_at: 2026-06-18T14:15:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - Orchestration class (`Laswitchtech\CoreWeb\Bootstrap`) — mode-driven single-entry boot for WEB and CLI.
-   - Completed bootstrap foundation; unified Router now handles both WEB and CLI dispatch.
+  - Completed bootstrap foundation; unified Router now handles both WEB and CLI dispatch.
   - Tags: framework, bootstrap, feature
   - [x] Implement `new Bootstrap("WEB")` / `new Bootstrap("CLI")` constructor with static `container()` getter <!-- created_at: 2026-06-18T14:15:30-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Implement `initConfig()` — load `core.cfg`, deep-merge `local.cfg` on top, store in Config singleton <!-- created_at: 2026-06-18T14:16:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
@@ -213,12 +208,12 @@
   - [x] Implement config path resolution from app root <!-- created_at: 2026-06-18T14:19:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Implement `initExtensions()` discovery/autoload/hook registration foundation <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Create skeleton `/index.php` and `/cli` files matching the exact 2-line user pattern <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-   - [x] Validate bootstrap in WEB and CLI mode with Hello World plugin <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Validate bootstrap in WEB and CLI mode with Hello World plugin <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
 - [x] Routing <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-22 priority: high -->
   - Unified routing subsystem for both WEB and CLI modes, with Request/Response objects, dynamic path parameters, HTTP method support, server-config generators, and Hello World end-to-end validation.
   - Tags: framework, routing
   - [x] Router Class <!-- created_at: 2026-06-18T10:59:23-04:00 completed_at: 2026-06-22 priority: high -->
-     - Unified Router supporting HTTP routing, CLI command dispatch, path parameter extraction, Request/Response abstractions, and extension route registration.
+    - Unified Router supporting HTTP routing, CLI command dispatch, path parameter extraction, Request/Response abstractions, and extension route registration.
     - Tags: feature
     - [x] Support all HTTP methods (GET, POST, PUT, DELETE, PATCH) as first-class routes <!-- created_at: 2026-06-18T11:05:30-04:00 completed_at: 2026-06-22 priority: high -->
     - [x] Implement parameter extraction from URL paths including query string access <!-- created_at: 2026-06-18T11:06:00-04:00 completed_at: 2026-06-22 priority: high -->
