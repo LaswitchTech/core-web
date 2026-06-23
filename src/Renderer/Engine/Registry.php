@@ -23,19 +23,28 @@ final class Registry extends \ArrayObject
     /**
      * Resolve the engine to use for a given Entry.
      *
-     * Resolution strategy (priority descending):
-     *   1. If metadata['engine'] is set, resolve that named engine (falls back to 'php' if not found).
-     *   2. Otherwise return the default 'php' engine if registered.
+     * Resolution strategy:
+     *   1. If metadata['engine'] is set and registered, return that engine.
+     *   2. If metadata['engine'] is set but not registered, throw RenderException.
+     *   3. Otherwise return the default 'php' engine if registered.
      */
     public function resolve(Entry $entry): EngineInterface
     {
         // Try metadata override first.
         $engineName = $entry->metadata['engine'] ?? null;
-        if (is_string($engineName) && $this->offsetExists($engineName)) {
-            return $this->offsetGet($engineName);
+
+        if (is_string($engineName)) {
+            // Metadata is set: must be a registered engine — no fallback.
+            if ($this->offsetExists($engineName)) {
+                return $this->offsetGet($engineName);
+            }
+
+            throw new RenderException(
+                "Engine '{$engineName}' referenced in metadata but not registered."
+            );
         }
 
-        // Fallback to 'php' engine.
+        // Fallback to 'php' engine when no engine metadata is set.
         if ($this->offsetExists('php')) {
             return $this->offsetGet('php');
         }

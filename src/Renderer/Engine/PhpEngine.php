@@ -2,6 +2,7 @@
 
 namespace Laswitchtech\CoreWeb\Renderer\Engine;
 
+use Laswitchtech\CoreWeb\Renderer\Error\RenderException;
 use Laswitchtech\CoreWeb\Renderer\Resource\Entry;
 
 /**
@@ -33,7 +34,7 @@ final class PhpEngine implements EngineInterface
     public function render(Entry $entry, array $data = []): string
     {
         if (!is_file($entry->path)) {
-            throw new \RuntimeException("PHP engine: file not found: {$entry->path}");
+            throw new RenderException("PHP engine: file not found: {$entry->path}");
         }
 
         // Prevent variable leakage between requests by creating a scope.
@@ -43,7 +44,7 @@ final class PhpEngine implements EngineInterface
             require $entry->path;
         } catch (\Throwable $e) {
             ob_end_clean();
-            throw new \RuntimeException("PHP engine: render failed: {$e->getMessage()}", 0, $e);
+            throw new RenderException("PHP engine: render failed: {$e->getMessage()}", 0, $e);
         }
 
         return (string) ob_get_clean();
