@@ -7,6 +7,11 @@ namespace Laswitchtech\CoreWeb;
 use Laswitchtech\CoreWeb\Router\Request\Web;
 use Laswitchtech\CoreWeb\Router\Request\Cli;
 use Laswitchtech\CoreWeb\Router\Router;
+use Laswitchtech\CoreWeb\Renderer\Registry as RendererRegistry;
+use Laswitchtech\CoreWeb\Renderer\Renderer;
+use Laswitchtech\CoreWeb\Renderer\Engine\PhpEngine;
+use Laswitchtech\CoreWeb\Renderer\Engine\LatteEngine;
+use Laswitchtech\CoreWeb\Renderer\Engine\Registry as EngineRegistry;
 
 /**
  * Mode-driven single-entry bootstrap.
@@ -358,6 +363,44 @@ class Bootstrap
      /  Subsystems (mode-specific)                                          */
     /* ------------------------------------------------------------------ */
 
+    /**
+     * Initialise the renderer subsystem: create registries, register core engines,
+     * trigger ``renderer.engine.register``, then fire ``renderer.register``.
+     *
+     * Bootstrap returns the Renderer instance; both registries remain in the container.
+     */
+    private function initRenderer(string $mode): Renderer
+    {
+        // 1. Create engine registry and register core engines -- appRoot provides the
+        //    application layout so the Latte cache path can be built inside storage/.
+        $engineRegistry = new EngineRegistry();
+        $engineRegistry->register(new PhpEngine());
+        $engineRegistry->register(new LatteEngine($this->appRoot));
+
+        // 2. Trigger renderer.engine.register hook so extensions can add engines.
+        $hookRegistry = static::$instance->resolve('hook_registry');
+        if ($hookRegistry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
+            $hookRegistry->trigger('renderer.engine.register', [
+                'engineRegistry' => $engineRegistry,
+                'container'      => static::$instance,
+                'mode'           => $mode,
+            ]);
+        }
+
+        // 3. Create renderer registry and renderer pipeline.
+        $rendererRegistry = new RendererRegistry();
+        $renderer         = new Renderer($rendererRegistry, $engineRegistry);
+
+        // Store both registries in container for extensions and downstream code.
+        if (static::$instance !== null) {
+            static::$instance->set('renderer_registry',       $rendererRegistry);
+            static::$instance->set('renderer_engine_registry', $engineRegistry);
+            static::$instance->set('renderer',                 $renderer);
+        }
+
+        return $renderer;
+    }
+
     /** BOOTSTRAP WEB CHAIN. */
     private function bootWeb(): void
     {
@@ -367,24 +410,13 @@ class Bootstrap
             $registry->trigger('plugin.started', ['mode' => 'web']);
         }
 
-        // Create renderer registry, engine registry and renderer.
-        $rendererRegistry = new \Laswitchtech\CoreWeb\Renderer\Registry();
-        $engineRegistry   = new \Laswitchtech\CoreWeb\Renderer\Engine\Registry();
-        $engineRegistry->register(new \Laswitchtech\CoreWeb\Renderer\Engine\PhpEngine());
-        $engineRegistry->register(new \Laswitchtech\CoreWeb\Renderer\Engine\LatteEngine(
-            sys_get_temp_dir(),
-            'web'
-        ));
-        $renderer = new \Laswitchtech\CoreWeb\Renderer\Renderer($rendererRegistry, $engineRegistry);
-        if (static::$instance !== null) {
-            static::$instance->set('renderer_registry', $rendererRegistry);
-            static::$instance->set('renderer_engine_registry', $engineRegistry);
-            static::$instance->set('renderer', $renderer);
-        }
+        // Initialize renderer, engine registry and all bindings.
+        $renderer = $this->initRenderer('web');
 
         // Fire renderer.register hook so plugins can register layouts, templates, views.
         $hookRegistry = static::$instance->resolve('hook_registry');
         if ($hookRegistry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
+            $rendererRegistry = static::$instance->resolve('renderer_registry');
             $hookRegistry->trigger('renderer.register', [
                 'registry'  => $rendererRegistry,
                 'renderer'  => $renderer,
@@ -420,24 +452,13 @@ class Bootstrap
             $registry->trigger('plugin.started', ['mode' => 'cli']);
         }
 
-        // Create renderer registry, engine registry and renderer.
-        $rendererRegistry = new \Laswitchtech\CoreWeb\Renderer\Registry();
-        $engineRegistry   = new \Laswitchtech\CoreWeb\Renderer\Engine\Registry();
-        $engineRegistry->register(new \Laswitchtech\CoreWeb\Renderer\Engine\PhpEngine());
-        $engineRegistry->register(new \Laswitchtech\CoreWeb\Renderer\Engine\LatteEngine(
-            sys_get_temp_dir(),
-            'cli'
-        ));
-        $renderer = new \Laswitchtech\CoreWeb\Renderer\Renderer($rendererRegistry, $engineRegistry);
-        if (static::$instance !== null) {
-            static::$instance->set('renderer_registry', $rendererRegistry);
-            static::$instance->set('renderer_engine_registry', $engineRegistry);
-            static::$instance->set('renderer', $renderer);
-        }
+        // Initialize renderer, engine registry and all bindings.
+        $renderer = $this->initRenderer('cli');
 
         // Fire renderer.register hook so plugins can register layouts, templates, views.
         $hookRegistry = static::$instance->resolve('hook_registry');
         if ($hookRegistry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
+            $rendererRegistry = static::$instance->resolve('renderer_registry');
             $hookRegistry->trigger('renderer.register', [
                 'registry'  => $rendererRegistry,
                 'renderer'  => $renderer,

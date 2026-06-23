@@ -21,16 +21,6 @@ final class PhpEngine implements EngineInterface
         return 'php';
     }
 
-    public function supports(Entry $entry): bool
-    {
-        // Accept any entry type whose path ends with .php unless metadata specifies 'latte'.
-        if (substr($entry->path, -4) !== '.php') {
-            return false;
-        }
-
-        return ($entry->metadata['engine'] ?? null) !== 'latte';
-    }
-
     public function render(Entry $entry, array $data = []): string
     {
         if (!is_file($entry->path)) {

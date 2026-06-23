@@ -8,12 +8,14 @@ use Laswitchtech\CoreWeb\Renderer\Error\RenderException;
 /**
  * Engine registry keyed by name for lazy instantiation and lookup.
  *
- * Documentation: docs/development/architecture/Renderer/EngineRegistry.md
+ * Documentation: docs/development/architecture/Renderer/Engine/Registry.md
  */
 final class Registry extends \ArrayObject
 {
     /**
      * Register an engine instance.
+     *
+     * The engine is keyed by its ``name()`` return value.
      */
     public function register(EngineInterface $engine): void
     {

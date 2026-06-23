@@ -1,25 +1,24 @@
-# Renderer — Renderer Phase 1 Documentation
+# Renderer — Current Implementation Documentation
 
-**Class**: `Laswitchtech\CoreWeb\Renderer\Renderer`  
+**Class**: `Laswitchtech\CoreWeb\Renderer\Renderer`
 **File**: `src/Renderer/Renderer.php`
 
 ## Purpose
 
-Minimal renderer pipeline that composes layout, template, and view files. Uses output buffering to capture rendered output at each stage. Registry resolves resources by name and type.
+Minimal renderer pipeline that composes layout → template → view through two registries and an engine layer. Each layer is resolved via the resource Registry, rendered by an engine from the engine registry, and composed into output.
 
 ## Architecture
 
 ```
-Renderer → Registry → Entry path → file require (output buffer)
-                    ↓
-              Provider rank → precedence resolution
-                    ↓
-              Priority → tie-breaking
+Renderer
+ ├── Registry            → resolves name/type → Entry (path + metadata)
+ └── Engine\Registry     → resolves Entry  → engine (php / latte)
+                            → renders Entry   → string output
 ```
 
-Composition order: view → template → layout
+Resolution order: **view → template → layout** (inside-out).
 
-Data flow: `$data` passed through layers, accumulating results.
+Each resolved `Entry` is rendered by `Engine\Registry::resolve($entry)->render($entry, $data)`. The Engine layer handles output buffering; the Renderer delegates file I/O to engines.
 
 ### Composition Pipeline
 
@@ -27,112 +26,116 @@ Data flow: `$data` passed through layers, accumulating results.
   $data + ['name' => 'World']
         │
         ▼
-   ┌─────────┐
-   │  View   │  ← renders into $viewContent
+   ┌─────────┐   renders into $viewContent
+   │  View   │
    └────┬────┘
         │
         ▼
-┌───────────────┐
-│  Template     │  ← receives $data + ['viewContent' => ...]
-└───┬───────────┘
-    │ renders into $templateContent
-    ▼
-┌───────────────┐
-│   Layout      │  ← receives $data + ['templateContent' => ..., 'viewContent' => ...]
-└───┬───────────┘
-    │ rendered as final output
-    ▼
-  (string return)
+   ┌───────────────┐  receives $data + ['viewContent' => ...]
+   │  Template     │  → renders into $templateContent
+   └───┬───────────┘
+       │
+       ▼
+   ┌───────────────┐  receives $data + ['templateContent' => ..., 'viewContent' => ...]
+   │   Layout      │  → rendered as final output (string)
+   └───────────────┘
 ```
 
 ## Public API
 
 ### render(string $layout, string $template, string $view, array $data = []): string
 
-Main entry point. Resolves and composes all three layers in one call.
+Main entry point. Resolves and composes all three layers in **one call**. Each name is looked up via `$this->registry->resolve($name, Entry::TYPE_*)`.
 
-**Resolution**: Each name is looked up via `$this->registry->resolve($name, Entry::TYPE_*)`. If any lookup fails (null), renders an empty placeholder for that layer. No exceptions are thrown on missing resources — the renderer degrades gracefully.
-
-### renderByName(string $name, string $type, array $data = []): string
-
-Renders a single resource (layout/template/view) by name and type without composable chains. Uses `$this->registry->get(name, type)` resolution.
+- If any lookup fails (`null`), a `RenderException` is thrown immediately. No missing resource produces an empty placeholder.
+- The pipeline proceeds through the layer only when its entry has been successfully resolved.
 
 ### renderResource(Entry $entry, array $data = []): string
 
-Direct file rendering for a specific Entry object. Output buffer captures the require() output. 
+Renders a single resource Entry directly. Validates that `$entry->path` exists and is readable (throws `RenderException` on failure), then delegates rendering to `Engine\Registry::resolve($entry)->render(...)`.
 
 ## Internal Implementation
 
 ### Constructor Dependencies
 
 ```php
-public function __construct(Registry $registry)
+public function __construct(Registry $registry, Engine\Registry $engineRegistry)
 ```
 
-Takes a Registry instance for resource resolution. No container access needed — the Registry is responsible for finding entries.
+The Renderer requires **two** distinct registries:
 
-### Key Design Decisions
+| Dependency | Type | Role |
+|------------|------|------|
+| `$registry` | `Renderer\Registry` | Resolves resource names → Entries (path + metadata) |
+| `$engineRegistry` | `Renderer\Engine\Registry` | Resolves entries to engine and delegates rendering |
 
-#### 1. No Exceptions on Missing Resources
+### render() — Step-by-Step
 
-When `resolve()` returns null (resource not registered), the renderer uses empty strings as placeholders. This prevents boot-time failures and allows graceful degradation during development or testing where not all assets are available yet.
+1. **Resolve view** via `$this->registry->resolve($view, Entry::TYPE_VIEW)`. Throw `RenderException` if null.
+2. **Render view** via `$this->engineRegistry->resolve($viewEntry)->render($viewEntry, $data)`. Result stored in `$viewContent`.
+3. **Resolve template** via `$this->registry->resolve($template, Entry::TYPE_TEMPLATE)`. Throw `RenderException` if null.
+4. **Render template** with `$data + ['viewContent' => $viewContent]`. Result stored in `$templateContent`.
+5. **Resolve layout** via `$this->registry->resolve($layout, Entry::TYPE_LAYOUT)`. Throw `RenderException` if null.
+6. **Render layout** with `$data + ['templateContent' => $templateContent, 'viewContent' => $viewContent]`. Return result.
 
-#### 2. Output Buffering for Rendering
+### renderResource() — Precondition Checks
 
-```php
-ob_start();
-extract($data, EXTR_SKIP);
-include $entry->path;
-$result = ob_get_clean();
-```
+Before delegating to an engine, the Renderer validates:
 
-Output buffering captures file output without polluting the calling scope. `EXTR_SKIP` prevents variable collisions between layers — a view's `$title` won't accidentally overwrite the template's `$title`.
+| Check | Behavior on failure |
+|-------|---------------------|
+| `is_file($entry->path)` | `RenderException("Render path does not exist: ...")` |
+| `is_readable($entry->path)` | `RenderException("Render path is not readable: ...")` |
 
-#### 3. Data Accumulation via Array Merge
+## Key Design Decisions
+
+### 1. Exceptions on Missing Resources
+
+Every layer (view, template, layout) throws a `RenderException` when its resource name resolves to null via the Registry. There is **no** graceful degradation or empty placeholder rendering — every component must be registered.
+
+### 2. Engine Delegation
+
+The Renderer does not perform file I/O or output buffering itself. It delegates all rendering to engine instances resolved by `Engine\Registry`:
+
+- PhpEngine: `ob_start()` → `extract($data, EXTR_SKIP)` → `require` → `ob_get_clean()`
+- LatteEngine: compiles template, invokes Latte's `renderToHtml()`, catches `Latte\RuntimeException` as `RenderException`
+
+The engine layer is the sole owner of output buffering semantics.
+
+### 3. Data Accumulation via Array Merge
 
 Each layer receives the original `$data` plus its own content variable:
-- Template: `$data + ['viewContent' => $viewContent]`
-- Layout: `$data + ['templateContent' => $templateContent, 'viewContent' => $viewContent]`
 
-This means the layout has access to everything — original context *plus* all rendered layers. Templates have access to the view output. Views only have access to their own `$data`.
+| Layer | Receives |
+|-------|----------|
+| View | `$data` (direct) |
+| Template | `array_merge($data, ['viewContent' => $viewContent])` |
+| Layout | `array_merge($data, ['templateContent' => $templateContent, 'viewContent' => $viewContent])` |
+
+The layout thus has access to original context plus all rendered layers. Templates see view output. Views only see their own `$data`.
 
 ## Current Behavior Notes / Limitations
 
-### 1. Missing Resources → Empty Placeholders
+### 1. Mandatory Resources — No Placeholders
 
-If `registry.get(name, type)` returns null:
-- `$viewContent`, `$templateContent`, or `$layoutContent` will be an empty string for that layer.
-- This is **intentional** — it allows partial renders during development (e.g., just the view without a layout).
+If any of view, template, or layout is not registered in the resource Registry, `render()` throws `RenderException` rather than silently producing partial output. This ensures that production applications cannot render with missing components.
 
 ### 2. No Automatic Layout Detection
 
-There is no auto-discovery of "default" layouts. Every render call must explicitly specify the layout name, template name, and view name. Defaults are not baked in because different applications have different needs.
+Every render call must explicitly specify the layout name, template name, and view name. Defaults are not baked in because different applications have different needs.
 
-### 3. Variable Naming Convention via Context Variables
+### 3. Registry Resolution Behavior
 
-| Layer | Receives from previous | Own variable injected |
-|-------|----------------------|----------------------|
-| View | `$data` (direct) | — |
-| Template | `['viewContent' => $viewContent] + $data` | `$viewContent` |
-| Layout | `['templateContent' => $templateContent, 'viewContent' => $viewContent] + $data` | `$templateContent`, `$viewContent` |
+`Registry->resolve(name, type)` follows these precedence rules:
 
-Files rendered with `include` (not `require_once`) and the current working directory remain unchanged. Variable scoping is isolated via `extract()`.
-
-### 4. No Caching or Compilation
-
-Every render call reads files from disk. There is no opcode cache layer, Twig compilation, or file modification-time checks. This is a Phase 1 limitation that may be addressed in later phases with a cache adapter interface.
-
-### 5. Registry Resolution Behavior
-
-Registry `get(name, type)` follows these precedence rules:
-1. **Highest priority wins** — entries registered with higher priority numbers take precedence (registered first = lower priority)
+1. **Highest priority wins** — entries registered with higher priority numbers take precedence
 2. **Provider rank breaks ties** — app > theme > plugin > core (higher rank = lower precedence when priority is equal)
 3. **First-in-wins for identical priority + provider** — entries created during the same hook priority level are resolved in registration order
 
-### 6. No Layout Slots or Named Sections
+### 4. No Caching or Compilation
 
-Unlike more advanced templating engines, layouts cannot define "named slots" (e.g., `{{ content }}`, `{{ sidebar }}`). The entire template content is placed into a single `$templateContent` variable. If you need conditional rendering inside layouts, that must be handled via PHP conditionals in the layout file itself.
+Every render call reads files from disk through engines. There is no opcode cache layer, compilation step, or file modification-time checks at the Renderer level (Latte handles its own caching internally).
 
-### 7. Context Variable Leakage is Possible but Contained
+### 5. File Validation Only in renderResource()
 
-Because all rendered layers share variables from their respective `extract()` calls, there *could* be accidental variable overlap between contexts. However, since each layer's content is captured in a dedicated container variable (`$viewContent`, `$templateContent`) before the next layer renders, this is not an actual problem — it is only a concern for template file authors who should use unique variable names for their own context variables.
+`render()` relies on the Registry for resolution and does not perform `is_file()` / `is_readable()` checks itself. `renderResource()` performs explicit validation before delegating. This distinction means that invalid entries bypassed by the Registry (null result) hit the exception path in `render()`, while valid Entries could still fail file I/O inside an engine.

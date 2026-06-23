@@ -109,6 +109,22 @@ This method handles all extension discovery and registration as a single step:
 9. **Store extension index** — builds an associative array keyed by extension name with fields: `type`, `version`, `directory`, `depends`. Stored in the container under `'extension_index'` as `<object>`.
 10. **Bind resolved services** — `'hook_registry'` → the populated `\Laswitchtech\CoreWeb\Hook\Registry()`.
 
+### Renderer Initialization (`initRenderer()`)
+
+The renderer subsystem is initialized by `initRenderer(string $mode): Renderer`, called from both `bootWeb()` and `bootCli()`:
+
+1. **Create EngineRegistry** — instantiates a fresh engine registry.
+2. **Register PhpEngine** — registers the built-in PHP template engine as `'php'`.
+3. **Register LatteEngine($appRoot)** — registers the Latte engine, passing `$this->appRoot` so its cache directory can be resolved.
+4. **Trigger `renderer.engine.register`** — fires the hook via the Hook\Registry with context `[engineRegistry, container, mode]`, allowing extensions to add engines before renderer creation.
+5. **Create RendererRegistry** — instantiates a fresh resource registry for layouts/templates/views.
+6. **Create Renderer(registry, engineRegistry)** — wires both registries into the renderer pipeline.
+7. **Store three keys in the container**:
+   - `'renderer_registry'` → `Renderer\Registry` instance
+   - `'renderer_engine_registry'` → `Renderer\Engine\Registry` instance
+   - `'renderer'` → `Renderer` instance
+8. **Return** the `$renderer` instance.
+
 ### WEB Flow (`bootWeb()`)
 
 ```php
@@ -116,11 +132,14 @@ private function bootWeb(): void
 ```
 
 1. Triggers `plugin.started` hook via `$registry->trigger('plugin.started', ['mode' => 'web'])` (only if the registry instance is `\Laswitchtech\CoreWeb\Hook\Registry`).
-2. Creates a new `Router(Router::MODE_WEB)`.
-3. Binds `'router'` → the Router instance in the container.
-4. Triggers `router.register` hook with `['router' => $router, 'container' => static::$instance, 'mode' => 'web']`.
-5. Dispatches the request: `$router->dispatch(Web::fromGlobals())`.
-6. Sends response: `$response->send()`.
+2. Calls `initRenderer('web')`, resolves $renderer.
+3. Resolves `$rendererRegistry` from container (`renderer_registry`).
+4. Triggers `renderer.register` hook with `[registry => $rendererRegistry, renderer => $renderer, container => static::$instance, mode => 'web']`.
+5. Creates a new `Router(Router::MODE_WEB)`.
+6. Binds `'router'` → the Router instance in the container.
+7. Triggers `router.register` hook with `['router' => $router, 'container' => static::$instance, 'mode' => 'web']`.
+8. Dispatches the request: `$response = $router->dispatch(Web::fromGlobals())`.
+9. Sends response: `$response->send()`.
 
 ### CLI Flow (`bootCli()`)
 
@@ -129,11 +148,14 @@ private function bootCli(): void
 ```
 
 1. Triggers `plugin.started` hook via `$registry->trigger('plugin.started', ['mode' => 'cli'])` (same guard as WEB).
-2. Creates a new `Router(Router::MODE_CLI)`.
-3. Binds `'router'` → the Router instance in the container.
-4. Triggers `router.register` hook with `['router' => $router, 'container' => static::$instance, 'mode' => 'cli']`.
-5. Dispatches the request: `$router->dispatch(Cli::fromArgv($_SERVER['argv'] ?? []))`.
-6. Sends response: `$response->send()`.
+2. Calls `initRenderer('cli')`, resolves $renderer.
+3. Resolves `$rendererRegistry` from container (`renderer_registry`).
+4. Triggers `renderer.register` hook with `[registry => $rendererRegistry, renderer => $renderer, container => static::$instance, mode => 'cli']`.
+5. Creates a new `Router(Router::MODE_CLI)`.
+6. Binds `'router'` → the Router instance in the container.
+7. Triggers `router.register` hook with `['router' => $router, 'container' => static::$instance, 'mode' => 'cli']`.
+8. Dispatches the request: `$response = $router->dispatch(Cli::fromArgv($_SERVER['argv'] ?? []))`.
+9. Sends response: `$response->send()`.
 
 ### Container Bindings Summary
 
@@ -147,7 +169,50 @@ The Bootstrap class binds exactly these keys into the container (in registration
 | `extension_base` | first existing `ext/` directory, or `null` | `registerExtensions()` |
 | `hook_registry` | `\Laswitchtech\CoreWeb\Hook\Registry()` (empty or populated) | `registerExtensions()` |
 | `extension_index` | `<object>` of `{name => [type, version, directory, depends]}` | `registerExtensions()` |
+| `renderer_registry` | `Renderer\Registry` instance | `initRenderer()` |
+| `renderer_engine_registry` | `Renderer\Engine\Registry` instance | `initRenderer()` |
+| `renderer` | `Renderer` instance wired with both registries | `initRenderer()` |
 | `router` | `Router` instance | `bootWeb()` / `bootCli()` |
+
+---
+
+### Extension Loading and Hook Registration
+
+#### Manifest Discovery
+
+1. Walk `{extBase}/plugins/` + `{extBase}/themes/`.
+2. For each subdirectory, attempt to parse `manifest.json`.
+3. Validate required fields (`type`, `name`, `version`, `hooks`, `layouts`).
+4. Invalid manifests are **skipped** (tolerant — one broken manifest does not block discovery).
+
+#### Hook Registration
+
+For every manifest with non-empty hooks:
+
+1. If the extension has a `src/` directory, register an autoloader for it.
+2. For each hook entry in manifest:
+   - Simple name (e.g., `"my.hook"`) → registers as a named stub on `Hook\Registry`.
+   - Dotted namespace (e.g., `"layout.header::app.MyView"`) → calls `$registry->addClassCall('layout.header', 'MyView', 0)`.
+
+For every manifest with non-empty layouts:
+
+1. Register placeholder callbacks for each layout name into the Hook\Registry.
+
+#### Extension Index
+
+After all manifests are processed, an index is built and bound into the container as a stdClass object containing `{name => [type, version, directory]}` for each successfully parsed extension.
+
+---
+
+### Key Design Decisions
+
+1. **Engine registry fires before renderer creation** — extensions can add engines during `renderer.engine.register`; these will be available when the Renderer is created and later used during rendering.
+
+2. **Three container bindings per subsystem** — the renderer subsystem stores `renderer_registry`, `renderer_engine_registry`, AND `renderer` separately, allowing extensions to inject into registries after `renderer.register` fires but before first render occurs.
+
+3. **Extension discovery happens before ANY subsystem** — all hooks are registered prior to router creation, meaning route registrations in `renderer.register` and `router.register` can reference resources added by other plugins.
+
+4. **Lazy extension source loading** — the autoloader is only registered when extensions with `src/` directories exist; empty `ext/` folders cause no issues or overhead.
 
 ## Lifecycle
 

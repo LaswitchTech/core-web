@@ -7,21 +7,39 @@ Active smoke-test plugin for CoreWeb's renderer and router subsystems.
 | Subsystem | Route / Command | Description |
 |-----------|------------------|-------------|
 | `router.register` | `/hello` (web) | Legacy HTML route (no renderer) |
-| `renderer.register` | `/hello-render` (web) | Full layout → template → view pipeline |
+| `renderer.register` | `/hello-render` (web) | Full layout → template → PHP view pipeline |
 | `renderer.register` | `hello.render` (CLI) | Same pipeline via CLI |
-| `router.register` | `hello.world` (CLI) | Legacy CLI command |
+| `router.register` | `/hello-latte` (web) | Layout → template → Latte view pipeline |
+| `router.register` | `hello.latte` (CLI) | Same Latte pipeline via CLI |
+| `router.register` | `hello.world` (CLI) | Legacy CLI command (accepts optional name argument) |
 
 ## Resource registration
 
-Registerer into the renderer registry during `renderer.register`:
+Registered into the renderer registry during the `renderer.register` hook:
 
 ```
 hello.layout       →  ext/plugins/hello-world/layouts/hello-view.php   (type: layout)
 hello.template     →  ext/plugins/hello-world/templates/hello-view.php  (type: template)
-hello.view         →  ext/plugins/hello-world/views/hello-view.php      (type: view)
+hello.view         →  ext/plugins/hello-world/views/hello-view.php      (type: view, engine: php)
+hello.latte.view   →  ext/plugins/hello-world/views/hello-view.latte    (type: view, engine: latte)
 ```
 
-Provider priority: `app` (highest) — these override any core / plugin / theme defaults.
+Provider priority: `plugin` — these register with the plugin provider rank and can override core / theme defaults where registered.
+
+### Renderer engine registration
+
+Render engines **are not registered by HelloWorld**. They are registered by CoreWeb's Bootstrap during bootstrap:
+
+| Engine | Registration | Usage |
+|--------|-------------|-------|
+| `php` | Registered first by Bootstrap | Default fallback for `.php` view files |
+| `latte` | Registered second by Bootstrap | Handles `[engine => 'latte']` view entries (e.g. `hello.latte.view`) |
+
+The engine selection algorithm is implemented in **Renderer\Engine\Registry::resolve()**.  It does not use registration order or first-match logic.  Instead it follows a strict priority:
+
+1. **Metadata engine override** — If ``$entry->metadata['engine']`` is set to a registered name (e.g. ``'latte'``), that exact engine is returned.
+2. **'php' default** — When no metadata engine is set, the registry falls back to the ``'php'`` engine.
+3. **Error when metadata references an unregistered engine** — If ``metadata['engine']`` is set but the name does not match any registered engine, a ``RenderException`` is thrown (no fallback applied).
 
 ## Directory structure
 
@@ -34,23 +52,28 @@ hello-world/
 ├── templates/
 │   └── hello-view.php     # template wrapper (renders $viewContent)
 ├── views/
-│   └── hello-view.php     # view content (renders $name via htmlspecialchars)
+│   ├── hello-view.php     # PHP view content (renders $name via htmlspecialchars)
+│   └── hello-view.latte   # Latte view content (renders {$name})
 └── src/
     └── HelloWorld.php     # registerRoutes() + registerRenderer() hooks
 ```
+
+The `layouts/` and `templates/` directories contain renderer resources contributed to the pipeline — they are **not** standalone plugins or extensions.
 
 ## Usage
 
 ### CLI
 
 ```bash
-php cli hello.world            # → "Hello World!\n"
-php cli hello.render           # → rendered layout → template → view HTML
+php cli hello.world            # → "Hello World!\n" (accepts optional name argument)
+php cli hello.render           # → rendered layout → template → PHP view HTML
+php cli hello.latte            # → rendered layout → template → Latte view HTML
 ```
 
 ### Web (browser)
 
 ```
 GET /hello        — legacy static HTML
-GET /hello-render — full pipeline rendering
+GET /hello-render — full pipeline (PHP view) rendering
+GET /hello-latte  — layout → template → Latte view rendering
 ```
