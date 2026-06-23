@@ -62,6 +62,21 @@ final class HelloWorld
                 );
             });
 
+            // Latte smoke test: /hello-latte renders via layout -> template -> .latte view.
+            $latteData  = ['name' => 'World'];
+            $router->get('/hello-latte', function (Web $_req) use ($renderer, $latteData): Response {
+                return Response::html(
+                    $renderer->render('hello.layout', 'hello.template', 'hello.latte.view', $latteData),
+                );
+            });
+
+            // CLI route: hello.latte also exercises the pipeline.
+            $router->command('hello.latte', function (Cli $_req) use ($renderer, $latteData): Response {
+                return Response::text(
+                    $renderer->render('hello.layout', 'hello.template', 'hello.latte.view', $latteData) . PHP_EOL,
+                );
+            });
+
             // Legacy /hello route (no renderer).
             $router->get('/hello', fn (Web $_req) => Response::html('<h1>Hello World!</h1>'));
         } else {
@@ -91,9 +106,10 @@ final class HelloWorld
             return;
         }
 
-        $registry->add('hello.layout', 'layout', "{$dir}/layouts/hello-view.php", 'plugin');
-        $registry->add('hello.template', 'template', "{$dir}/templates/hello-view.php", 'plugin');
-        $registry->add('hello.view', 'view',   "{$dir}/views/hello-view.php",     'plugin');
+        $registry->add('hello.layout',     'layout',   "{$dir}/layouts/hello-view.php",  'plugin');
+        $registry->add('hello.template',    'template', "{$dir}/templates/hello-view.php", 'plugin');
+        $registry->add('hello.view',        'view',     "{$dir}/views/hello-view.php",    'plugin');
+        $registry->add('hello.latte.view',  'view',     "{$dir}/views/hello-view.latte",  \Laswitchtech\CoreWeb\Renderer\Resource\Entry::PROVIDER_PLUGIN, 0, ['engine' => 'latte']);
     }
 
     /** Return the plugin directory (lazily resolved). */

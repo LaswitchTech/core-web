@@ -86,6 +86,8 @@ final class Renderer
     /**
      * Render a single entry with buffered output protection.
      *
+     * Detects Latte templates via Entry::metadata['engine'] and delegates accordingly.
+     *
      * @throws RenderException if the file does not exist, is not readable, or throws during require.
      */
     private function renderFile(Entry $entry, array $data): string
@@ -103,6 +105,12 @@ final class Renderer
             );
         }
 
+        // Latte engine dispatch.
+        if (($entry->metadata['engine'] ?? null) === 'latte') {
+            return $this->renderLatte($entry, $data);
+        }
+
+        // Plain PHP rendering (default path).
         ob_start();
 
         try {
@@ -116,6 +124,58 @@ final class Renderer
 
             throw new RenderException(
                 "Failed to render resource '{$entry->name}': {$e->getMessage()}",
+                0,
+                $e
+            );
+        }
+    }
+
+    /**
+     * Render a Latte template file and return the string output.
+     *
+     * @throws RenderException if Latte class is not available or rendering fails.
+     */
+    private function renderLatte(Entry $entry, array $data): string
+    {
+        if (!class_exists(\Latte\Engine::class)) {
+            throw new RenderException('Latte is unavailable but requested for resource: '.$entry->name);
+        }
+
+        try {
+            // Determine cache directory with fallback chain.
+            $cacheBase = dirname(__DIR__, 2) . '/storage/cache/renderer/latte';
+
+            if (!is_dir($cacheBase) && !mkdir($cacheBase, 0755, true) && !is_dir($cacheBase)) {
+                $cacheBase = sys_get_temp_dir() . '/core-web-latte';
+
+                if (!is_dir($cacheBase) && !mkdir($cacheBase, 0755, true) && !is_dir($cacheBase)) {
+                    throw new RenderException('Unable to create Latte cache directory.');
+                }
+            }
+
+            $engine = new \Latte\Engine();
+            $engine->setTempDirectory($cacheBase);
+
+            ob_start();
+
+            try {
+                $engine->render($entry->path, $data);
+                return (string) ob_get_clean();
+            } catch (\Throwable $e) {
+                if (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+                throw new RenderException(
+                    "Failed to render Latte resource '{$entry->name}': {$e->getMessage()}",
+                    0,
+                    $e
+                );
+            }
+        } catch (RenderException $re) {
+            throw $re; // pass through already-render-exception cases.
+        } catch (\Throwable $e) {
+            throw new RenderException(
+                "Failed to initialize Latte engine for '{$entry->name}': {$e->getMessage()}",
                 0,
                 $e
             );

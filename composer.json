@@ -17,5 +17,7 @@
             "email": "louis@laswitchtech.com"
         }
     ],
-    "require": {}
+    "require": {
+        "latte/latte": "^3.0"
+    }
 }
