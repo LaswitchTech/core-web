@@ -24,7 +24,7 @@ hello.view         →  ext/plugins/hello-world/views/hello-view.php      (type:
 hello.latte.view   →  ext/plugins/hello-world/views/hello-view.latte    (type: view, engine: latte)
 ```
 
-Provider priority: `plugin` — these register with the plugin provider rank and can override core / theme defaults where registered.
+Provider priority: `plugin` — these resources can override core defaults, but theme and app resources have higher precedence.
 
 ### Renderer engine registration
 

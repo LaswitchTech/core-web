@@ -29,11 +29,11 @@ final class RenderException extends \RuntimeException
 
 ## When It Is Thrown
 
-RenderException is thrown exclusively by `Renderer::renderResource()` and `Renderer::render()` / `Renderer::renderByName()`:
-
 | Condition | Message Template | Location |
 |-----------|-----------------|----------|
-| View/template/layout not found in registry | `"No registered {$name} resource of type '{$type}'."` | `Renderer::render()` + `Renderer::renderByName()` |
+| View name not found in registry | `"No registered view resource named '{$view}'."` | `Renderer::render()` (step 2) |
+| Template name not found in registry | `"No registered template resource named '{$template}'."` | `Renderer::render()` (step 4) |
+| Layout name not found in registry | `"No registered layout resource named '{$layout}'."` | `Renderer::render()` (step 6) |
 | Resolved `$entry->path` does not exist as a file | `"Render path does not exist: {$entry->path}"` | `Renderer::renderResource()` |
 | Resolved `$entry->path` is not readable | `"Render path is not readable: {$entry->path}"` | `Renderer::renderResource()` |
 
