@@ -1,10 +1,10 @@
-# Database Subsystem — Phase 1
+# Database Subsystem — Phase 2A (Multi-Driver)
 
 ## Overview
 
-The Database subsystem provides a minimal PDO-based SQLite driver for Core-Web as the day-one data persistence layer. It is intentionally limited to connection creation, lazy initialization, and basic transaction support — no query builder, ORM, or schema management.
+The Database subsystem provides a minimal PDO-based driver abstraction layer for Core-Web with two production-ready drivers: **SQLite** (zero-config, default) and **MySQL/MariaDB** (server-based). It is intentionally limited to connection creation, lazy initialization, and basic transaction support — no query builder, ORM, or schema management.
 
-This document describes the architecture and components of the current implementation. Future phases will extend this with MySQL/MariaDB drivers, migration tools, and the Query Builder subsystem.
+This document describes the multi-driver architecture and components as of Phase 2A. Future phases will extend this with migration tools and the Query Builder subsystem.
 
 ---
 
@@ -24,12 +24,75 @@ The connection is **lazy**: database file opening, directory creation, and SQLit
 
 ---
 
+## Driver Selection
+
+The driver is selected by the `database.driver` configuration key in `config/core.cfg`:
+
+| `database.driver` value | Resolved class                                          | Notes                                   |
+|------------------------|---------------------------------------------------------|-----------------------------------------|
+| `"sqlite"`             | `Laswitchtech\CoreWeb\Database\Driver\Sqlite`          | Default — zero-config file-based DB     |
+| `"mysql"`              | `Laswitchtech\CoreWeb\Database\Driver\Mysql`           | Uses PDO MySQL protocol                 |
+| `"mariadb"`            | `Laswitchtech\CoreWeb\Database\Driver\Mysql` (alias)   | MariaDB maps to same Mysql class        |
+
+Bootstrap normalizes the driver name and instantiates the appropriate driver during `registerDbServices()`. The container never returns a driver directly — it always resolves through `db_driver` (the driver instance) or `db_connection` (the Connection object created by the driver).
+
+### Driver Comparison
+
+| Aspect             | `sqlite`                         | `mysql` / `mariadb`                          |
+|--------------------|----------------------------------|----------------------------------------------|
+| Class              | `Laswitchtech\CoreWeb\Database\Driver\Sqlite` | `Laswitchtech\CoreWeb\Database\Driver\Mysql` |
+| Required extension | `pdo_sqlite`                     | `pdo_mysql`                                  |
+| Zero-config        | Yes                              | No (requires host/database credentials)      |
+| Typical use case   | Local development, embedded apps  | Production/shared hosting/server deployments  |
+
+---
+
+## Database Configuration
+
+### SQLite Config Keys
+
+| key      | type    | default         | required | notes                       |
+|----------|---------|-----------------|----------|-----------------------------|
+| driver   | string  | `sqlite`        | yes      | Driver identifier (lowercase) |
+| path     | string  | `data/app.db`   | no       | Database file path; auto-created |
+
+### MySQL/MariaDB Config Keys
+
+| Key           | Type             | Default    | Required          | Notes                                    |
+|---------------|------------------|------------|--------------------|-------------------------------------------|
+| host          | string           | `127.0.0.1` | no               | Server hostname                            |
+| port          | integer          | `3306`     | no               | Server port                                |
+| database      | string           | `""`       | **yes** if dsn is absent | Target schema/schema name              |
+| charset       | string           | `utf8mb4`  | no               | Connection character set                   |
+| username      | string           | `""`       | no               | Authentication username                    |
+| password      | string           | `""`       | no               | Authentication password                    |
+| dsn           | string\|`null`   | `null`     | no               | Full DSN override (see DSN Behavior below) |
+
+### DSN Override Behavior
+
+- If `dsn` is provided as a **non-empty string**, it is used verbatim as the PDO DSN. All other host/port/database/charset keys are retained in config but ignored for DSN construction.
+- If `dsn` is an **empty string** (`""`), a `DatabaseException` is thrown: `"MySQL DSN must not be empty."`
+- If `dsn` is **not provided** (key absent or `null`), the driver builds the DSN from individual keys:
+
+```
+mysql:host={host};port={port};dbname={database};charset={charset}
+```
+
+In this mode, `database` must be a non-empty string; otherwise a `DatabaseException` is thrown.
+
+---
+
 ## Container Bindings
 
-| Binding Key       | Type                                          | Lifetime   | Description                                                      |
-|-------------------|-----------------------------------------------|------------|------------------------------------------------------------------|
-| `db_driver`       | `Laswitchtech\CoreWeb\Database\Driver\Sqlite` | singleton  | SQLite database driver — resolves a PDO-connected Connection.    |
-| `db_connection`   | `Laswitchtech\CoreWeb\Database\Connection`     | singleton  | Thin PDO wrapper — lazy-initialized; directory creation happens at first access. |
+| Binding Key       | Type                                                | Lifetime   | Description                                                                                                      |
+|-------------------|-----------------------------------------------------|------------|------------------------------------------------------------------------------------------------------------------|
+| `db_driver`       | `DriverInterface` (Sqlite or Mysql)                 | lazy singleton | The driver instance — **does NOT return a Connection**. Returns the driver itself (`Sqlite`, `Mysql`, etc.) |
+| `db_connection`   | `Laswitchtech\CoreWeb\Database\Connection`           | lazy singleton | PDO wrapper — lazy-initialized via `$driver->connect(...)`. Resolved on first access only                      |
+
+### Critical Distinction
+
+- **`db_driver`** does NOT return a Connection. It returns the driver instance (e.g., `Sqlite|class:Mysql`). Use it if you need to introspect which driver is active or call driver-specific factory methods.
+- **`db_connection`** returns the Connection object. This is the primary interface for raw PDO access via `$conn->prepare()`, `$conn->query()`, and `$conn->pdo()`.
 
 ### Accessing the Database
 
@@ -44,7 +107,7 @@ $stmt->bindValue(1, 42);
 $row    = $stmt->fetch() ?? null;
 
 // Raw PDO access (when extension-specific methods are needed):
-$rawPdo = $conn->pdo(); // PDO with 'sqlite:' DSN
+$rawPdo = $conn->pdo(); // PDO with 'sqlite:' or 'mysql:' DSN depending on config
 ```
 
 ---
@@ -58,6 +121,7 @@ src/Database/
 │   └── DatabaseException.php      # Laswitchtech\CoreWeb\Database\Error\DatabaseException
 └── Driver/
     ├── DriverInterface.php        # Laswitchtech\CoreWeb\Database\Driver\DriverInterface
+    ├── Mysql.php                  # Laswitchtech\CoreWeb\Database\Driver\Mysql (Phase 2A)
     └── Sqlite.php                 # Laswitchtech\CoreWeb\Database\Driver\Sqlite
 
 docs/development/architecture/Database/
@@ -66,18 +130,19 @@ docs/development/architecture/Database/
 │   └── DatabaseException.md       # docs/development/architecture/Database/Error/DatabaseException.md
 └── Driver/
     ├── DriverInterface.md         # docs/development/architecture/Database/Driver/DriverInterface.md
+    ├── Mysql.md                   # docs/development/architecture/Database/Driver/Mysql.md (Phase 2A)
     └── Sqlite.md                  # docs/development/architecture/Database/Driver/Sqlite.md
 ```
 
 ---
 
-## Limitations (Phase 1)
+## Limitations — Phase 2A
 
 | Item                        | Status           | Notes                                                          |
 |-----------------------------|------------------|----------------------------------------------------------------|
-| MySQL / MariaDB driver      | ❌ Not yet       | Bootstrap guard rejects non-sqlite drivers at registration     |
-| PostgreSQL driver           | ❌ Not yet       | Out of scope for Phase 1                                       |
-| Connection pooling          | ❌ Not yet       | SQLite does not need pool; MySQL version deferred             |
+| MySQL / MariaDB driver      | ✅ Implemented   | Bootstrap resolves `mysql` and `mariadb` to Mysql class       |
+| PostgreSQL driver           | ❌ Not yet       | Out of scope for Phase 2A                                      |
+| Connection pooling          | ❌ Not yet       | SQLite does not need pool; MySQL version deferred              |
 | Query Builder               | ❌ Future phase  | KANBAN-designated future work; use native PDO until available  |
 | ORM / Active Record         | ❌ Future phase  | Beyond the scope of a driver layer                             |
 | Database migrations          | ❌ Future phase  | DESIGN.md states "No migration system in day-one"              |
@@ -86,9 +151,30 @@ docs/development/architecture/Database/
 | Admin panel DB settings     | ❌ Not yet       | KANBAN-admin UI task separate from driver implementation        |
 | Database seeding             | ❌ Future phase  | Seed/fixture system planned for a later data infrastructure task |
 
+### Phase 2A Explicitly Out of Scope (Not Deferred — Out of Scope)
+
+The following items are strictly out of scope and will not be added until a dedicated future scope:
+
+- **Join support** — Even though MySQL/MariaDB support joins, the driver provides raw connection only
+- **TLS/SSL** — `MYSQL_ATTR_SSL_*` options not included; consider DSN override for TLS connections
+- **Transaction helpers** — Only raw PDO methods (`beginTransaction()`, `commit()`, `rollBack()`); helper wrappers deferred
+- **PDO options beyond core set above** — e.g., `MYSQL_ATTR_INIT_COMMAND`, driver-specific settings (e.g. `CLIENT_SSL`)
+
+### What Is Supported in Phase 2A
+
+| Capability                  | SQLite       | MySQL/MariaDB    |
+|-----------------------------|--------------|------------------|
+| Connection creation          | ✅           | ✅               |
+| Lazy initialization         | ✅           | ✅               |
+| Native prepared statements  | ✅           | ✅                |
+| Raw SQL via PDO             | ✅           | ✅               |
+| PRAGMA (SQLite)            | ✅           | N/A              |
+| Custom DSN override         | ❌           | ✅               |
+| Extension validation         | ✅           | ✅               |
+
 ---
 
-## Validation (Phase 1)
+## Validation — Phase 2A
 
 ### CLI Smoke Test (Temporary — HelloWorld extension)
 
@@ -105,9 +191,10 @@ php cli hello.db
 1. `php -l src/Database/Error/DatabaseException.php` — syntax check
 2. `php -l src/Database/Connection.php` — syntax check
 3. `php -l src/Database/Driver/DriverInterface.php` — syntax check
-4. `php -l src/Database/Driver/Sqlite.php` — syntax check
-5. `php cli hello.db` — runtime validation (lazy connect + PRAGMA)
-6. Verify `$container->has('db_driver')` and `$container->has('db_connection')` are both true after bootstrap
+4. `php -l src/Database/Driver/Mysql.php` — syntax check (Phase 2A)
+5. `php -l src/Database/Driver/Sqlite.php` — syntax check
+6. `php cli hello.db` — runtime validation (lazy connect + PRAGMA)
+7. Verify `$container->has('db_driver')` and `$container->has('db_connection')` are both true after bootstrap
 
 ---
 
@@ -140,7 +227,7 @@ Phase 1 validates that `pdo_sqlite` is loaded and rejects an empty path string. 
 | Priority | Task                                   | Status     | Notes                                           |
 |----------|---------------------------------------|------------|-------------------------------------------------|
 | P1        | `core.db` CLI commands                | ⏳ Deferred  | Replaces temporary HelloWorld `hello.db`           |
-| P2        | MySQL / MariaDB Driver via PDO::mysql  | ⏳ Deferred  | Same interface contract as SQLite — swap at registration level |
+| P2        | MySQL / MariaDB Driver via PDO::mysql  | ✅ Implemented | Same interface contract as SQLite — swap at registration level |
 | P3        | Connection persistence for MySQL       | ⏳ Deferred  | Requires `$config['persistent'] = true` option    |
 | P4        | Migration system                        | ⏳ Deferred  | DESIGN.md: "No migration system in day-one"        |
 | P5        | Query Builder                              | ⏳ Deferred  | Future KANBAN task                                  |
@@ -155,3 +242,4 @@ See the linked documentation files in this directory for each component:
 - [DatabaseException](./Error/DatabaseException.md) — exception classes used during driver initialization
 - [DriverInterface](./Driver/DriverInterface.md) — contract shared by all drivers
 - [Sqlite Driver](./Driver/Sqlite.md) — SQLite-specific implementation details
+- [Mysql Driver](./Driver/Mysql.md) — MySQL/MariaDB PDO driver specific implementation (Phase 2A)

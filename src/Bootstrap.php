@@ -12,6 +12,7 @@ use Laswitchtech\CoreWeb\Renderer\Renderer;
 use Laswitchtech\CoreWeb\Renderer\Engine\PhpEngine;
 use Laswitchtech\CoreWeb\Renderer\Engine\LatteEngine;
 use Laswitchtech\CoreWeb\Renderer\Engine\Registry as EngineRegistry;
+use Laswitchtech\CoreWeb\Database\Driver\Mysql;
 use Laswitchtech\CoreWeb\Database\Driver\Sqlite;
 use Laswitchtech\CoreWeb\Database\Error\DatabaseException;
 
@@ -201,25 +202,45 @@ class Bootstrap
     private function registerDbServices(Container $c): void
     {
         $appRoot   = $this->resolveAppRoot();
-        $driverKey = Config::get('database.driver', 'sqlite');
-        $dbPath    = Config::get('database.path') ?: 'data/app.db';
 
-        // Phase-1 guard: only sqlite is supported.
-        if ($driverKey !== 'sqlite') {
-            throw new DatabaseException(
-                "Database driver '{$driverKey}' is not supported in Phase 1. Set database.driver to 'sqlite'."
-            );
+        $driverKey = Config::get('database.driver', 'sqlite');
+        if (!is_string($driverKey) || $driverKey === '') {
+            $driverKey = 'sqlite';
+        } else {
+            $driverKey = strtolower($driverKey);
         }
 
-        $c->registerSingleton('db_driver', static fn ($container) => new Sqlite());
+        // Resolve the correct driver singleton.
+        $c->registerSingleton('db_driver', static fn ($container) => match ($driverKey) {
+            'mysql', 'mariadb' => new Mysql(),
+            'sqlite'           => new Sqlite(),
+            default            => throw new DatabaseException(
+                "Unsupported database driver: '{$driverKey}'. Supported: sqlite, mysql, mariadb."
+            ),
+        });
 
-        // Lazy connection — directory creation and pdo_sqlite validation happen on first resolution, not boot.
+        // Lazy connection — directory creation and driver-specific validation happen on first resolution, not boot.
         $c->registerSingleton('db_connection', static fn ($container) =>
-            $container->resolve('db_driver')
-                ->connect([
-                    'path'     => (string) $dbPath,
-                    'basePath' => $appRoot,
-                ])
+            match ($driverKey) {
+                'mysql', 'mariadb' => $container->resolve('db_driver')
+                    ->connect([
+                        'host'     => Config::get('database.host', '127.0.0.1'),
+                        'port'     => Config::get('database.port', 3306),
+                        'database' => Config::get('database.database', ''),
+                        'charset'  => Config::get('database.charset', 'utf8mb4'),
+                        'username' => Config::get('database.username', ''),
+                        'password' => Config::get('database.password', ''),
+                        'dsn'      => Config::get('database.dsn', null),
+                    ]),
+                'sqlite' => $container->resolve('db_driver')
+                    ->connect([
+                        'path'     => (string) (Config::get('database.path') ?: 'data/app.db'),
+                        'basePath' => $appRoot,
+                    ]),
+                default => throw new DatabaseException(
+                    "Unsupported database driver: '{$driverKey}'. Supported: sqlite, mysql, mariadb."
+                ),
+            }
         );
     }
 
