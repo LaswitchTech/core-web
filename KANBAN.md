@@ -58,6 +58,19 @@
   - [ ] Configure Latte cache path through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
   - [ ] Configure Latte strict mode / debug mode <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
   - [ ] Allow application-level engine registration overrides <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+  - [ ] LESS / CSS Asset Pipeline <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - Compile kernel, application, enabled theme, and enabled plugin LESS/CSS assets into a generated stylesheet served by the framework.
+    - Tags: framework, renderer, assets, less, css
+    - [ ] Add `wikimedia/less.php` dependency for LESS compilation <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - [ ] Implement static `/css` route for generated stylesheet output <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+      - Route should serve compiled CSS generated from kernel assets, application assets, the enabled theme, and all enabled plugins.
+    - [ ] Compile kernel + application + enabled extension styles in deterministic order <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+      - Order should be explicit and documented: kernel first, application overrides second, enabled theme next, enabled plugins last unless a stronger precedence rule is defined later.
+    - [ ] Cache compiled CSS under `/storage/cache/renderer/less/` <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+      - Cache should avoid recompilation in production when source files are unchanged.
+    - [ ] Recompile LESS on every request when debug mode is enabled <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+      - Debug mode should bypass the cached compiled CSS so developers immediately see style changes.
+    - [ ] Document asset discovery and cache invalidation behavior <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
 - [ ] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
   - `/admin` panel with all required sub-systems.
   - Tags: feature, admin
@@ -97,7 +110,27 @@
     - [x] Support custom path for database file location <!-- created_at: 2026-06-18T10:54:00-04:00 completed_at: 2026-06-23 priority: normal -->
       - Sqlite driver resolves `database.path` from config, supports relative paths (resolved against basePath), absolute paths, and empty-path rejection. Path resolution with isAbsPath() helper for Unix/Windows detection in docs/development/architecture/Database/Driver/Sqlite.md.
     - [x] Auto-create data directory on connection <!-- created_at: 2026-06-18T10:55:00-04:00 completed_at: 2026-06-23 priority: normal -->
-      - Sqlite driver checks \is_dir() on $parentDir; calls \mkdir(parentDir, 0755, true) with @ suppressor and throws DatabaseException on failure. Directory creation only runs during lazy connection (first resolve('db_connection') call).
+      - Sqlite driver checks \is_dir() on $parentDir; calls \mkdir(parentDir, 0755, true) with race-safe fallback checks and throws DatabaseException on failure. Directory creation only runs during lazy connection (first resolve('db_connection') call).
+  - [ ] MySQL / MariaDB Driver <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - Add a PDO-based MySQL/MariaDB driver so developers and administrators can choose SQLite for zero-config local installs or MySQL/MariaDB for shared/server deployments.
+    - Tags: feature, database, mysql, mariadb
+    - [ ] Implement PDO MySQL driver with configurable DSN/host/port/database/charset/user/password <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - [ ] Support `database.driver = mysql` and `database.driver = mariadb` aliases in Bootstrap database registration <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - [ ] Add configuration documentation for MySQL/MariaDB connection settings <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+    - [ ] Add CLI smoke validation for MySQL/MariaDB connection testing <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+  - [ ] Query Builder Foundation <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - Add a small database query layer for safe SELECT/INSERT/UPDATE/DELETE composition while keeping raw PDO available through `Connection::pdo()`.
+    - Tags: feature, database, query-builder
+    - [ ] Implement basic SELECT builder with WHERE conditions and bound parameters <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - [ ] Add support for table joins (`INNER`, `LEFT`, and `RIGHT` where supported by driver) <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - [ ] Implement INSERT/UPDATE/DELETE helpers with parameter binding <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+    - [ ] Document driver differences for join support between SQLite and MySQL/MariaDB <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+  - [ ] Transaction API Enhancements <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+    - Build on the existing PDO transaction pass-throughs with safer application-level transaction helpers.
+    - Tags: feature, database, transactions
+    - [ ] Add `transaction(callable $callback)` helper that commits on success and rolls back on failure <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+    - [ ] Add `inTransaction()` pass-through helper <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+    - [ ] Document nested transaction behavior and driver limitations <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
   - [x] Config Manager <!-- created_at: 2026-06-18T11:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
     - Tags: feature
