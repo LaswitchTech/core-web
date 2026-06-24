@@ -14,6 +14,10 @@ use Laswitchtech\CoreWeb\Renderer\Engine\LatteEngine;
 use Laswitchtech\CoreWeb\Renderer\Engine\Registry as EngineRegistry;
 use Laswitchtech\CoreWeb\Database\Driver\Mysql;
 use Laswitchtech\CoreWeb\Database\Driver\Sqlite;
+use Laswitchtech\CoreWeb\Database\Query\Compiler\MysqlCompiler;
+use Laswitchtech\CoreWeb\Database\Query\Compiler\SqliteCompiler;
+use Laswitchtech\CoreWeb\Database\Connection;
+use Laswitchtech\CoreWeb\Database\Database;
 use Laswitchtech\CoreWeb\Database\Error\DatabaseException;
 
 /**
@@ -242,6 +246,18 @@ class Bootstrap
                 ),
             }
         );
+
+        // Facade service — wraps db_connection + dialect compiler and exposes the public API.
+        $c->registerSingleton('database', function ($container) use ($driverKey) {
+            $compiler = match ($driverKey) {
+                'mysql', 'mariadb' => new MysqlCompiler(),
+                'sqlite'            => new SqliteCompiler(),
+                default             => throw new DatabaseException(
+                    "Unsupported database driver: '{$driverKey}'. Supported: sqlite, mysql, mariadb."
+                ),
+            };
+            return new Database($container->resolve('db_connection'), $compiler);
+        });
     }
 
     /* ------------------------------------------------------------------ --/

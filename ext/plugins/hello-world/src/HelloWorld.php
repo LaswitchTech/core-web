@@ -112,6 +112,33 @@ final class HelloWorld
                     return Response::text("SQLite FAILED: {$_e->getMessage()}\n", 500);
                 }
             });
+
+            // Temporary smoke validation for the Query Builder (Phase 1F).
+            $router->command('hello.query', function (Cli $_req) use ($c): Response {
+                try {
+                    /** @var \Laswitchtech\CoreWeb\Database\Database */
+                    $db = $c->resolve('database');
+
+                    // Raw-PDO setup.
+                    $pdo  = $db->pdo();
+                    $pdo->exec("CREATE TABLE IF NOT EXISTS query_smoke (id INTEGER PRIMARY KEY, name TEXT)");
+                    $pdo->exec("DELETE FROM query_smoke WHERE id = 1");
+                    $pdo->exec("INSERT INTO query_smoke (id, name) VALUES (1, 'smoke')");
+
+                    // Query via the fluent builder.
+                    $row = $db->select('query_smoke')
+                        ->where(['id' => 1])
+                        ->fetch();
+
+                    if (!\is_array($row) || !isset($row['name'])) {
+                        return Response::text("Query FAILED: result row missing or name column not set\n", 500);
+                    }
+
+                    return Response::text("Query OK: {$row['name']}\n");
+                } catch (\Throwable $_e) {
+                    return Response::text("Query FAILED: {$_e->getMessage()}\n", 500);
+                }
+            });
         }
     }
 

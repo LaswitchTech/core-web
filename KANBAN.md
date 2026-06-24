@@ -133,19 +133,26 @@
          ->fetch();
       ```
     - Tags: feature, database, query-builder
-    - [ ] Design fluent query builder API before implementation <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-      - Decide method names and execution semantics, including `select($table)`, `where([...])`, `join(...)`, `fetch()` for one result, and a separate method for multiple rows if needed.
-    - [ ] Implement query representation independent of SQL dialect <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-      - Store table, selected columns, where clauses, joins, ordering, limits, and bound values as query intent before compiling to SQL.
-    - [ ] Implement SQL compiler / grammar interface <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-      - Convert query objects into executable SQL and bound parameters without exposing driver-specific syntax to application code.
-    - [ ] Implement SQLite query compiler <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-    - [ ] Implement MySQL/MariaDB query compiler <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-    - [ ] Implement basic SELECT builder with WHERE conditions and bound parameters <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-    - [ ] Add support for table joins (`INNER`, `LEFT`, and `RIGHT` where supported by driver) <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-    - [ ] Implement ORDER BY, LIMIT, and OFFSET support <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
-    - [ ] Implement INSERT/UPDATE/DELETE helpers with parameter binding <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
-    - [ ] Document driver differences for joins, identifier quoting, limits, booleans, and future RETURNING support between SQLite and MySQL/MariaDB <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+    - [x] Design fluent query builder API before implementation <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - Methods: select(table, columns), where(operator/comparison), join()/leftJoin(), orderBy(limit/offset), fetch()/all(). Verified in src/Database/Query/Builder.php.
+  - [x] Implement query representation independent of SQL dialect <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - Query intent stored as immutable clause value objects (WhereClause, JoinClause, OrderByClause) in src/Database/Query/Clause/. Builder stores table, columns, clauses, limit/offset; compiles via CompilerInterface at execution time.
+  - [x] Implement SQL compiler / grammar interface <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - CompilerInterface::compile(Builder): array{sql, params} in src/Database/Query/CompilerInterface.php. Return shape is fixed shape-typed array with sql string and positional params list.
+  - [x] Implement SQLite query compiler <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - SqliteCompiler in src/Database/Query/Compiler/SqliteCompiler.php. Double-quote identifiers, positional ? parameters, bool→int casting, all WHERE operators, INNER/LEFT JOIN, ORDER BY, LIMIT/OFFSET documented in docs/development/architecture/Database/Query/Compiler/.
+  - [x] Implement MySQL/MariaDB query compiler <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - MysqlCompiler in src/Database/Query/Compiler/MysqlCompiler.php. Backtick identifiers, positional ? parameters, bool→int casting, same feature set as SqliteCompiler documented in docs/development/architecture/Database/Query/Compiler/.
+  - [x] Implement basic SELECT builder with WHERE conditions and bound parameters <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - src/Database/Query/Builder.php with where() (incl. array notation), orWhere(), fetch(): ?array, all(): list<array>. WHERE operators: =, !=, <, >, <=, >=, LIKE, IN, IS NULL, IS NOT NULL. Positioned 1-based parameter binding via bindValue().
+  - [~] Add support for table joins (INNER, LEFT, RIGHT deferred) <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - INNER and LEFT supported: join() and leftJoin() methods in Builder.php with column-to-column ON conditions (no expression-based joins). JoinClause restricts to INNER/LEFT types; RIGHT JOIN deferred. WHERE operators for JOIN comparisons: =, !=, <, >, <=, >= per JoinClause validation.
+  - [x] Implement ORDER BY, LIMIT, and OFFSET support <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+    - orderBy(column, dir) accepts ASC/DESC; limit(n)/offset(n) accept non-negative int (rejects negative). Stored as OrderByClause VOs; validated by compilers.
+  - [ ] Implement INSERT/UPDATE/DELETE helpers with parameter binding <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+    - Deferred: no execute method in Builder; DML compiler implementations also deferred. Future phase work.
+  - [x] Document driver differences for joins, identifier quoting, limits, booleans, and future RETURNING support between SQLite and MySQL/MariaDB <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+    - Documented in Docs/development/architecture/Database/Architecture.md, Query/Builder.md, and Compiler/*.md. Key differences: SQLite uses double-quoted identifiers "table"."column"; MySQL/MariaDB use backticks. Both use positional ? params, bool→int casting, SELECT * unquoted. JOINs column-to-column only in Phase 1D.
   - [ ] Transaction API Enhancements <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
     - Build on the existing PDO transaction pass-throughs with safer application-level transaction helpers.
     - Tags: feature, database, transactions

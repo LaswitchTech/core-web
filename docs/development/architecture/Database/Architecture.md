@@ -2,9 +2,33 @@
 
 ## Overview
 
-The Database subsystem provides a minimal PDO-based driver abstraction layer for Core-Web with two production-ready drivers: **SQLite** (zero-config, default) and **MySQL/MariaDB** (server-based). It is intentionally limited to connection creation, lazy initialization, and basic transaction support — no query builder, ORM, or schema management.
+The Database subsystem provides a minimal PDO-based driver abstraction layer for Core-Web with two production-ready drivers — **SQLite** (zero-config, default) and **MySQL/MariaDB** (server-based) — plus a fluent Query Builder that compiles to prepared statements at the dialect level.
 
-This document describes the multi-driver architecture and components as of Phase 2A. Future phases will extend this with migration tools and the Query Builder subsystem.
+Architecture layers:
+
+```
+┌─────────────────────────────────────────────┐
+│  Database Facade (Database.php)              │  ← public entry / builder factory
+│  + select(table, columns) → Builder          │
+├─────────────────────────────────────────────┤
+│  Query Builder (Builder.php)                 │  ✓ Phase 1E — SELECT intent + fetch()/all()
+│  + where/orWhere/join/orderBy/limit/offset   │
+│  + fetch(): ?array                            │
+│  + all(): list<array>                         │
+├─────────────────────────────────────────────┤
+│  Compiler Layer (CompilerInterface)          │  ✓ Phase 1E — SQL translation
+│    SqliteCompiler  → double-quoted, positional │
+│    MysqlCompiler   → backtick-quoted           │
+├─────────────────────────────────────────────┤
+│  Connection (Connection.php)                 │  ✓ Phase 2A — PDO wrapper
+│  + pdo(), query(), prepare()                 │
+├─────────────────────────────────────────────┤
+│  Drivers (DriverInterface, Mysql, Sqlite)    │  ✓ Phase 2A — DSN/connection
+│  + connect(string $dsn): PDO                 │
+└─────────────────────────────────────────────┘
+```
+
+This document describes the multi-driver architecture and components as of Phase 2A with the Query Builder layer additions from Phase 1E. Future phases will extend this with migration tools, schema introspection, ORM, and data management tooling.
 
 ---
 
@@ -88,11 +112,13 @@ In this mode, `database` must be a non-empty string; otherwise a `DatabaseExcept
 |-------------------|-----------------------------------------------------|------------|------------------------------------------------------------------------------------------------------------------|
 | `db_driver`       | `DriverInterface` (Sqlite or Mysql)                 | lazy singleton | The driver instance — **does NOT return a Connection**. Returns the driver itself (`Sqlite`, `Mysql`, etc.) |
 | `db_connection`   | `Laswitchtech\CoreWeb\Database\Connection`           | lazy singleton | PDO wrapper — lazy-initialized via `$driver->connect(...)`. Resolved on first access only                      |
+| `database`        | `Laswitchtech\CoreWeb\Database\Database`             | lazy singleton | Database facade wrapping `db_connection` + selected compiler. **No `db` alias**.                                   |
 
 ### Critical Distinction
 
 - **`db_driver`** does NOT return a Connection. It returns the driver instance (e.g., `Sqlite|class:Mysql`). Use it if you need to introspect which driver is active or call driver-specific factory methods.
 - **`db_connection`** returns the Connection object. This is the primary interface for raw PDO access via `$conn->prepare()`, `$conn->query()`, and `$conn->pdo()`.
+- **`database`** wraps both `db_connection` + `CompilerInterface`; use it for fluent query building (`->select()->where()->fetch()`) or raw SQL through delegation.
 
 ### Accessing the Database
 
@@ -112,13 +138,59 @@ $rawPdo = $conn->pdo(); // PDO with 'sqlite:' or 'mysql:' DSN depending on confi
 
 ---
 
+## Database Facade (Phase 1E)
+
+The `Database` class wraps ``Connection`` + ``CompilerInterface`` and exposes:
+
+| Method | Return type | Description |
+|--------|-------------|-------------|
+| `pdo()` | `PDO` | Pass-through to the underlying connection's PDO. |
+| `query(string $sql)` | `PDOStatement\|false` | Execute a SQL query; returns result statement or false. |
+| `select(table, columns = ['*'])` | `Builder` | Fluent SELECT — passes ``Connection`` + ``CompilerInterface`` to ``Builder``. |
+
+The facade is the public entry point for both raw and fluent queries.
+
+### Bootstrap Wiring
+
+```php
+$driverKey = /* 'sqlite'|'mysql'|'mariadb' from config */;
+
+$c->registerSingleton('db_driver', /* ... */);      // Sqlite or Mysql driver singleton
+$c->registerSingleton('db_connection', /* ... */);   // Connection via lazy db_driver factory
+$c->registerSingleton('database', fn($container) =>  // Lazy singleton — resolved on first use
+    new Database(
+        $container->resolve('db_connection'),
+        match ($driverKey) {
+            'mysql', 'mariadb' => new MysqlCompiler(),
+            'sqlite'           => new SqliteCompiler(),
+            default            => throw new \DomainException("Unsupported driver: {$driverKey}"),
+        },
+    ),
+);
+```
+
+Neither the ``Connection`` nor the compiler is ever `null` because both are resolved/created within the factory closure. ``binParams()`` validates this invariant: if `$this->pdo !== null && $this->stmt` has not been set at execution time, it throws a ``DomainException`` rather than a ``TypeError``, preserving backward compatibility with existing callers.
+
+---
+
 ## Directory Structure
 
 ```
 src/Database/
 ├── Connection.php                 # Laswitchtech\CoreWeb\Database\Connection
+├── Database.php                   # Laswitchtech\CoreWeb\Database\Database (Phase 1E)
 ├── Error/
 │   └── DatabaseException.php      # Laswitchtech\CoreWeb\Database\Error\DatabaseException
+├── Query/
+│   ├── Builder.php                # Laswitchtech\CoreWeb\Database\Query\Builder (Phase 1E)
+│   ├── Clause/
+│   │   ├── JoinClause.php         # Immutable JOIN condition value object (Phase 1E)
+│   │   ├── OrderByClause.php      # Immutable ORDER BY value object (Phase 1E)
+│   │   └── WhereClause.php        # Immutable WHERE condition value object (Phase 1E)
+│   ├── Compiler/
+│   │   ├── SqliteCompiler.php     # SQLite SQL generation: double-quoted, positional (Phase 1E)
+│   │   └── MysqlCompiler.php      # MySQL/MariaDB SQL generation: backticks (Phase 1E)
+│   └── CompilerInterface.php      # Contract between Builder and dialect compilers (Phase 1E)
 └── Driver/
     ├── DriverInterface.php        # Laswitchtech\CoreWeb\Database\Driver\DriverInterface
     ├── Mysql.php                  # Laswitchtech\CoreWeb\Database\Driver\Mysql (Phase 2A)
@@ -126,8 +198,20 @@ src/Database/
 
 docs/development/architecture/Database/
 ├── Architecture.md                # this file
+├── Database.md                    # docs/development/architecture/Database/Database.md (Phase 1E)
 ├── Error/
 │   └── DatabaseException.md       # docs/development/architecture/Database/Error/DatabaseException.md
+├── Query/
+│   ├── Builder.md                 # docs/development/architecture/Database/Query/Builder.md (Phase 1E)
+│   ├── Clause/
+│   │   ├── JoinClause.md          # docs/development/architecture/Database/Query/Clause/JoinClause.md
+│   │   ├── OrderByClause.md       # docs/development/architecture/Database/Query/Clause/OrderByClause.md
+│   │   └── WhereClause.md         # docs/development/architecture/Database/Query/Clause/WhereClause.md
+│   ├── Compiler/
+│   │   ├── CompilerInterface.md   # docs/development/architecture/Database/Query/Compiler/CompilerInterface.md (Phase 1E)
+│   │   ├── SqliteCompiler.md      # docs/development/architecture/Database/Query/Compiler/SqliteCompiler.md (Phase 1E)
+│   │   └── MysqlCompiler.md       # docs/development/architecture/Database/Query/Compiler/MysqlCompiler.md (Phase 1E)
+│   └── Architecture.md           # Phase 1E — Query Builder layer overview + SQL output examples
 └── Driver/
     ├── DriverInterface.md         # docs/development/architecture/Database/Driver/DriverInterface.md
     ├── Mysql.md                   # docs/development/architecture/Database/Driver/Mysql.md (Phase 2A)
@@ -143,7 +227,7 @@ docs/development/architecture/Database/
 | MySQL / MariaDB driver      | ✅ Implemented   | Bootstrap resolves `mysql` and `mariadb` to Mysql class       |
 | PostgreSQL driver           | ❌ Not yet       | Out of scope for Phase 2A                                      |
 | Connection pooling          | ❌ Not yet       | SQLite does not need pool; MySQL version deferred              |
-| Query Builder               | ❌ Future phase  | KANBAN-designated future work; use native PDO until available  |
+| Query Builder               | ✅ Phase 1E implemented (SELECT + fetch()/all()) | DML INSERT/UPDATE/DELETE deferred to a later phase |
 | ORM / Active Record         | ❌ Future phase  | Beyond the scope of a driver layer                             |
 | Database migrations          | ❌ Future phase  | DESIGN.md states "No migration system in day-one"              |
 | Schema introspection        | ❌ Not yet       | Table/column metadata APIs not implemented                     |
@@ -229,9 +313,8 @@ Phase 1 validates that `pdo_sqlite` is loaded and rejects an empty path string. 
 | P1        | `core.db` CLI commands                | ⏳ Deferred  | Replaces temporary HelloWorld `hello.db`           |
 | P2        | MySQL / MariaDB Driver via PDO::mysql  | ✅ Implemented | Same interface contract as SQLite — swap at registration level |
 | P3        | Connection persistence for MySQL       | ⏳ Deferred  | Requires `$config['persistent'] = true` option    |
-| P4        | Migration system                        | ⏳ Deferred  | DESIGN.md: "No migration system in day-one"        |
-| P5        | Query Builder                              | ⏳ Deferred  | Future KANBAN task                                  |
-| P6        | Schema manager                             | ⏳ Deferred  | Table/column introspection + DDL helpers           |
+| P4        | Query Builder                              | ✅ Implemented | Phase 1E — SELECT with fetch()/all() complete (DML deferred)  |
+| P5        | Schema manager                             | ⏳ Deferred  | Table/column introspection + DDL helpers           |
 
 ---
 

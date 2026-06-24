@@ -13,6 +13,7 @@ Active smoke-test plugin for CoreWeb's renderer and router subsystems.
 | `router.register` | `hello.latte` (CLI) | Same Latte pipeline via CLI |
 | `router.register` | `hello.world` (CLI) | Legacy CLI command (accepts optional name argument) |
 | **temporary** | `hello.db` **(CLI)** | **Database smoke validation — resolves `db_connection` and runs `SELECT sqlite_version()` — Phase 1 placeholder for core.db.** |
+| **temporary** | `hello.query` **(CLI)** | **Query Builder smoke validation — creates a temporary `query_smoke` table via raw PDO, inserts one row, queries it using `$db->select('query_smoke')->where(['id' => 1])->fetch()` — Phase 1F.** |
 
 ## Resource registration
 
@@ -70,6 +71,7 @@ php cli hello.world            # → "Hello World!\n" (accepts optional name arg
 php cli hello.render           # → rendered layout → template → PHP view HTML
 php cli hello.latte            # → rendered layout → template → Latte view HTML
 php cli hello.db               # → database smoke validation: "SQLite OK: {version}\n"
+php cli hello.query            # → query builder smoke validation (Phase 1F)
 ```
 
 ### Temporary DB Smoke Command
