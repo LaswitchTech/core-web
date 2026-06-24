@@ -1,27 +1,6 @@
 # Kanban
 
 ## Todo <!-- hide: archive -->
-- [ ] Database <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Tags: framework, database, config
-  - [~] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - [x] SQLite Driver <!-- created_at: 2026-06-18T10:52:22-04:00 completed_at: 2026-06-23 priority: high -->
-    - Zero-config database backend, file-based storage. PDO-based SQLite driver with lazy connection via container binding. Implementation: src/Database/Connection.php (thin wrapper), src/Database/Driver/Sqlite.php (driver with path resolution + auto-mkdir), src/Database/Driver/DriverInterface.php (contract). Container bindings: `db_driver` (singleton → Sqlite), `db_connection` (lazy singleton → Connection, resolved on first access). SQLite3 native class is not used — PDO only. Migrations/query builder/ORM are out of scope for Phase 1 (deferred to later tasks).
-    - Validation: `php cli hello.db` smoke test passes (PDO connects, PRAGMA journal_mode=WAL + foreign_keys=ON applied). All .cfg keys documented (`database.driver` restricted to `'sqlite'`, `database.path` default `data/app.db`). Architecture docs at `docs/development/architecture/Database/`.
-    - Tags: feature
-    - [x] Implement PDO wrapper with SQLite defaults <!-- created_at: 2026-06-18T10:53:03-04:00 completed_at: 2026-06-23 priority: high -->
-      - Connection class with typed pass-through methods: `pdo()`, `query()`, `prepare()`, `beginTransaction()`, `commit()`, `rollback()`, `lastInsertId()`. PDO constructed with ERRMODE_EXCEPTION, FETCH_ASSOC, no emulate_prepares, no persistent connections.
-    - [x] Support custom path for database file location <!-- created_at: 2026-06-18T10:54:00-04:00 completed_at: 2026-06-23 priority: normal -->
-      - Sqlite driver resolves `database.path` from config, supports relative paths (resolved against basePath), absolute paths, and empty-path rejection. Path resolution with isAbsPath() helper for Unix/Windows detection in docs/development/architecture/Database/Driver/Sqlite.md.
-    - [x] Auto-create data directory on connection <!-- created_at: 2026-06-18T10:55:00-04:00 completed_at: 2026-06-23 priority: normal -->
-      - Sqlite driver checks \is_dir() on $parentDir; calls \mkdir(parentDir, 0755, true) with @ suppressor and throws DatabaseException on failure. Directory creation only runs during lazy connection (first resolve('db_connection') call).
-  - [x] Config Manager <!-- created_at: 2026-06-18T11:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
-    - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
-    - Tags: feature
-    - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 priority: normal -->
-      - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
 - [ ] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, extensions
   - [~] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
@@ -106,6 +85,27 @@
     - [ ] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 priority: normal -->
 
 ## In Progress <!-- hide: archive -->
+- [ ] Database <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+  - Tags: framework, database, config
+  - [~] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+  - [x] SQLite Driver <!-- created_at: 2026-06-18T10:52:22-04:00 completed_at: 2026-06-23 priority: high -->
+    - Zero-config database backend, file-based storage. PDO-based SQLite driver with lazy connection via container binding. Implementation: src/Database/Connection.php (thin wrapper), src/Database/Driver/Sqlite.php (driver with path resolution + auto-mkdir), src/Database/Driver/DriverInterface.php (contract). Container bindings: `db_driver` (singleton → Sqlite), `db_connection` (lazy singleton → Connection, resolved on first access). SQLite3 native class is not used — PDO only. Migrations/query builder/ORM are out of scope for Phase 1 (deferred to later tasks).
+    - Validation: `php cli hello.db` smoke test passes (PDO connects, PRAGMA journal_mode=WAL + foreign_keys=ON applied). All .cfg keys documented (`database.driver` restricted to `'sqlite'`, `database.path` default `data/app.db`). Architecture docs at `docs/development/architecture/Database/`.
+    - Tags: feature
+    - [x] Implement PDO wrapper with SQLite defaults <!-- created_at: 2026-06-18T10:53:03-04:00 completed_at: 2026-06-23 priority: high -->
+      - Connection class with typed pass-through methods: `pdo()`, `query()`, `prepare()`, `beginTransaction()`, `commit()`, `rollback()`, `lastInsertId()`. PDO constructed with ERRMODE_EXCEPTION, FETCH_ASSOC, no emulate_prepares, no persistent connections.
+    - [x] Support custom path for database file location <!-- created_at: 2026-06-18T10:54:00-04:00 completed_at: 2026-06-23 priority: normal -->
+      - Sqlite driver resolves `database.path` from config, supports relative paths (resolved against basePath), absolute paths, and empty-path rejection. Path resolution with isAbsPath() helper for Unix/Windows detection in docs/development/architecture/Database/Driver/Sqlite.md.
+    - [x] Auto-create data directory on connection <!-- created_at: 2026-06-18T10:55:00-04:00 completed_at: 2026-06-23 priority: normal -->
+      - Sqlite driver checks \is_dir() on $parentDir; calls \mkdir(parentDir, 0755, true) with @ suppressor and throws DatabaseException on failure. Directory creation only runs during lazy connection (first resolve('db_connection') call).
+  - [x] Config Manager <!-- created_at: 2026-06-18T11:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
+    - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
+    - Tags: feature
+    - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 priority: normal -->
+      - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
 
 ## Validation
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
