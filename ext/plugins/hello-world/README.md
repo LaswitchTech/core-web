@@ -12,6 +12,7 @@ Active smoke-test plugin for CoreWeb's renderer and router subsystems.
 | `router.register` | `/hello-latte` (web) | Layout → template → Latte view pipeline |
 | `router.register` | `hello.latte` (CLI) | Same Latte pipeline via CLI |
 | `router.register` | `hello.world` (CLI) | Legacy CLI command (accepts optional name argument) |
+| **temporary** | `hello.db` **(CLI)** | **Database smoke validation — resolves `db_connection` and runs `SELECT sqlite_version()` — Phase 1 placeholder for core.db.** |
 
 ## Resource registration
 
@@ -68,7 +69,12 @@ The `layouts/` and `templates/` directories contain renderer resources contribut
 php cli hello.world            # → "Hello World!\n" (accepts optional name argument)
 php cli hello.render           # → rendered layout → template → PHP view HTML
 php cli hello.latte            # → rendered layout → template → Latte view HTML
+php cli hello.db               # → database smoke validation: "SQLite OK: {version}\n"
 ```
+
+### Temporary DB Smoke Command
+
+> **Phase 1 only.** This command validates that the `db_connection` container binding works. It will be replaced by a permanent `core.db.*` CLI subsystem in a later phase.
 
 ### Web (browser)
 

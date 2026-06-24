@@ -1,15 +1,19 @@
 # Kanban
 
-## Todo
+## Todo <!-- hide: archive -->
 - [ ] Database <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - [~] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, database, config
-  - [ ] SQLite Driver <!-- created_at: 2026-06-18T10:52:22-04:00 priority: high -->
-    - Zero-config database backend, file-based storage
+  - [~] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+  - [x] SQLite Driver <!-- created_at: 2026-06-18T10:52:22-04:00 completed_at: 2026-06-23 priority: high -->
+    - Zero-config database backend, file-based storage. PDO-based SQLite driver with lazy connection via container binding. Implementation: src/Database/Connection.php (thin wrapper), src/Database/Driver/Sqlite.php (driver with path resolution + auto-mkdir), src/Database/Driver/DriverInterface.php (contract). Container bindings: `db_driver` (singleton → Sqlite), `db_connection` (lazy singleton → Connection, resolved on first access). SQLite3 native class is not used — PDO only. Migrations/query builder/ORM are out of scope for Phase 1 (deferred to later tasks).
+    - Validation: `php cli hello.db` smoke test passes (PDO connects, PRAGMA journal_mode=WAL + foreign_keys=ON applied). All .cfg keys documented (`database.driver` restricted to `'sqlite'`, `database.path` default `data/app.db`). Architecture docs at `docs/development/architecture/Database/`.
     - Tags: feature
-    - [ ] Implement PDO wrapper with SQLite defaults <!-- created_at: 2026-06-18T10:53:03-04:00 priority: high -->
-    - [ ] Support custom path for database file location <!-- created_at: 2026-06-18T10:54:00-04:00 priority: normal -->
-    - [ ] Auto-create data directory on connection <!-- created_at: 2026-06-18T10:55:00-04:00 priority: normal -->
+    - [x] Implement PDO wrapper with SQLite defaults <!-- created_at: 2026-06-18T10:53:03-04:00 completed_at: 2026-06-23 priority: high -->
+      - Connection class with typed pass-through methods: `pdo()`, `query()`, `prepare()`, `beginTransaction()`, `commit()`, `rollback()`, `lastInsertId()`. PDO constructed with ERRMODE_EXCEPTION, FETCH_ASSOC, no emulate_prepares, no persistent connections.
+    - [x] Support custom path for database file location <!-- created_at: 2026-06-18T10:54:00-04:00 completed_at: 2026-06-23 priority: normal -->
+      - Sqlite driver resolves `database.path` from config, supports relative paths (resolved against basePath), absolute paths, and empty-path rejection. Path resolution with isAbsPath() helper for Unix/Windows detection in docs/development/architecture/Database/Driver/Sqlite.md.
+    - [x] Auto-create data directory on connection <!-- created_at: 2026-06-18T10:55:00-04:00 completed_at: 2026-06-23 priority: normal -->
+      - Sqlite driver checks \is_dir() on $parentDir; calls \mkdir(parentDir, 0755, true) with @ suppressor and throws DatabaseException on failure. Directory creation only runs during lazy connection (first resolve('db_connection') call).
   - [x] Config Manager <!-- created_at: 2026-06-18T11:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
     - Tags: feature
@@ -19,8 +23,8 @@
     - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 priority: normal -->
       - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
 - [ ] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - [~] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
   - Tags: framework, extensions
+  - [~] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
   - [x] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - Discover, parse, and validate extension manifests (`manifest.json` and `extension.json`).
     - Supports required `type`, `name`, `version` fields, version normalization (`X.Y.Z`), hook format validation, layouts, and dependency declarations.
@@ -47,7 +51,7 @@
     - [ ] Add namespace mapping support in manifest <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [ ] Register Composer-style namespace mappings for extension `src/` directories <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [ ] Validate class hook callbacks using declared namespace mappings <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [~] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal; updated_at: 2026-06-22 -->
+  - [~] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
     - Docs: lifecycle documented in docs/development/extensions/Lifecycle.md (placeholder — no implementation yet)
     - Tags: feature
     - [ ] Enable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
@@ -68,7 +72,6 @@
     - Renderable UI components with plugin extensibility.
     - Tags: feature
     - [ ] Implement base UIComponent interface and HTML sanitizer <!-- created_at: 2026-06-18T11:41:00-04:00 priority: normal -->
-
 - [ ] Renderer Configuration <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
   - Centralize renderer runtime settings so applications can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
   - Tags: framework, renderer, config
@@ -102,6 +105,17 @@
     - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
     - [ ] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 priority: normal -->
 
+## In Progress <!-- hide: archive -->
+
+## Validation
+- [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+  - Tags: testing
+  - [ ] Verify routing across all platforms <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
+    - Test Apache, Nginx, and IIS routing with the skeleton application on localhost.
+    - Tags: testing
+  - [ ] Add Bootstrap smoke tests <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
+    - Validate `php cli` boots successfully and triggers the Hello World plugin.
+    - Validate browser load triggers the Hello World plugin in WEB mode.
 
 ## Done
 - [x] Renderer <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-23 priority: normal -->
@@ -157,18 +171,6 @@
       - `renderer.register` and `renderer.engine.register` hooks are available for extension integration.
     - [x] Add simple smoke route using layout → template → view rendering <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-23 priority: normal -->
       - HelloWorld plugin validates both PHP and Latte rendering pipelines through WEB and CLI routes.
-
-## Validation
-- [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Tags: testing
-  - [ ] Verify routing across all platforms <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
-    - Test Apache, Nginx, and IIS routing with the skeleton application on localhost.
-    - Tags: testing
-  - [ ] Add Bootstrap smoke tests <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
-    - Validate `php cli` boots successfully and triggers the Hello World plugin.
-    - Validate browser load triggers the Hello World plugin in WEB mode.
-
-## Done
 - [x] Bootstrap Architecture <!-- created_at: 2026-06-18T14:10:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - Design document for the mode-driven bootstrap system and both entry-point patterns.
   - Tags: framework, bootstrap, documentation
@@ -224,8 +226,8 @@
   - [x] Nginx Support <!-- created_at: 2026-06-18T09:59:41-04:00 completed_at: 2026-06-22 priority: high -->
     - `try_files` directive that passes unknown paths to index.php, support subdirectory deployments via parameterizable root and location blocks.
     - Tags: feature
-    - [x] Generate nginx routing configuration supporting root deployments.
-      Alias configuration remains future work. <!-- created_at: 2026-06-18T11:10:30-04:00 completed_at: 2026-06-22 priority: normal -->
+    - [x] Generate nginx routing configuration supporting root deployments. <!-- created_at: 2026-06-24T08:07:37-04:00 completed_at: 2026-06-24T08:07:37-04:00 priority: normal -->
+      - Alias configuration remains future work. <!-- created_at: 2026-06-18T11:10:30-04:00 completed_at: 2026-06-22 priority: normal -->
   - [x] IIS Support <!-- created_at: 2026-06-18T10:00:04-04:00 completed_at: 2026-06-22 priority: high -->
     - URL Rewrite module rules for Windows IIS deployment with auto-detect for root vs subdirectory paths and fallback to PHP built-in server for local development.
     - Tags: feature

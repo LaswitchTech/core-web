@@ -12,8 +12,12 @@ use Laswitchtech\CoreWeb\Renderer\Renderer;
 use Laswitchtech\CoreWeb\Renderer\Engine\PhpEngine;
 use Laswitchtech\CoreWeb\Renderer\Engine\LatteEngine;
 use Laswitchtech\CoreWeb\Renderer\Engine\Registry as EngineRegistry;
+use Laswitchtech\CoreWeb\Database\Driver\Sqlite;
+use Laswitchtech\CoreWeb\Database\Error\DatabaseException;
 
 /**
+
+
  * Mode-driven single-entry bootstrap.
  * Documentation: docs/development/architecture/Bootstrap.md
  *
@@ -69,6 +73,7 @@ class Bootstrap
             $this->initConfig();
             $this->initContainer();
             $this->registerCoreServices(static::$instance);
+            $this->registerDbServices($c = static::$instance);
             $this->initExtensions();
 
             switch ($this->mode) {
@@ -185,6 +190,36 @@ class Bootstrap
 
         // Bootstrap mode for downstream subsystem selection (router vs cli).
         $c->set('mode', $this->mode);
+    }
+
+    /* ------------------------------------------------------------------ --/
+     /  Database Services                                                   */
+    /* ------------------------------------------------------------------ */
+
+    /** Register database services (driver + lazy singleton connection). */
+    private function registerDbServices(Container $c): void
+    {
+        $appRoot   = $this->resolveAppRoot();
+        $driverKey = Config::get('database.driver', 'sqlite');
+        $dbPath    = Config::get('database.path') ?: 'data/app.db';
+
+        // Phase-1 guard: only sqlite is supported.
+        if ($driverKey !== 'sqlite') {
+            throw new DatabaseException(
+                "Database driver '{$driverKey}' is not supported in Phase 1. Set database.driver to 'sqlite'."
+            );
+        }
+
+        $c->registerSingleton('db_driver', static fn ($container) => new Sqlite());
+
+        // Lazy connection — directory creation and pdo_sqlite validation happen on first resolution, not boot.
+        $c->registerSingleton('db_connection', static fn ($container) =>
+            $container->resolve('db_driver')
+                ->connect([
+                    'path'     => (string) $dbPath,
+                    'basePath' => $appRoot,
+                ])
+        );
     }
 
     /* ------------------------------------------------------------------ --/

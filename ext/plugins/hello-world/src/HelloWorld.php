@@ -88,6 +88,25 @@ final class HelloWorld
         $router->command('hello.world', function (Cli $req): Response {
             return Response::text('Hello ' . $req->arg(0, 'World') . "!\n");
         });
+
+        /* ------------------------------------------------------------------ --/
+         /  Temporary DB smoke-validation command                               */
+        /* ------------------------------------------------------------------ */
+
+        /** @var \Laswitchtech\CoreWeb\Bootstrap */
+        if ($c = Bootstrap::container()) {
+            $router->command('hello.db', function (Cli $_req) use ($c): Response {
+                try {
+                    /** @var \Laswitchtech\CoreWeb\Database\Connection */
+                    $conn = $c->resolve('db_connection');
+                    $stmt = $conn->query('SELECT sqlite_version() AS version');
+                    $row  = $stmt !== false ? $stmt->fetch() : null;
+                    return Response::text("SQLite OK: {$row['version']}\n");
+                } catch (\Throwable $_e) {
+                    return Response::text("SQLite FAILED: {$_e->getMessage()}\n", 500);
+                }
+            });
+        }
     }
 
     /** Register renderer resources into the registry during discovery. */

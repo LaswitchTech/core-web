@@ -173,6 +173,23 @@ The Bootstrap class binds exactly these keys into the container (in registration
 | `renderer_engine_registry` | `Renderer\Engine\Registry` instance | `initRenderer()` |
 | `renderer` | `Renderer` instance wired with both registries | `initRenderer()` |
 | `router` | `Router` instance | `bootWeb()` / `bootCli()` |
+| `db_driver`      | `\Laswitchtech\CoreWeb\Database\Driver\Sqlite` (singleton) | `registerDbServices()`           |
+| `db_connection`  | `Connection` (lazy singleton — resolved only on first access) | `registerDbServices()`           |
+
+---
+
+### Database Initialization (`registerDbServices()`)
+
+Called after `registerCoreServices()` and before `initExtensions()`:
+
+1. **Validate driver** — reads `database.driver` from config; Phase 1 requires `'sqlite'` and throws `\RuntimeException` for any other value.
+2. **Resolve database path** — reads `database.path`; defaults to `'data/app.db'` from core.cfg fallback.
+3. **Register driver singleton** — binds `'db_driver'` to `\Laswitchtech\CoreWeb\Database\Driver\Sqlite`.
+4. **Register connection factory** — binds `'db_connection'` as a lazy singleton; the closure:
+   - Resolves `$driver = $container->resolve('db_driver')` (unwraps Sqlite).
+   - Reads `app_root` for base-path resolution (defaults to `getcwd()` if missing).
+   - Calls `$driver->connect(['path' => $databasePath, 'basePath' => $basePath])`.
+5. If any step fails, throws `\RuntimeException` which is caught by the bootstrap's global `try/catch(\Throwable)` and surfaces as a boot error (`die()` or stderr).
 
 ---
 
