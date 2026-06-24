@@ -56,7 +56,7 @@ MySQL/MariaDB stores booleans as TINYINT(1). `MysqlCompiler` casts all `bool` pa
 | LEFT JOIN | ✅ | Same as INNER JOIN, different keyword. |
 | ORDER BY | ✅ | Supports multiple columns via Builder. |
 | LIMIT | ✅ | Non-negative integer literal appended directly to SQL. |
-| OFFSET | ✅ | Greater than 0 only; integer literal appended to SQL. |
+| OFFSET | ✅ | Non-negative integer, including 0; integer literal appended to SQL. |
 
 ## SQL Output Examples
 
@@ -89,19 +89,17 @@ SELECT `id`, `name` FROM `users` INNER JOIN `orders` ON `users`.`id` = `orders`.
 
 Params: `[1]` (boolean `true` cast to integer `1`)
 
-### OR condition and IN operator
+### OR conditions
 
 ```php
-$db->select('users')
-   ->where(['status' => 'approved'])
-   ->orWhere(['status' => 'pending', 'flagged' => true])
+$db->select('users')->where(['status' => 'approved'])->orWhere('status', 'pending')
 ```
 
 ````sql
-SELECT * FROM `users` WHERE `status` = ? AND `status` = ? OR `status` = ?  AND `flagged` = ?
+SELECT * FROM `users` WHERE `status` = ? OR `status` = ?
 ````
 
-Params: `['approved', 'pending', 'pending', 1]`
+Params: `['approved', 'pending']`
 
 ## Shared with MariaDB
 

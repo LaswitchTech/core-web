@@ -239,7 +239,7 @@ docs/development/architecture/Database/
 
 The following items are strictly out of scope and will not be added until a dedicated future scope:
 
-- **Join support** — Even though MySQL/MariaDB support joins, the driver provides raw connection only
+- **Driver-level JOIN helpers** — Raw drivers do not provide joins; they return PDO connections only. JOIN support is provided exclusively by the Query Builder (Phase 1E) for INNER and LEFT JOIN on SELECT queries.
 - **TLS/SSL** — `MYSQL_ATTR_SSL_*` options not included; consider DSN override for TLS connections
 - **Transaction helpers** — Only raw PDO methods (`beginTransaction()`, `commit()`, `rollBack()`); helper wrappers deferred
 - **PDO options beyond core set above** — e.g., `MYSQL_ATTR_INIT_COMMAND`, driver-specific settings (e.g. `CLIENT_SSL`)

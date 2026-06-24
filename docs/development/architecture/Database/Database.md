@@ -78,14 +78,14 @@ Builder::fetch() or all()
 
 ### Design guarantees
 
-1. **Intent-only chaining** — calling `fetch()` or `all()` is non-mutating; the builder state is preserved across multiple executions because PHP 8+ readonly classes create copies per call site, and our Builder uses no mutable internal state outside of clause accumulation during chain build-up.
+1. **Intent-only chaining** — calling `fetch()` or `all()` does not mutate the Builder's clause state; the builder preserves its accumulated intent across multiple executions, so the same chain can be replayed.
 2. **Positional parameter binding** — parameters are bound at their 1-based positional index (PDO convention); `$compiled['params'][0]` maps to `bindValue(1, ...)`.
 3. **Exception hierarchy** — `prepare()` failures that return `false` (not thrown) are converted to ``RuntimeException`` with the message from ``$pdo->errorInfo()[2]``. Exceptions from `execute()` or `fetchAll()`/`fetch()` propagate as-is (typically ``PDOException``).
 
 ## Design Principles Applied
 
-1. **Thin facade** — no logic duplication; every method delegates to ``Connection``.
-2. **Immutable state** — no mutations after construction; all public methods are pure pass-throughs.
+1. **Thin facade** — no logic duplication; every method delegates to ``Connection`` or ``CompilerInterface``.
+2. **Facade over raw drivers** — Database facade has readonly dependencies; Builder is mutable fluent state; fetch()/all() do not mutate Builder state.
 3. **Container-first** — created by the DI container, not instantiated by callers directly.
 4. **No global state** — the class stores nothing but its private constructor arguments.
 5. **Dialect separation** — SQL generation is delegated to ``CompilerInterface`` implementations; Database remains dialect-agnostic.
