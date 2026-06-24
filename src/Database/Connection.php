@@ -12,8 +12,8 @@ use PDOStatement;
  */
 final class Connection {
 
-    /** @var PDO The underlying PDO instance (nullable after close). */
-    private ?PDO $pdo = null;
+    /** @var PDO The underlying PDO instance (always set by the constructor). */
+    private PDO $pdo;
 
     /* ------------------------------------------------------------------ */
     /*  Constructor                                                        */
