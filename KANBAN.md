@@ -106,7 +106,7 @@
   - Tags: framework, database, config
   - [~] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - [x] SQLite Driver <!-- created_at: 2026-06-18T10:52:22-04:00 completed_at: 2026-06-23 priority: high -->
-    - Zero-config database backend, file-based storage. PDO-based SQLite driver with lazy connection via container binding. Implementation: src/Database/Connection.php (thin wrapper), src/Database/Driver/Sqlite.php (driver with path resolution + auto-mkdir), src/Database/Driver/DriverInterface.php (contract). Container bindings: `db_driver` (singleton → Sqlite or Mysql depending on `database.driver`), `db_connection` (lazy singleton → Connection, resolved on first access). SQLite3 native class is not used — PDO only. Migrations/query builder/ORM are out of scope for Phase 1 (deferred to later tasks).
+    - Zero-config database backend, file-based storage. PDO-based SQLite driver with lazy connection via container binding. Implementation: src/Database/Connection.php (thin wrapper), src/Database/Driver/Sqlite.php (driver with path resolution + auto-mkdir), src/Database/Driver/DriverInterface.php (contract). Container bindings: `db_driver` (singleton → Sqlite or Mysql depending on `database.driver`), `db_connection` (lazy singleton → Connection, resolved on first access). SQLite3 native class is not used — PDO only. Migrations and ORM remain deferred to later tasks; query builder work is tracked separately under Query Builder Foundation.
     - Validation: `php cli hello.db` smoke test passes (PDO connects, PRAGMA journal_mode=WAL + foreign_keys=ON applied). All .cfg keys documented (`database.driver` supports `sqlite`, `mysql`, and `mariadb`, `database.path` default `data/app.db`). Architecture docs at `docs/development/architecture/Database/`.
     - Tags: feature
     - [x] Implement PDO wrapper with SQLite defaults <!-- created_at: 2026-06-18T10:53:03-04:00 completed_at: 2026-06-23 priority: high -->
@@ -123,7 +123,7 @@
     - [x] Add configuration documentation for MySQL/MariaDB connection settings <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: normal -->
     - [ ] Add CLI smoke validation for MySQL/MariaDB connection testing <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
       - Deferred to the CLI Command Framework / permanent `core.db.*` commands. Current temporary `hello.db` smoke command validates the default SQLite path only.
-  - [ ] Query Builder Foundation <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+  - [~] Query Builder Foundation <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
     - Add a database-agnostic fluent query layer for safe SELECT/INSERT/UPDATE/DELETE composition while keeping raw PDO available through `Connection::pdo()`.
     - Developers should use one consistent API regardless of the configured driver; the query builder and driver-specific compiler/grammar are responsible for translating query intent into SQLite or MySQL/MariaDB SQL.
     - Preferred SELECT syntax direction:
@@ -134,7 +134,7 @@
       ```
     - Tags: feature, database, query-builder
     - [x] Design fluent query builder API before implementation <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: high -->
-    - Methods: select(table, columns), where(operator/comparison), join()/leftJoin(), orderBy(limit/offset), fetch()/all(). Verified in src/Database/Query/Builder.php.
+      - Methods: `select(table, columns)`, `where(...)`, `orWhere(...)`, `join()` / `leftJoin()`, `orderBy()`, `limit()`, `offset()`, `fetch()`, and `all()`. Verified in `src/Database/Query/Builder.php`.
     - [x] Implement query representation independent of SQL dialect <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: high -->
       - Query intent stored as immutable clause value objects (WhereClause, JoinClause, OrderByClause) in src/Database/Query/Clause/. Builder stores table, columns, clauses, limit/offset; compiles via CompilerInterface at execution time.
     - [x] Implement SQL compiler / grammar interface <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: high -->
@@ -152,7 +152,7 @@
     - [ ] Implement INSERT/UPDATE/DELETE helpers with parameter binding <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
       - Deferred: no execute method in Builder; DML compiler implementations also deferred. Future phase work.
     - [x] Document driver differences for joins, identifier quoting, limits, booleans, and future RETURNING support between SQLite and MySQL/MariaDB <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: normal -->
-      - Documented in Docs/development/architecture/Database/Architecture.md, Query/Builder.md, and Compiler/*.md. Key differences: SQLite uses double-quoted identifiers "table"."column"; MySQL/MariaDB use backticks. Both use positional ? params, bool→int casting, SELECT * unquoted. JOINs column-to-column only in Phase 1D.
+      - Documented in `docs/development/architecture/Database/Architecture.md`, `Query/Builder.md`, and `Query/Compiler/*.md`. Key differences: SQLite uses double-quoted identifiers (`"table"."column"`); MySQL/MariaDB use backticks. Both use positional `?` params, bool→int casting, `SELECT *` unquoted, and column-to-column JOINs only in Phase 1E.
   - [ ] Transaction API Enhancements <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
     - Build on the existing PDO transaction pass-throughs with safer application-level transaction helpers.
     - Tags: feature, database, transactions
@@ -169,12 +169,10 @@
       - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
 
 ## Validation
-- [ ] Full Cross-platform Validation <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
-  - Future enhancement: test routing across Apache, Nginx, IIS in CI with the skeleton application on localhost.
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: testing
-  - [ ] Verify routing across all platforms <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
-    - Test Apache, Nginx, and IIS routing with the skeleton application on localhost.
+  - [ ] Full cross-platform routing validation <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
+    - Future enhancement: test routing across Apache, Nginx, and IIS in CI with the skeleton application on localhost.
     - Tags: testing
   - [ ] Add Bootstrap smoke tests <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
     - Validate `php cli` boots successfully and triggers the Hello World plugin.
