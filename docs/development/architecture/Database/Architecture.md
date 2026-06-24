@@ -12,11 +12,11 @@ This document describes the multi-driver architecture and components as of Phase
 
 ```
 Bootstrap::registerDbServices()
-    ├── Config::get('database.driver')  → 'sqlite' ← (validated by Phase-1 guard)
-    ├── Config::get('database.path')    → 'data/app.db' ← default from core.cfg
+    ├── Read config: $config = Config::get('database')
+    ├── Resolve driver name ("sqlite" | "mysql" | "mariadb")
     └── Container bindings registered:
             │
-            ├─ db_driver      → singleton → Laswitchtech\CoreWeb\Database\Driver\Sqlite
+            ├─ db_driver      → singleton → Sqlite or Mysql (via driver)
             └─ db_connection  → singleton → Connection (lazy — resolved on first access, not at registration)
 ```
 

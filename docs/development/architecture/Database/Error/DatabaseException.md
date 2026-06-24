@@ -19,30 +19,62 @@ class DatabaseException extends \RuntimeException { }
 
 Thrown by:
 
-| Component       | When                                                              |
-|-----------------|-------------------------------------------------------------------|
-| Sqlite::connect | PDO extension `pdo_sqlite` is not loaded                          |
-| Sqlite::connect | Config path resolves to empty string                              |
-| Sqlite::connect | Parent directory cannot be created (`mkdir` fails)                |
-| PDO constructor | Any underlying SQLite connection failure (wrapped in catch block)  |
+| Component                     | When                                                         |
+|-------------------------------|--------------------------------------------------------------|
+| Sqlite::connect               | PDO extension `pdo_sqlite` is not loaded                     |
+| Sqlite::connect               | Config path resolves to empty string                         |
+| Sqlite::connect               | Parent directory cannot be created (`mkdir` fails)           |
+| Sqlite::connect               | PDO SQLite connection failure                                |
+| Mysql::connect                | PDO extension `pdo_mysql` is not loaded                      |
+| Mysql::connect                | DSN override provided as empty string                        |
+| Mysql::connect                | DSN auto-build requires database name (missing/non-empty)    |
+| Mysql::connect                | PDO MySQL connection failure                                 |
+| Bootstrap::registerDbServices | Unsupported database.driver value is configured              |
 
-### Example — Extension Missing
+Each driver documents its own specific `DatabaseException` throw conditions in its dedicated documentation. The examples below show only patterns, not exhaustive lists for all drivers.
+
+### Example — SQLite: Extension Missing
 
 ```php
 // If $config['path'] is 'data/app.db' but pdo_sqlite is not loaded:
 throw new DatabaseException('The PDO SQLite extension (pdo_sqlite) is not loaded.');
 ```
 
-### Example — Wrapper on PDO Failure
+### Example — MySQL: Empty DSN
+
+```php
+// If $config['dsn'] is explicitly set to an empty string:
+throw new DatabaseException('MySQL DSN must not be empty.');
+```
+
+### Example — Wrapper on PDO Failure (both drivers)
+
+Both drivers wrap `\PDOException` and re-throw as `DatabaseException`, using their own message prefix:
+
+**SQLite:**
 
 ```php
 try {
     $pdo = new PDO('sqlite:path/to/file.db');
 } catch (\PDOException $e) {
-    throw new DatabaseException(  // ← new instance carrying original as previous
+    throw new DatabaseException(
         "PDO SQLite connection failed: {$e->getMessage()}",
-        0,                           // preserves original error-code
-        $e                           // injected as the inner exception
+        0,
+        $e
+    );
+}
+```
+
+**MySQL:**
+
+```php
+try {
+    $pdo = new PDO($dsn, $username, $password, [...]);
+} catch (\PDOException $e) {
+    throw new DatabaseException(
+        "PDO MySQL connection failed: {$e->getMessage()}",
+        0,
+        $e
     );
 }
 ```
