@@ -27,7 +27,7 @@ Thrown by:
 | Sqlite::connect               | PDO SQLite connection failure                                |
 | Mysql::connect                | PDO extension `pdo_mysql` is not loaded                      |
 | Mysql::connect                | DSN override provided as empty string                        |
-| Mysql::connect                | DSN auto-build requires database name (missing/non-empty)    |
+| Mysql::connect                | DSN auto-build requires database name (missing/empty)        |
 | Mysql::connect                | PDO MySQL connection failure                                 |
 | Bootstrap::registerDbServices | Unsupported database.driver value is configured              |
 
