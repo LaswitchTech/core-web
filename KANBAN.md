@@ -96,6 +96,10 @@
     - [ ] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 priority: normal -->
     - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
     - [ ] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 priority: normal -->
+- [ ] Installer-generated Server Config <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
+  - Future enhancement: `core.install` CLI command to auto-write router server config files during framework bootstrap.
+- [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
+  - Future enhancement: before/after hooks per route and global middleware support.
 
 ## In Progress <!-- hide: archive -->
 - [ ] Database <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
@@ -141,6 +145,8 @@
       - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
 
 ## Validation
+- [ ] Full Cross-platform Validation <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
+  - Future enhancement: test routing across Apache, Nginx, IIS in CI with the skeleton application on localhost.
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: testing
   - [ ] Verify routing across all platforms <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
@@ -265,9 +271,3 @@
     - URL Rewrite module rules for Windows IIS deployment with auto-detect for root vs subdirectory paths and fallback to PHP built-in server for local development.
     - Tags: feature
     - [x] Generate IIS URL Rewrite configuration for front-controller routing. <!-- created_at: 2026-06-18T11:11:00-04:00 completed_at: 2026-06-22 priority: normal -->
-  - [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
-    - Future enhancement: before/after hooks per route and global middleware support.
-  - [ ] Installer-generated Server Config <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
-    - Future enhancement: `core.install` CLI command to auto-write router server config files during framework bootstrap.
-  - [ ] Full Cross-platform Validation <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
-    - Future enhancement: test routing across Apache, Nginx, IIS in CI with the skeleton application on localhost.
