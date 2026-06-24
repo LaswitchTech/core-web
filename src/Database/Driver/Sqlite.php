@@ -46,7 +46,7 @@ final class Sqlite implements DriverInterface {
 
         /* --- path resolution --------------------------------------------------------------- */
 
-        if (isAbsPath($path)) {
+        if (self::isAbsPath($path)) {
             $resolvedPath = $path;
         } else {
             // Relative — resolve against basePath.
@@ -104,23 +104,24 @@ final class Sqlite implements DriverInterface {
 
         return new Connection($pdo);
     }
-}
 
-/** --------------------------------------------------------------- helpers ---------------------------------------------- */
+    /* ------------------------------------------------------------------ */
+    /*  Helpers                                                             */
+    /* ------------------------------------------------------------------ */
 
-/** Check whether a string represents an absolute path. */
-function isAbsPath(string $path): bool {
-    if ($path === '') {
+    /** Check whether a string represents an absolute path. */
+    private static function isAbsPath(string $path): bool {
+        if ($path === '') {
+            return false;
+        }
+        // Unix-style absolute: starts with '/'.
+        if (\str_starts_with($path, '/')) {
+            return true;
+        }
+        // Windows absolute: starts with 'X:\' or '\\?\''.
+        if (\preg_match('#^[A-Za-z]:[/\\\\]|^\\\\[|\\\\\\\\[?\?\\\\]#', $path)) {
+            return true;
+        }
         return false;
     }
-    // Unix-style absolute: starts with '/'.
-    if (\str_starts_with($path, '/')) {
-        return true;
-    }
-    // Windows absolute: starts with 'X:\' or '\\\\?\\'.
-    if (\preg_match('#^[A-Za-z]:[/\\\\]|^\\\\[|\\\\\\\\[?\?\\\\]#', $path)) {
-        return true;
-    }
-    return false;
 }
-
