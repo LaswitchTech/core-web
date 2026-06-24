@@ -106,7 +106,7 @@
   - Tags: framework, database, config
   - [~] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - [x] SQLite Driver <!-- created_at: 2026-06-18T10:52:22-04:00 completed_at: 2026-06-23 priority: high -->
-     - Zero-config database backend, file-based storage. PDO-based SQLite driver with lazy connection via container binding. Implementation: src/Database/Connection.php (thin wrapper), src/Database/Driver/Sqlite.php (driver with path resolution + auto-mkdir), src/Database/Driver/DriverInterface.php (contract). Container bindings: `db_driver` (singleton → Sqlite or Mysql depending on `database.driver`), `db_connection` (lazy singleton → Connection, resolved on first access). SQLite3 native class is not used — PDO only. Migrations/query builder/ORM are out of scope for Phase 1 (deferred to later tasks).
+    - Zero-config database backend, file-based storage. PDO-based SQLite driver with lazy connection via container binding. Implementation: src/Database/Connection.php (thin wrapper), src/Database/Driver/Sqlite.php (driver with path resolution + auto-mkdir), src/Database/Driver/DriverInterface.php (contract). Container bindings: `db_driver` (singleton → Sqlite or Mysql depending on `database.driver`), `db_connection` (lazy singleton → Connection, resolved on first access). SQLite3 native class is not used — PDO only. Migrations/query builder/ORM are out of scope for Phase 1 (deferred to later tasks).
     - Validation: `php cli hello.db` smoke test passes (PDO connects, PRAGMA journal_mode=WAL + foreign_keys=ON applied). All .cfg keys documented (`database.driver` supports `sqlite`, `mysql`, and `mariadb`, `database.path` default `data/app.db`). Architecture docs at `docs/development/architecture/Database/`.
     - Tags: feature
     - [x] Implement PDO wrapper with SQLite defaults <!-- created_at: 2026-06-18T10:53:03-04:00 completed_at: 2026-06-23 priority: high -->
@@ -115,21 +115,37 @@
       - Sqlite driver resolves `database.path` from config, supports relative paths (resolved against basePath), absolute paths, and empty-path rejection. Path resolution with isAbsPath() helper for Unix/Windows detection in docs/development/architecture/Database/Driver/Sqlite.md.
     - [x] Auto-create data directory on connection <!-- created_at: 2026-06-18T10:55:00-04:00 completed_at: 2026-06-23 priority: normal -->
       - Sqlite driver checks \is_dir() on $parentDir; calls \mkdir(parentDir, 0755, true) with race-safe fallback checks and throws DatabaseException on failure. Directory creation only runs during lazy connection (first resolve('db_connection') call).
-   - [x] MySQL / MariaDB Driver <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: high -->
-     - Implementation: src/Database/Driver/Mysql.php. Documentation: docs/development/architecture/Database/Driver/Mysql.md. Bootstrap supports both `mysql` and `mariadb` as `database.driver` values, which resolve to the Mysql driver class. Config keys: `host`, `port`, `database`, `charset`, `username`, `password`, optional `dsn`.
-     - Tags: feature, database, mysql, mariadb
-     - [x] Implement PDO MySQL driver with configurable DSN/host/port/database/charset/user/password <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: high -->
-     - [x] Support `database.driver = mysql` and `database.driver = mariadb` aliases in Bootstrap database registration <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: high -->
-     - [x] Add configuration documentation for MySQL/MariaDB connection settings <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: normal -->
-     - [ ] Add CLI smoke validation for MySQL/MariaDB connection testing <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
-       Deferred to the CLI Command Framework / permanent `core.db.*` commands. Current temporary `hello.db` smoke command validates the default SQLite path only.
+  - [~] MySQL / MariaDB Driver <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - Implementation: src/Database/Driver/Mysql.php. Documentation: docs/development/architecture/Database/Driver/Mysql.md. Bootstrap supports both `mysql` and `mariadb` as `database.driver` values, which resolve to the Mysql driver class. Config keys: `host`, `port`, `database`, `charset`, `username`, `password`, optional `dsn`.
+    - Tags: feature, database, mysql, mariadb
+    - [x] Implement PDO MySQL driver with configurable DSN/host/port/database/charset/user/password <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: high -->
+    - [x] Support `database.driver = mysql` and `database.driver = mariadb` aliases in Bootstrap database registration <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: high -->
+    - [x] Add configuration documentation for MySQL/MariaDB connection settings <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: normal -->
+    - [ ] Add CLI smoke validation for MySQL/MariaDB connection testing <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+      - Deferred to the CLI Command Framework / permanent `core.db.*` commands. Current temporary `hello.db` smoke command validates the default SQLite path only.
   - [ ] Query Builder Foundation <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-    - Add a small database query layer for safe SELECT/INSERT/UPDATE/DELETE composition while keeping raw PDO available through `Connection::pdo()`.
+    - Add a database-agnostic fluent query layer for safe SELECT/INSERT/UPDATE/DELETE composition while keeping raw PDO available through `Connection::pdo()`.
+    - Developers should use one consistent API regardless of the configured driver; the query builder and driver-specific compiler/grammar are responsible for translating query intent into SQLite or MySQL/MariaDB SQL.
+    - Preferred SELECT syntax direction:
+      ```php
+      $db->select('users')
+         ->where(['id' => 1])
+         ->fetch();
+      ```
     - Tags: feature, database, query-builder
+    - [ ] Design fluent query builder API before implementation <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+      - Decide method names and execution semantics, including `select($table)`, `where([...])`, `join(...)`, `fetch()` for one result, and a separate method for multiple rows if needed.
+    - [ ] Implement query representation independent of SQL dialect <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+      - Store table, selected columns, where clauses, joins, ordering, limits, and bound values as query intent before compiling to SQL.
+    - [ ] Implement SQL compiler / grammar interface <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+      - Convert query objects into executable SQL and bound parameters without exposing driver-specific syntax to application code.
+    - [ ] Implement SQLite query compiler <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - [ ] Implement MySQL/MariaDB query compiler <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
     - [ ] Implement basic SELECT builder with WHERE conditions and bound parameters <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
     - [ ] Add support for table joins (`INNER`, `LEFT`, and `RIGHT` where supported by driver) <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - [ ] Implement ORDER BY, LIMIT, and OFFSET support <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
     - [ ] Implement INSERT/UPDATE/DELETE helpers with parameter binding <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
-    - [ ] Document driver differences for join support between SQLite and MySQL/MariaDB <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+    - [ ] Document driver differences for joins, identifier quoting, limits, booleans, and future RETURNING support between SQLite and MySQL/MariaDB <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
   - [ ] Transaction API Enhancements <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
     - Build on the existing PDO transaction pass-throughs with safer application-level transaction helpers.
     - Tags: feature, database, transactions
