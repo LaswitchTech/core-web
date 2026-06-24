@@ -12,7 +12,7 @@ use Laswitchtech\CoreWeb\Database\Query\CompilerInterface;
  * MySQL / MariaDB dialect compiler.
  *
  * Produces SQL using backtick-quoted identifiers and `?` positional
- * placeholders.  Boolean parameters are cast to integers (0/1).  
+ * placeholders.  Boolean parameters are cast to integers (0/1).
  * MySQL and MariaDB share the same compiler because they use identical
  * SELECT syntax for the features covered in Phase&nbsp;1D.
  */
