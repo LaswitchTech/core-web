@@ -91,7 +91,7 @@
     - Tags: feature
     - [ ] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 priority: normal -->
     - [ ] `core.auth create-user <username> <password>` — create admin users from CLI <!-- created_at: 2026-06-18T13:07:00-04:00 priority: normal -->
-    - [ ] `core.db connect <driver> --path=<sqlite path>|--dsn=mysql://...` — test and configure database connectivity <!-- created_at: 2026-06-18T13:08:00-04:00 priority: normal -->
+    - [ ] `core.db connect <driver> --path=<sqlite path>|--dsn=mysql://...` — test and configure database connectivity (includes MySQL/MariaDB smoke validation) <!-- created_at: 2026-06-18T13:08:00-04:00 priority: normal -->
     - [ ] `core.config show --key=<path.to.key>` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 priority: normal -->
     - [ ] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 priority: normal -->
     - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
@@ -102,12 +102,12 @@
   - Future enhancement: before/after hooks per route and global middleware support.
 
 ## In Progress <!-- hide: archive -->
-- [ ] Database <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+- [~] Database <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, database, config
   - [~] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - [x] SQLite Driver <!-- created_at: 2026-06-18T10:52:22-04:00 completed_at: 2026-06-23 priority: high -->
-    - Zero-config database backend, file-based storage. PDO-based SQLite driver with lazy connection via container binding. Implementation: src/Database/Connection.php (thin wrapper), src/Database/Driver/Sqlite.php (driver with path resolution + auto-mkdir), src/Database/Driver/DriverInterface.php (contract). Container bindings: `db_driver` (singleton → Sqlite), `db_connection` (lazy singleton → Connection, resolved on first access). SQLite3 native class is not used — PDO only. Migrations/query builder/ORM are out of scope for Phase 1 (deferred to later tasks).
-    - Validation: `php cli hello.db` smoke test passes (PDO connects, PRAGMA journal_mode=WAL + foreign_keys=ON applied). All .cfg keys documented (`database.driver` restricted to `'sqlite'`, `database.path` default `data/app.db`). Architecture docs at `docs/development/architecture/Database/`.
+     - Zero-config database backend, file-based storage. PDO-based SQLite driver with lazy connection via container binding. Implementation: src/Database/Connection.php (thin wrapper), src/Database/Driver/Sqlite.php (driver with path resolution + auto-mkdir), src/Database/Driver/DriverInterface.php (contract). Container bindings: `db_driver` (singleton → Sqlite or Mysql depending on `database.driver`), `db_connection` (lazy singleton → Connection, resolved on first access). SQLite3 native class is not used — PDO only. Migrations/query builder/ORM are out of scope for Phase 1 (deferred to later tasks).
+    - Validation: `php cli hello.db` smoke test passes (PDO connects, PRAGMA journal_mode=WAL + foreign_keys=ON applied). All .cfg keys documented (`database.driver` supports `sqlite`, `mysql`, and `mariadb`, `database.path` default `data/app.db`). Architecture docs at `docs/development/architecture/Database/`.
     - Tags: feature
     - [x] Implement PDO wrapper with SQLite defaults <!-- created_at: 2026-06-18T10:53:03-04:00 completed_at: 2026-06-23 priority: high -->
       - Connection class with typed pass-through methods: `pdo()`, `query()`, `prepare()`, `beginTransaction()`, `commit()`, `rollback()`, `lastInsertId()`. PDO constructed with ERRMODE_EXCEPTION, FETCH_ASSOC, no emulate_prepares, no persistent connections.
@@ -115,13 +115,14 @@
       - Sqlite driver resolves `database.path` from config, supports relative paths (resolved against basePath), absolute paths, and empty-path rejection. Path resolution with isAbsPath() helper for Unix/Windows detection in docs/development/architecture/Database/Driver/Sqlite.md.
     - [x] Auto-create data directory on connection <!-- created_at: 2026-06-18T10:55:00-04:00 completed_at: 2026-06-23 priority: normal -->
       - Sqlite driver checks \is_dir() on $parentDir; calls \mkdir(parentDir, 0755, true) with race-safe fallback checks and throws DatabaseException on failure. Directory creation only runs during lazy connection (first resolve('db_connection') call).
-  - [ ] MySQL / MariaDB Driver <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-    - Add a PDO-based MySQL/MariaDB driver so developers and administrators can choose SQLite for zero-config local installs or MySQL/MariaDB for shared/server deployments.
-    - Tags: feature, database, mysql, mariadb
-    - [ ] Implement PDO MySQL driver with configurable DSN/host/port/database/charset/user/password <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-    - [ ] Support `database.driver = mysql` and `database.driver = mariadb` aliases in Bootstrap database registration <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-    - [ ] Add configuration documentation for MySQL/MariaDB connection settings <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
-    - [ ] Add CLI smoke validation for MySQL/MariaDB connection testing <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+   - [x] MySQL / MariaDB Driver <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: high -->
+     - Implementation: src/Database/Driver/Mysql.php. Documentation: docs/development/architecture/Database/Driver/Mysql.md. Bootstrap supports both `mysql` and `mariadb` as `database.driver` values, which resolve to the Mysql driver class. Config keys: `host`, `port`, `database`, `charset`, `username`, `password`, optional `dsn`.
+     - Tags: feature, database, mysql, mariadb
+     - [x] Implement PDO MySQL driver with configurable DSN/host/port/database/charset/user/password <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: high -->
+     - [x] Support `database.driver = mysql` and `database.driver = mariadb` aliases in Bootstrap database registration <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: high -->
+     - [x] Add configuration documentation for MySQL/MariaDB connection settings <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: normal -->
+     - [ ] Add CLI smoke validation for MySQL/MariaDB connection testing <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+       Deferred to the CLI Command Framework / permanent `core.db.*` commands. Current temporary `hello.db` smoke command validates the default SQLite path only.
   - [ ] Query Builder Foundation <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
     - Add a small database query layer for safe SELECT/INSERT/UPDATE/DELETE composition while keeping raw PDO available through `Connection::pdo()`.
     - Tags: feature, database, query-builder
