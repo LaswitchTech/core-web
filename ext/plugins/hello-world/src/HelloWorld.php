@@ -100,7 +100,13 @@ final class HelloWorld
                     /** @var \Laswitchtech\CoreWeb\Database\Connection */
                     $conn = $c->resolve('db_connection');
                     $stmt = $conn->query('SELECT sqlite_version() AS version');
-                    $row  = $stmt !== false ? $stmt->fetch() : null;
+                    if ($stmt === false) {
+                        return Response::text("SQLite FAILED: sqlite_version query failed\n", 500);
+                    }
+                    $row = $stmt->fetch();
+                    if (!\is_array($row) || !isset($row['version'])) {
+                        return Response::text("SQLite FAILED: sqlite_version result missing\n", 500);
+                    }
                     return Response::text("SQLite OK: {$row['version']}\n");
                 } catch (\Throwable $_e) {
                     return Response::text("SQLite FAILED: {$_e->getMessage()}\n", 500);

@@ -58,12 +58,10 @@ final class Sqlite implements DriverInterface {
         /* --- directory creation ------------------------------------------------------------ */
 
         $parentDir = \dirname($resolvedPath);
-        if (!\is_dir($parentDir)) {
-            if (!@\mkdir($parentDir, 0755, true)) {
-                throw new DatabaseException(
-                    "Unable to create database parent directory: {$parentDir}"
-                );
-            }
+        if (!\is_dir($parentDir) && !\mkdir($parentDir, 0755, true) && !\is_dir($parentDir)) {
+            throw new DatabaseException(
+                "Unable to create database parent directory: {$parentDir}"
+            );
         }
 
         /* --- PDO construction -------------------------------------------------------------- */

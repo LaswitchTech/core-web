@@ -10,7 +10,7 @@ Thin, final class wrapping a `PDO` instance. Provides typed convenience methods 
 namespace Laswitchtech\CoreWeb\Database;
 
 final class Connection {
-    private ?PDO $pdo = null;  // nullable after explicit close (Phase 1 does not implement close).
+    private PDO $pdo;  // always set by the constructor.
 
     public function __construct(PDO $pdo);
     public function pdo(): PDO;
@@ -37,11 +37,11 @@ Used when a caller needs driver-specific features not covered by the wrapper (e.
 
 ### `query(string $sql): PDOStatement|false`
 
-Pass-through to `$this->pdo->query($sql)`. Returns `PDOStatement` on success, `false` on failure (since PDO::ERRMODE_EXCEPTION is **not** set in the driver — this should return a thrown exception; however, the method signature includes `false` for backward-compatibility with existing code that checks the boolean).
+Pass-through to `$this->pdo->query($sql)`. Returns `PDOStatement` on success, `false` on failure. With the SQLite driver, PDO is configured with `PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION`, so errors are thrown as `\PDOException` rather than producing a `false` return. The `false` return type remains in the signature because PDO's native method signature permits it and future drivers may return `false` instead of throwing.
 
 ### `prepare(string $sql): PDOStatement|false`
 
-Pass-through to `$this->pdo->prepare($sql)`. Returns `PDOStatement` on success, `false` on failure. Parameters are bound using native PDO methods (`bindValue`, `bindParam`) via the returned statement object — the wrapper does not add parameter binding helpers in Phase 1.
+Pass-through to `$this->pdo->prepare($sql)`. Returns `PDOStatement` on success, false on failure. Parameters are bound using native PDO methods (`bindValue`, `bindParam`) via the returned statement object — the wrapper does not add parameter binding helpers in Phase 1.
 
 ### `beginTransaction(): bool`
 
@@ -89,7 +89,7 @@ $rawPdo = $conn->pdo();  // Use extension-specific PDO methods if needed.
 | No `close()` / `disconnect()`      | PDO destructor handles teardown; no explicit close API.  |
 | No `exec()` pass-through           | Not needed yet; raw connection via `pdo()` suffices.     |
 | No result-set wrapper              | Returns native `PDOStatement` — caller controls fetch modes and iteration. |
-| Error mode relies on driver config | PDO::ERRMODE_EXCEPTION set in Sqlite, but Connection does not enforce it. Future drivers must match. |
+| Error mode managed by drivers      | PDO::ERRMODE_EXCEPTION is set in each driver's PDO construction; Connection does not enforce it. Future drivers must configure it. |
 
 ## Files
 

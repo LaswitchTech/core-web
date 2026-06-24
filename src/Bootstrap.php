@@ -72,8 +72,9 @@ class Bootstrap
         try {
             $this->initConfig();
             $this->initContainer();
-            $this->registerCoreServices(static::$instance);
-            $this->registerDbServices($c = static::$instance);
+            $c = static::$instance;
+            $this->registerCoreServices($c);
+            $this->registerDbServices($c);
             $this->initExtensions();
 
             switch ($this->mode) {
