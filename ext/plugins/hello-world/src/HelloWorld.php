@@ -139,6 +139,117 @@ final class HelloWorld
                     return Response::text("Query FAILED: {$_e->getMessage()}\n", 500);
                 }
             });
+
+            /* ------------------------------------------------------------------ --/
+             /  Temporary CLI smoke command — migration Runner (Phase 1)         */
+            /* ------------------------------------------------------------------ */
+
+            /** @var \Laswitchtech\CoreWeb\Bootstrap */
+            $router->command('hello.migrate', function (Cli $_req): Response {
+                $tmpDir    = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'core-web-migration-smoke-' . bin2hex(random_bytes(8));
+                $migrationsDir  = "{$tmpDir}/migrations";
+                $dbFile       = "{$tmpDir}/smoke.db";
+                $migrationSql = 'CREATE TABLE _migration_smoke (id INTEGER PRIMARY KEY, name TEXT NOT NULL)';
+
+                try {
+                    // 1. Create temp directories & migration file
+                    if (!mkdir($migrationsDir, 0700, true)) {
+                        return Response::text("Migration FAILED: could not create migrations directory\n", 500);
+                    }
+                    $migrationFile = "{$migrationsDir}/20260625000000_create_smoke_table.sql";
+                    // File content: up (CREATE TABLE) + down (DROP TABLE).
+                    if (!file_put_contents($migrationFile, $migrationSql . "\n\n-- Down:\nDROP TABLE _migration_smoke")) {
+                        return Response::text("Migration FAILED: could not write migration file\n", 500);
+                    }
+
+                    // 2. Create a raw PDO for the smoke test database, then wrap it.
+                    $pdo      = new \PDO(
+                        "sqlite:{$dbFile}",
+                        null,
+                        null,
+                        [
+                            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+                        ],
+                    );
+                    $conn     = new \Laswitchtech\CoreWeb\Database\Connection($pdo);
+
+                    // 3. Instantiate core migration classes directly.
+                    // CorePromoter (priority 0) is needed first — pass an empty temp dir so discover() returns [].
+                    $emptyCoreDir   = sys_get_temp_dir() . '/core-web-smoke-empty-' . bin2hex(random_bytes(4));
+                    mkdir($emptyCoreDir, 0700, true);
+
+                    // Use CorePromoter (priority 0) with an empty dir so discover() returns [],
+                    // and AppPromoter (priority 1) to exercise Migration::fromFile() + discover().
+                    /** @var \Laswitchtech\CoreWeb\Migration\RegistryTable */
+                    $registry     = new \Laswitchtech\CoreWeb\Migration\RegistryTable($conn);
+
+                    $corePromoter  = new \Laswitchtech\CoreWeb\Migration\Promoter\CorePromoter($emptyCoreDir);
+                    $appPromoter   = new \Laswitchtech\CoreWeb\Migration\Promoter\AppPromoter($migrationsDir);
+                    $runner        = new \Laswitchtech\CoreWeb\Migration\Runner(
+                        [$corePromoter, $appPromoter],
+                        $conn,
+                        'sqlite',
+                        $registry,
+                    );
+
+                    // 4. Ensure the tracking table exists before the first run().
+                    $registry->ensureTable();
+
+                    // 5. First migration run — expect exactly one applied version.
+                    $applied = $runner->run();
+                    if (\count($applied) !== 1 || !\in_array('20260625000000', $applied, true)) {
+                        return Response::text("Migration FAILED: expected 1 applied version, got " . \count($applied) . "\n", 500);
+                    }
+
+                    // 6. Second migration run — expect zero applied (already applied, idempotent).
+                    $again = $runner->run();
+                    if (\count($again) !== 0) {
+                        return Response::text("Migration FAILED: second run should have zero applied versions, got " . \count($again) . "\n", 500);
+                    }
+
+                    // 7. Rollback one batch — verify registry row removed.
+                    $rolledBack = $runner->rollback(1);
+                    if (\count($rolledBack) !== 1 || !\in_array('20260625000000', $rolledBack, true)) {
+                        return Response::text("Migration FAILED: rollback did not remove expected version\n", 500);
+                    }
+
+                    // 8. Verify the migration tracking row is gone.
+                    if ($registry->isApplied('20260625000000')) {
+                        return Response::text("Migration FAILED: registry still reports version as applied after rollback\n", 500);
+                    }
+
+                    // 9. Verify _migration_smoke table no longer exists in the database.
+                    $pdo = $conn->pdo();
+                    $stmt = $pdo->query(
+                        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = '_migration_smoke'"
+                    );
+                    if ($stmt === false) {
+                        return Response::text("Migration FAILED: could not verify smoke table removal\n", 500);
+                    }
+                    $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+                    if ($row !== false) {
+                        return Response::text("Migration FAILED: _migration_smoke table still exists after rollback\n", 500);
+                    }
+
+                    // Cleanup temp files.
+                    @unlink($dbFile);
+                    @unlink($migrationFile);
+                    @rmdir($migrationsDir);
+                    @rmdir($emptyCoreDir);
+                    @rmdir($tmpDir);
+
+                    return Response::text("Migration OK\n");
+                } catch (\Throwable $_e) {
+                    // Best-effort cleanup on failure so smoke-test leaves nothing behind.
+                    if (isset($migrationFile) && is_file($migrationFile)) { @unlink($migrationFile); }
+                    if (isset($dbFile) && is_file($dbFile))        { @unlink($dbFile); }
+                    if (isset($migrationsDir) && is_dir($migrationsDir))   { @rmdir($migrationsDir); }
+                    if (isset($emptyCoreDir)  && is_dir($emptyCoreDir))    { @rmdir($emptyCoreDir); }
+                    if (isset($tmpDir)        && is_dir($tmpDir))          { @rmdir($tmpDir); }
+                    return Response::text("Migration FAILED: " . $_e->getMessage() . "\n", 500);
+                }
+            });
         }
     }
 
