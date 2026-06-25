@@ -124,7 +124,7 @@
     - [ ] Add CLI smoke validation for MySQL/MariaDB connection testing <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
       - Deferred to the CLI Command Framework / permanent `core.db.*` commands. Current temporary `hello.db` smoke command validates the default SQLite path only.
   - [~] Query Builder Foundation <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-    - Add a database-agnostic fluent query layer for safe SELECT/INSERT/UPDATE/DELETE composition while keeping raw PDO available through `Connection::pdo()`.
+    - Add a database-agnostic fluent query layer for safe SELECT composition now, with INSERT/UPDATE/DELETE composition deferred, while keeping raw PDO available through `Connection::pdo()`.
     - Developers should use one consistent API regardless of the configured driver; the query builder and driver-specific compiler/grammar are responsible for translating query intent into SQLite or MySQL/MariaDB SQL.
     - Preferred SELECT syntax direction:
       ```php
@@ -153,6 +153,31 @@
       - Deferred: no execute method in Builder; DML compiler implementations also deferred. Future phase work.
     - [x] Document driver differences for joins, identifier quoting, limits, booleans, and future RETURNING support between SQLite and MySQL/MariaDB <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: normal -->
       - Documented in `docs/development/architecture/Database/Architecture.md`, `Query/Builder.md`, and `Query/Compiler/*.md`. Key differences: SQLite uses double-quoted identifiers (`"table"."column"`); MySQL/MariaDB use backticks. Both use positional `?` params, bool→int casting, `SELECT *` unquoted, and column-to-column JOINs only in Phase 1E.
+    - [ ] Database Versioning / Migrations <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+      - Track database schema versions and apply incremental updates safely across SQLite and MySQL/MariaDB deployments.
+      - Tags: feature, database, migrations, versioning
+      - [ ] Create schema version table / migration registry <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+        - Store migration identifier, applied timestamp, checksum/hash, execution status, and optional batch number.
+      - [ ] Implement migration discovery from application/core/plugin directories <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+        - Support deterministic ordering for core migrations, application migrations, and enabled extension migrations.
+      - [ ] Implement incremental migration runner <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+        - Apply only pending migrations and stop safely on failure without marking failed migrations as complete.
+      - [ ] Support driver-specific migration SQL or PHP migration classes <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
+        - Allow migrations to target SQLite/MySQL differences without leaking dialect-specific SQL into application code.
+      - [ ] Add rollback/down migration strategy decision <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
+        - Decide whether Core-Web supports reversible migrations, forward-only migrations, or rollback only in development.
+      - [ ] Document migration naming, ordering, and failure behavior <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
+    - [ ] Database Seeding <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+      - Provide repeatable seed data for installing applications, initializing core records, and preparing development/test environments.
+      - Tags: feature, database, seeding
+      - [ ] Implement seed discovery from application/core/plugin directories <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+      - [ ] Implement idempotent seed runner <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+        - Seeds should be safe to re-run without duplicating records where possible.
+      - [ ] Track applied seed sets and seed version/checksum metadata <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
+        - Allow seed updates to be detected while avoiding accidental duplicate inserts.
+      - [ ] Support environment-specific seed groups <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
+        - Examples: install, demo, development, testing.
+      - [ ] Document seeding conventions and relationship with migrations <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
   - [ ] Transaction API Enhancements <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
     - Build on the existing PDO transaction pass-throughs with safer application-level transaction helpers.
     - Tags: feature, database, transactions
