@@ -71,6 +71,30 @@
     - [ ] Recompile LESS on every request when debug mode is enabled <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
       - Debug mode should bypass the cached compiled CSS so developers immediately see style changes.
     - [ ] Document asset discovery and cache invalidation behavior <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+
+- [ ] Audit / Logging System <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+  - Provide a consistent kernel-level logger for audit events, debugging, testing, development diagnostics, and operational visibility.
+  - Logs should be stored as plain text files under `log/` with the `.log` extension.
+  - Support multiple named log files/channels so information can be separated by subsystem, such as database queries, authentication attempts, application errors, migration events, and general debug output.
+  - Tags: framework, logging, audit, debug
+  - [ ] Design logger API and channel model <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+    - Define a simple service API such as `info()`, `warning()`, `error()`, `debug()`, and channel/file selection.
+  - [ ] Implement text-file logger backend <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+    - Write line-oriented log entries to `log/{channel}.log` with timestamp, level, channel, message, and optional structured context encoded safely.
+  - [ ] Support multiple log channels/files <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+    - Examples: `app.log`, `error.log`, `database.log`, `auth.log`, `migration.log`, and `debug.log`.
+  - [ ] Add configuration for enabling/disabling logging <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
+    - Logging should be globally disableable through Config, with safe defaults for production and development.
+  - [ ] Add configurable log level threshold <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
+    - Support levels such as `debug`, `info`, `warning`, `error`, and `critical`; entries below the configured threshold should be ignored.
+  - [ ] Auto-create `log/` directory when needed <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
+    - Create the log directory lazily on first write, with clear failure behavior when the directory is not writable.
+  - [ ] Bind logger service into Bootstrap / Container <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+    - Register the logger as a shared service usable by core systems, plugins, CLI commands, and tests.
+  - [ ] Add subsystem integration points <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
+    - Initial targets: database queries/errors, authentication attempts, migration runner events, extension loading, and bootstrap failures.
+  - [ ] Document logging configuration and usage conventions <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
+    - Document channel naming, log file location, log levels, and recommended use during testing/development.
 - [ ] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
   - `/admin` panel with all required sub-systems.
   - Tags: feature, admin
