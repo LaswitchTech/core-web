@@ -258,6 +258,28 @@ class Bootstrap
             };
             return new Database($container->resolve('db_connection'), $compiler);
         });
+
+        // ——— Migration subsystem services (after database is ready) ———
+        $coreMigrationsPath  = self::resolveCoreMigrationsPath();
+        $appMigrationsPath   = "{$appRoot}/migrations";
+
+        $promoters = [
+            new Migration\Promoter\CorePromoter($coreMigrationsPath),
+            new Migration\Promoter\AppPromoter($appMigrationsPath),
+        ];
+
+        // Registry — lazy singleton shared by all migration services.
+        $c->registerSingleton('migration_registry', static fn ($container) => new Migration\RegistryTable($container->resolve('db_connection')));
+
+        // Runner — the public entry point, wires in promoters and registry.
+        $c->registerSingleton('migration_runner', static function ($container) use ($promoters, $driverKey) {
+            return new Migration\Runner(
+                $promoters,
+                $container->resolve('db_connection'),
+                $driverKey,
+                $container->resolve('migration_registry'),
+            );
+        });
     }
 
     /* ------------------------------------------------------------------ --/
@@ -561,6 +583,37 @@ class Bootstrap
     /* ------------------------------------------------------------------ --/
      /  Static Access                                                         */
     /* ------------------------------------------------------------------ */
+
+    /**
+     * Resolve the core framework migrations directory path.
+     *
+     * Search order (priority descending):
+     *   1. Config 'migrations.core_path' key (user override)
+     *   2. Define CORE_WEB_ROOT constant — Core-Web package root
+     *   3. Relative to this file (__DIR__/. . /migrations)
+     */
+    public static function resolveCoreMigrationsPath(): string {
+        // 1. User config override (if set).
+        $userPath = Config::get('migrations.core_path');
+        if (is_string($userPath) && $userPath !== '') {
+            return rtrim($userPath, '/\\');
+        }
+
+        // 2. CORE_WEB_ROOT constant — package/vendor install scenarios.
+        if (defined('CORE_WEB_ROOT')) {
+            return rtrim((string)CORE_WEB_ROOT . '/migrations', '/\\');
+        }
+
+        // 3. Relative to this file (standard Composer/vendor installs).
+        $basePath = dirname(__DIR__);
+        $candidate = "{$basePath}/migrations";
+        if (is_dir($candidate)) {
+            return rtrim($candidate, '/\\');
+        }
+
+        // Ultimate fallback: vendor core-web path.
+        return rtrim($basePath . '/migrations', '/\\');
+    }
 
     /** Return the active container. Throws if bootstrap has not run yet. */
     public static function container(): Container
