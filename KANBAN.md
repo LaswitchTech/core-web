@@ -71,7 +71,37 @@
     - [ ] Recompile LESS on every request when debug mode is enabled <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
       - Debug mode should bypass the cached compiled CSS so developers immediately see style changes.
     - [ ] Document asset discovery and cache invalidation behavior <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+- [ ] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
+  - `/admin` panel with all required sub-systems.
+  - Tags: feature, admin
+  - [ ] Dashboard (system status overview) <!-- created_at: 2026-06-18T12:11:00-04:00 priority: normal -->
+  - [ ] Updates system (kernel + application version checking) <!-- created_at: 2026-06-18T12:12:00-04:00 priority: normal -->
+  - [ ] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 priority: normal -->
+  - [ ] Developer Console (variable introspection) <!-- created_at: 2026-06-18T12:14:00-04:00 priority: normal -->
+  - [ ] Theme Preview (test against all UI components) <!-- created_at: 2026-06-18T12:15:00-04:00 priority: normal -->
+- [ ] CLI System <!-- created_at: 2026-06-18T13:00:00-04:00 priority: normal -->
+  - Tags: framework, cli
+  - [ ] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
+    - Command infrastructure built on top of the unified Router. Responsible for command discovery, argument parsing, command metadata, help output, and extension command registration.
+    - Tags: feature
+    - [ ] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 priority: normal -->
+    - [ ] Implement plugin discovery for CLI commands alongside core kernel commands <!-- created_at: 2026-06-18T13:03:00-04:00 priority: high -->
+  - [ ] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 priority: normal -->
+    - Bootstrap commands for testing, configuring, and managing the framework.
+    - Tags: feature
+    - [ ] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 priority: normal -->
+    - [ ] `core.auth create-user <username> <password>` — create admin users from CLI <!-- created_at: 2026-06-18T13:07:00-04:00 priority: normal -->
+    - [ ] `core.db connect <driver> --path=<sqlite path>|--dsn=mysql://...` — test and configure database connectivity (includes MySQL/MariaDB smoke validation) <!-- created_at: 2026-06-18T13:08:00-04:00 priority: normal -->
+    - [ ] `core.config show --key=<path.to.key>` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 priority: normal -->
+    - [ ] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 priority: normal -->
+    - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
+    - [ ] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 priority: normal -->
+- [ ] Installer-generated Server Config <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
+  - Future enhancement: `core.install` CLI command to auto-write router server config files during framework bootstrap.
+- [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
+  - Future enhancement: before/after hooks per route and global middleware support.
 
+## In Progress
 - [~] Database <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, database, config
   - [~] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
@@ -165,61 +195,6 @@
     - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 priority: normal -->
       - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
-- [ ] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
-  - `/admin` panel with all required sub-systems.
-  - Tags: feature, admin
-  - [ ] Dashboard (system status overview) <!-- created_at: 2026-06-18T12:11:00-04:00 priority: normal -->
-  - [ ] Updates system (kernel + application version checking) <!-- created_at: 2026-06-18T12:12:00-04:00 priority: normal -->
-  - [ ] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 priority: normal -->
-  - [ ] Developer Console (variable introspection) <!-- created_at: 2026-06-18T12:14:00-04:00 priority: normal -->
-  - [ ] Theme Preview (test against all UI components) <!-- created_at: 2026-06-18T12:15:00-04:00 priority: normal -->
-- [ ] CLI System <!-- created_at: 2026-06-18T13:00:00-04:00 priority: normal -->
-  - Tags: framework, cli
-  - [ ] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
-    - Command infrastructure built on top of the unified Router. Responsible for command discovery, argument parsing, command metadata, help output, and extension command registration.
-    - Tags: feature
-    - [ ] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 priority: normal -->
-    - [ ] Implement plugin discovery for CLI commands alongside core kernel commands <!-- created_at: 2026-06-18T13:03:00-04:00 priority: high -->
-  - [ ] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 priority: normal -->
-    - Bootstrap commands for testing, configuring, and managing the framework.
-    - Tags: feature
-    - [ ] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 priority: normal -->
-    - [ ] `core.auth create-user <username> <password>` — create admin users from CLI <!-- created_at: 2026-06-18T13:07:00-04:00 priority: normal -->
-    - [ ] `core.db connect <driver> --path=<sqlite path>|--dsn=mysql://...` — test and configure database connectivity (includes MySQL/MariaDB smoke validation) <!-- created_at: 2026-06-18T13:08:00-04:00 priority: normal -->
-    - [ ] `core.config show --key=<path.to.key>` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 priority: normal -->
-    - [ ] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 priority: normal -->
-    - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
-    - [ ] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 priority: normal -->
-- [ ] Installer-generated Server Config <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
-  - Future enhancement: `core.install` CLI command to auto-write router server config files during framework bootstrap.
-- [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
-  - Future enhancement: before/after hooks per route and global middleware support.
-
-## In Progress <!-- hide: archive -->
-
-- [ ] Audit / Logging System <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
-  - Provide a consistent kernel-level logger for audit events, debugging, testing, development diagnostics, and operational visibility.
-  - Logs should be stored as plain text files under `log/` with the `.log` extension.
-  - Support multiple named log files/channels so information can be separated by subsystem, such as database queries, authentication attempts, application errors, migration events, and general debug output.
-  - Tags: framework, logging, audit, debug
-  - [ ] Design logger API and channel model <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
-    - Define a simple service API such as `info()`, `warning()`, `error()`, `debug()`, and channel/file selection.
-  - [ ] Implement text-file logger backend <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
-    - Write line-oriented log entries to `log/{channel}.log` with timestamp, level, channel, message, and optional structured context encoded safely.
-  - [ ] Support multiple log channels/files <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
-    - Examples: `app.log`, `error.log`, `database.log`, `auth.log`, `migration.log`, and `debug.log`.
-  - [ ] Add configuration for enabling/disabling logging <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
-    - Logging should be globally disableable through Config, with safe defaults for production and development.
-  - [ ] Add configurable log level threshold <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
-    - Support levels such as `debug`, `info`, `warning`, `error`, and `critical`; entries below the configured threshold should be ignored.
-  - [ ] Auto-create `log/` directory when needed <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
-    - Create the log directory lazily on first write, with clear failure behavior when the directory is not writable.
-  - [ ] Bind logger service into Bootstrap / Container <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
-    - Register the logger as a shared service usable by core systems, plugins, CLI commands, and tests.
-  - [ ] Add subsystem integration points <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
-    - Initial targets: database queries/errors, authentication attempts, migration runner events, extension loading, and bootstrap failures.
-  - [ ] Document logging configuration and usage conventions <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
-    - Document channel naming, log file location, log levels, and recommended use during testing/development.
 
 ## Validation
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
@@ -232,6 +207,36 @@
     - Validate browser load triggers the Hello World plugin in WEB mode.
 
 ## Done
+- [x] Audit / Logging System <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 priority: high -->
+  - Kernel-level text logger for audit events, debugging, testing, development diagnostics, and operational visibility.
+  - Logs are stored as plain text files under configurable `logging.path` (default `log/`) with the `.log` extension.
+  - Supports named log channels/files through `logger_factory` and common container services such as `logger`, `logger.app`, `logger.error`, `logger.database`, `logger.auth`, `logger.migration`, and `logger.debug`.
+  - Log format:
+    ```text
+    [<ISO-8601 timestamp with timezone and microseconds>]	[<channel>:<LEVEL>]	<message>	<context>
+    ```
+  - Tags: framework, logging, audit, debug
+  - [x] Design logger API and channel model <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 priority: high -->
+    - Implemented `Logger` and `Level` under `src/Logger/`. Channels are validated with `/^[a-z][a-z0-9_-]*$/i`, normalized to lowercase, and map directly to `{channel}.log` files.
+  - [x] Implement text-file logger backend <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 priority: high -->
+    - `Logger::log()` writes line-oriented entries with timestamp, channel, level, message, and JSON context. Empty context is written as `-`.
+  - [x] Support multiple log channels/files <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 priority: high -->
+    - Channel-specific files are written as `{logging.path}/{channel}.log`; `logger_factory` supports custom channels beyond the pre-registered common channels.
+  - [x] Add configuration for enabling/disabling logging <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
+    - Added `logging.enabled` config key. Disabled logging returns without file I/O.
+  - [x] Add configurable log level threshold <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
+    - Added `logging.level` config key with levels `debug`, `info`, `warning`, `error`, and `critical`; entries below the configured threshold are ignored.
+  - [x] Auto-create `log/` directory when needed <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
+    - Logger creates the configured log directory lazily on first write using `mkdir(..., 0755, true)` and degrades to STDERR fallback on write failures.
+  - [x] Bind logger service into Bootstrap / Container <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 priority: high -->
+    - Bootstrap registers `logger_factory`, `logger`, and common channel logger singletons before database services are registered.
+  - [x] Add subsystem integration points <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
+    - Initial integration exposes logger services to core systems, plugins, CLI commands, and tests. HelloWorld provides `hello.log` smoke validation.
+  - [x] Document logging configuration and usage conventions <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
+    - Documentation added under `docs/development/architecture/Logger/Level.md` and `docs/development/architecture/Logger/Logger.md`.
+  - Validation:
+    - Full `php -l` syntax pass across `src/` and `ext/`.
+    - `php cli hello.log` returns `Logger OK`.
 - [x] Renderer <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-23 priority: normal -->
   - Three-layer renderer pipeline: layout → template → view.
   - Layouts provide application chrome such as panel, sidebar, topbar, footer, and global structure.

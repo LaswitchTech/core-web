@@ -19,6 +19,8 @@ use Laswitchtech\CoreWeb\Database\Query\Compiler\SqliteCompiler;
 use Laswitchtech\CoreWeb\Database\Connection;
 use Laswitchtech\CoreWeb\Database\Database;
 use Laswitchtech\CoreWeb\Database\Error\DatabaseException;
+use Laswitchtech\CoreWeb\Logger\Logger;
+use Laswitchtech\CoreWeb\Logger\Level;
 
 /**
 
@@ -79,6 +81,7 @@ class Bootstrap
             $this->initContainer();
             $c = static::$instance;
             $this->registerCoreServices($c);
+            $this->registerLoggerServices($c);
             $this->registerDbServices($c);
             $this->initExtensions();
 
@@ -199,7 +202,51 @@ class Bootstrap
     }
 
     /* ------------------------------------------------------------------ --/
-     /  Database Services                                                   */
+      /  Logging Services                                                   */
+    /* ------------------------------------------------------------------ */
+
+    /** Register logging services into the container. */
+    private function registerLoggerServices(Container $c): void
+    {
+        $appRoot    = $this->appRoot;
+        $enabled    = (bool) Config::get('logging.enabled', true);
+        $path       = Config::get('logging.path', 'log');
+        $relativePath = is_string($path) && $path !== '' ? $path : 'log';
+        $levelConfig = Config::get('logging.level', 'debug');
+        if (!is_string($levelConfig) || $levelConfig === '') {
+            $levelConfig = 'debug';
+        }
+        $levelKey   = match (strtolower($levelConfig)) {
+            'debug'       => Level::DEBUG,
+            'info'        => Level::INFO,
+            'warning'     => Level::WARNING,
+            'error'       => Level::ERROR,
+            'critical'    => Level::CRITICAL,
+            default       => Level::DEBUG,
+        };
+
+        $loggerFactory = function (string $channel) use ($appRoot, $enabled, $relativePath, $levelKey): Logger {
+            return new Logger($channel, $appRoot, $relativePath, $enabled, $levelKey);
+        };
+
+        // Expose a factory callable so callers can create their own channels.
+        $c->set('logger_factory', $loggerFactory);
+
+        // Register the default app logger and commonly-used channel singletons.
+        $c->registerSingleton('logger', function ($container) use ($loggerFactory): Logger {
+            return $loggerFactory('app');
+        });
+
+        foreach (['app', 'error', 'database', 'auth', 'migration', 'debug'] as $channel) {
+            $ch = $channel;
+            $c->registerSingleton("logger.{$ch}", function ($container) use ($loggerFactory, $ch): Logger {
+                return $loggerFactory($ch);
+            });
+        }
+    }
+
+    /* ------------------------------------------------------------------ --/
+      /  Database Services                                                   */
     /* ------------------------------------------------------------------ */
 
     /** Register database services (driver + lazy singleton connection). */

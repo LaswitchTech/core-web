@@ -4,3 +4,4 @@
 list.sh
 .htaccess
 /storage/cache/
+/log/*.log

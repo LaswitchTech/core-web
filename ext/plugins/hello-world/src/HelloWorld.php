@@ -3,6 +3,7 @@
 namespace Laswitchtech\CoreWeb\Plugin;
 
 use Laswitchtech\CoreWeb\Bootstrap;
+use Laswitchtech\CoreWeb\Config;
 use Laswitchtech\CoreWeb\Renderer\Registry;
 use Laswitchtech\CoreWeb\Router\Router;
 use Laswitchtech\CoreWeb\Router\Response;
@@ -248,6 +249,64 @@ final class HelloWorld
                     if (isset($emptyCoreDir)  && is_dir($emptyCoreDir))    { @rmdir($emptyCoreDir); }
                     if (isset($tmpDir)        && is_dir($tmpDir))          { @rmdir($tmpDir); }
                     return Response::text("Migration FAILED: " . $_e->getMessage() . "\n", 500);
+                }
+            });
+
+            /* ------------------------------------------------------------------ --/
+             /  Temporary CLI smoke command — logger (Phase 1)                   */
+            /* ------------------------------------------------------------------ */
+
+            $router->command('hello.log', function (Cli $_req) use ($c): Response {
+                try {
+                    /** @var mixed */
+                    $logger = null;
+
+                    if ($c->has('logger.hello')) {
+                        $logger = $c->resolve('logger.hello');
+                    } elseif ($c->has('logger_factory')) {
+                        $logger = $c->resolve('logger_factory')('hello');
+                    } else {
+                        return Response::text("Logger FAILED: no logger service available\n", 500);
+                    }
+
+                    if (!$logger instanceof \Laswitchtech\CoreWeb\Logger\Logger) {
+                        return Response::text("Logger FAILED: resolved logger is not a Logger instance\n", 500);
+                    }
+
+                    $logger->info('Hello logger smoke', ['source' => 'hello.log']);
+
+                    /* ------------------------------------------------------------------ --/
+                     /  Verify file and content                                             */
+                    /* ------------------------------------------------------------------ */
+
+                    $appRoot = $c->resolve('app_root');
+
+                    // Guard: app_root must be a non-empty string for path resolution.
+                    if (!is_string($appRoot) || $appRoot === '') {
+                        return Response::text("Logger FAILED: app_root is not available\n", 500);
+                    }
+
+                    // Respect logging.path from config, defaulting to "log".
+                    $loggingPath = Config::get('logging.path', 'log');
+                    if (!is_string($loggingPath) || $loggingPath === '') {
+                        $loggingPath = 'log';
+                    }
+
+                    $logFile = $appRoot . '/' . trim($loggingPath, '/\\') . '/hello.log';
+
+                    if (!is_file($logFile)) {
+                        return Response::text("Logger FAILED: log file does not exist: {$logFile}\n", 500);
+                    }
+
+                    $content = file_get_contents($logFile);
+                    if ($content === false || str_contains($content, 'Hello logger smoke') === false) {
+                        return Response::text("Logger FAILED: log file does not contain expected message\n", 500);
+                    }
+
+                    /** @var \Laswitchtech\CoreWeb\Logger\Level */
+                    return Response::text("Logger OK\n");
+                } catch (\Throwable $_e) {
+                    return Response::text("Logger FAILED: " . $_e->getMessage() . "\n", 500);
                 }
             });
         }
