@@ -19,6 +19,8 @@ final class Connection {
     public function beginTransaction(): bool;
     public function commit(): bool;
     public function rollback(): bool;
+    public function inTransaction(): bool;
+    public function transaction(callable $callback): mixed;
     public function lastInsertId(?string $name = null): string|false;
 }
 ```
@@ -54,6 +56,41 @@ Pass-through to `$this->pdo->commit()`. Returns `true` on success. Throws `\PDOE
 ### `rollback(): bool`
 
 Pass-through to `$this->pdo->rollBack()`. Returns `true` on success. Throws `\PDOException` if no transaction is active.
+
+### `inTransaction(): bool`
+
+Pass-through to `$this->pdo->inTransaction()`. Returns `true` when a transaction is currently open on this connection, `false` otherwise.
+
+Useful for checking nesting before starting a new transaction: callers that wish to refuse nested transactions (as Connection does internally in ``transaction()``) inspect this method first.
+
+### `transaction(callable $callback): mixed`
+
+Executes the callback inside an all-or-nothing transaction block.
+
+**Behavior:**
+
+1. If ``$this->inTransaction()`` is ``true``, throws ``RuntimeException("Nested database transactions are not supported.")`` immediately — **no savepoints** (not implemented in V1.0).
+2. Calls ``beginTransaction()``.
+3. Executes ``$callback($this)``, passing the **Connection wrapper** to the user.
+4. On successful callback return: calls ``commit()`` and returns the callback's value.
+5. On any ``Throwable`` in the callback: if still in a transaction calls ``rollback()``, then **re-throws the original ``Throwable``** (the transaction is guaranteed clean — either committed or rolled back, never left mid-transaction).
+
+**Key guarantees:**
+
+| Guarantee | Detail |
+|-----------|--------|
+| Commits on success | The callback's return value is propagated; the transaction is committed after it returns normally. |
+| Rolls back on error | Any ``Throwable`` triggers ``rollback()`` before the exception propagates outward. |
+| Re-throws original | The exact ``Throwable`` (including its stack trace) is re-thrown — never swallowed or wrapped. |
+| No savepoints | Nested calls throw; V1.0 does not implement SAVEPOINT support. |
+
+```php
+$conn->transaction(function ($db): int {
+    $db->prepare("INSERT INTO accounts (balance) VALUES (?)")->execute([1000]);
+    return 42;  // returned after commit succeeds
+});
+// Returns 42 if the transaction commits.
+```
 
 ### `lastInsertId(?string $name = null): string|false`
 

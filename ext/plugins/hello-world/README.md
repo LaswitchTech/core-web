@@ -14,6 +14,7 @@ Active smoke-test plugin for CoreWeb's renderer and router subsystems.
 | `router.register` | `hello.world` (CLI) | Legacy CLI command (accepts optional name argument) |
 | **temporary** | `hello.db` **(CLI)** | **Database smoke validation — resolves `db_connection` and runs `SELECT sqlite_version()` — Phase 1 placeholder for core.db.** |
 | **temporary** | `hello.query` **(CLI)** | **Query Builder smoke validation — creates a temporary `query_smoke` table via raw PDO, inserts one row, queries it using `$db->select('query_smoke')->where(['id' => 1])->fetch()` — Phase 1F.** |
+| **temporary** | `hello.transaction` **(CLI)** | **Transaction API smoke test — exercises `$db->transaction()` (Connection + facade pass-through), verifies committed rows persist, rolled-back rows disappear, and `inTransaction()` returns false. Returns `Transaction OK` or `Transaction FAILED: {message}`.** |
 | **temporary** | `hello.migrate` **(CLI)** | **Migration Runner smoke test — creates temp SQLite DB + migrations dir / rollback verifies: run → zero applied again, registry row removed, table dropped.** |
 | **temporary** | `hello.log` **(CLI)** | **Logger smoke validation — writes "Hello logger smoke" via the logger service (resolves `logger.hello` or falls back to `logger_factory`), verifies log/hello.log exists and contains the message — Phase 1.** |
 
@@ -74,6 +75,7 @@ php cli hello.render           # → rendered layout → template → PHP view H
 php cli hello.latte            # → rendered layout → template → Latte view HTML
 php cli hello.db               # → database smoke validation: "SQLite OK: {version}\n"
 php cli hello.query            # → query builder smoke validation (Phase 1F)
+php cli hello.transaction        # → transaction API smoke test: "Transaction OK\n" or "Transaction FAILED: {message}\n"
 php cli hello.migrate          # → migration runner smoke test: "Migration OK\n"
 php cli hello.log              # → logger smoke validation: "Logger OK\n"
 ```

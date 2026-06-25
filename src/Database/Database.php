@@ -72,6 +72,34 @@ final class Database {
         return $this->connection->prepare($sql);
     }
 
+    /** Return whether the wrapped connection is inside a transaction.       */
+    public function inTransaction(): bool {
+        return $this->connection->inTransaction();
+    }
+
+    /**
+     * Execute a callback inside a database transaction.
+     *
+     * The callback receives the ``Database`` facade as its argument, not the raw
+     * ``Connection``, so callers always work with the same fluent API they expect.
+     *
+     * ```php
+     * $db->transaction(function ($db) {
+     *     $db->select('users')->where(['id' => 1])->update([...]);
+     * });
+     * ```
+     *
+     * @param callable(self):mixed $callback receives this Database facade.
+     * @return mixed The callback's return value on success.
+     * @throws RuntimeException When called inside an existing transaction.
+     * @throws Throwable  Re-thrown after rollback (transaction is guaranteed clean).
+     */
+    public function transaction(callable $callback): mixed {
+        return $this->connection->transaction(function () use ($callback) {
+            return $callback($this);
+        });
+    }
+
     /* ------------------------------------------------------------------ */
     /*  Fluent query builder                                               */
     /* ------------------------------------------------------------------ */

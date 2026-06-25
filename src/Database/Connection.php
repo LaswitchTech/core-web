@@ -4,6 +4,8 @@ namespace Laswitchtech\CoreWeb\Database;
 
 use PDO;
 use PDOStatement;
+use RuntimeException;
+use Throwable;
 
 /**
  * Thin wrapper around PDO providing typed convenience methods.
@@ -63,6 +65,44 @@ final class Connection {
     /** Roll back the current transaction. Returns true on success.        */
     public function rollback(): bool {
         return $this->pdo->rollBack();
+    }
+
+    /** Return whether the connection is currently inside a transaction.    */
+    public function inTransaction(): bool {
+        return $this->pdo->inTransaction();
+    }
+
+    /**
+     * Execute a callback inside a transaction.
+     *
+     * Nested transactions (calls while already inside a transaction) throw
+     * ``RuntimeException``.  Savepoints are not supported.
+     *
+     * @param callable(self):mixed $callback receives this connection as argument.
+     * @return mixed The callback's return value on success.
+     * @throws RuntimeException  When called inside an existing transaction.
+     * @throws Throwable         Re-thrown after rollback (transaction is guaranteed clean).
+     */
+    public function transaction(callable $callback): mixed {
+        if ($this->pdo->inTransaction()) {
+            throw new RuntimeException('Nested database transactions are not supported.');
+        }
+
+        try {
+            if (!$this->beginTransaction()) {
+                throw new RuntimeException('Failed to begin database transaction.');
+            }
+            $result = $callback($this);
+            if (!$this->commit()) {
+                throw new RuntimeException('Failed to commit database transaction.');
+            }
+            return $result;
+        } catch (Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->rollback();
+            }
+            throw $e;
+        }
     }
 
     /* ------------------------------------------------------------------ */

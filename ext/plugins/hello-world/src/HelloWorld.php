@@ -142,6 +142,72 @@ final class HelloWorld
             });
 
             /* ------------------------------------------------------------------ --/
+             /  Temporary CLI smoke command — transaction (Phase 1F)              */
+            /* ------------------------------------------------------------------ */
+
+            /** @var \Laswitchtech\CoreWeb\Bootstrap */
+            $router->command('hello.transaction', function (Cli $_req) use ($c): Response {
+                try {
+                    /** @var \Laswitchtech\CoreWeb\Database\Database */
+                    $db    = $c->resolve('database');
+                    $pdo   = $db->pdo();
+
+                    // Create / clean up.
+                    $pdo->exec("CREATE TABLE IF NOT EXISTS transaction_smoke (id INTEGER PRIMARY KEY, name TEXT)");
+                    $pdo->exec("DELETE FROM transaction_smoke WHERE id IN (1, 2)");
+
+                    // Successful transaction: insert id=1, name='committed'.
+                    $db->transaction(function ($innerDb) use ($pdo) {
+                        $innerPdo = $innerDb->pdo();
+                        $innerPdo->prepare("INSERT INTO transaction_smoke (id, name) VALUES (?, ?)")
+                            ->execute([1, 'committed']);
+                    });
+
+                    // 1. Verify id=1 exists after the transaction.
+                    $row = $pdo->query("SELECT name FROM transaction_smoke WHERE id = 1")->fetch(\PDO::FETCH_ASSOC);
+                    if (!\is_array($row) || $row['name'] !== 'committed') {
+                        return Response::text(
+                            "Transaction FAILED: id=1/committed should exist after successful transaction\n",
+                            500,
+                        );
+                    }
+
+                    // Failing transaction: insert id=2, name='rolled_back', then throw.
+                    try {
+                        $db->transaction(function ($innerDb) use ($pdo) {
+                            $innerPdo = $innerDb->pdo();
+                            $innerPdo->prepare("INSERT INTO transaction_smoke (id, name) VALUES (?, ?)")
+                                ->execute([2, 'rolled_back']);
+                            throw new \RuntimeException('Intentional failure');
+                        });
+                    } catch (\RuntimeException $_e) {
+                        // Expected — do nothing, verification below.
+                    }
+
+                    // 2. Verify id=2 does NOT exist after rollback.
+                    $row = $pdo->query("SELECT id FROM transaction_smoke WHERE id = 2")->fetch(\PDO::FETCH_ASSOC);
+                    if (\is_array($row)) {
+                        return Response::text(
+                            "Transaction FAILED: id=2 should not exist after rollback\n",
+                            500,
+                        );
+                    }
+
+                    // 3. Verify inTransaction() returns false at the end.
+                    if ($db->inTransaction()) {
+                        return Response::text(
+                            "Transaction FAILED: inTransaction() is true when it should be false\n",
+                            500,
+                        );
+                    }
+
+                    return Response::text("Transaction OK\n");
+                } catch (\Throwable $_e) {
+                    return Response::text("Transaction FAILED: " . $_e->getMessage() . "\n", 500);
+                }
+            });
+
+            /* ------------------------------------------------------------------ --/
              /  Temporary CLI smoke command — migration Runner (Phase 1)         */
             /* ------------------------------------------------------------------ */
 

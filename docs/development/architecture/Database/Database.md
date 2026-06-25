@@ -10,6 +10,54 @@ The `Database` class is the public facade / entry-point for the database subsyst
 | `query(string $sql)` | `PDOStatement\|false` | Execute a SQL query; returns the result statement or false on failure. |
 | `prepare(string $sql)` | `PDOStatement\|false` | Prepare a statement for later binding and execution. |
 | `select(string $table, array $columns = ['*'])` | `Builder` | Start a fluent SELECT query; passes connection + compiler to ``Builder``. |
+| `inTransaction()` | `bool` | Pass-through to ``Connection::inTransaction()`` — reports if the wrapped connection is inside an open transaction. |
+| `transaction(callable $callback)` | `mixed` | All-or-nothing transaction block; passes the **Database facade** to the callback (not the raw Connection), delegates to ``Connection::transaction()``. |
+
+The class is **final** and has only a constructor and public read-only methods — no mutable state beyond the private, readonly `$connection` and `$compiler` properties.
+
+## `inTransaction(): bool`
+
+Pass-through to ``$this->connection->inTransaction()``. Reports whether the wrapped Connection is currently inside an open database transaction. Use before calling ``transaction()`` if you want explicit pre-checking; ``transaction()`` itself guards against nesting and will throw ``RuntimeException`` when called inside an existing transaction.
+
+## `transaction(callable $callback): mixed`
+
+Delegates to ``$this->connection->transaction(...)`` while passing the **Database facade** (not the raw Connection) to the user callback:
+
+```php
+$db->transaction(function ($db): int {
+    // $db is Laswitchtech\CoreWeb\Database\Database, not Connection.
+    $stmt = $db->pdo()->prepare('INSERT INTO accounts (balance) VALUES (?)');
+    $stmt->execute([1000]);
+    return 42;
+});
+// Returns 42 — the transaction commits after the callback returns normally.
+
+// On any Throwable inside the callback:
+// The transaction rolls back, then the original Throwable is re-thrown unchanged.
+```
+
+**Behavior inherited from ``Connection::transaction()``:**
+
+| Guarantee | Detail |
+|-----------|--------|
+| Commits on success | Callback's return value propagated after commit. |
+| Rolls back on error | Any ``Throwable`` triggers rollback before propagation. |
+| Re-throws original | Exception is never swallowed or wrapped. |
+| No savepoints | Nested calls throw `RuntimeException("Nested database transactions are not supported.")` — V1.0 does not implement SAVEPOINT support. |
+
+**Important: callback receives the Database facade**
+
+Unlike ``Connection::transaction()`` which passes the Connection wrapper to its callback, ``Database::transaction()`` wraps the inner call so that the user's ``$db`` argument is always the same ``Database`` instance they called ``transaction()`` on. This means all fluent methods (`select()`, `pdo()`, etc.) are available inside the callback:
+
+```php
+$db->transaction(function ($db): void {
+    // Fluent API (Database facade) — correct:
+    $db->select('users')->where(['id' => 1])->fetch();
+
+    // Raw PDO — also correct:
+    $db->pdo()->exec("SELECT ...");
+});
+```
 
 The class is **final** and has only a constructor and public read-only methods — no mutable state beyond the private, readonly `$connection` and `$compiler` properties.
 
