@@ -153,34 +153,34 @@
       - Deferred: no execute method in Builder; DML compiler implementations also deferred. Future phase work.
     - [x] Document driver differences for joins, identifier quoting, limits, booleans, and future RETURNING support between SQLite and MySQL/MariaDB <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: normal -->
       - Documented in `docs/development/architecture/Database/Architecture.md`, `Query/Builder.md`, and `Query/Compiler/*.md`. Key differences: SQLite uses double-quoted identifiers (`"table"."column"`); MySQL/MariaDB use backticks. Both use positional `?` params, bool→int casting, `SELECT *` unquoted, and column-to-column JOINs only in Phase 1E.
-    - [x] Database Versioning / Migrations <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
-      - Track database schema versions and apply incremental updates safely across SQLite and MySQL/MariaDB deployments. Full rollback (up/down) support with dialect-resolving companion file overrides. No automatic execution — explicit CLI/manual trigger only. Per-migration transaction model. Version conflict detection via checksum validation.
-      - Tags: feature, database, migrations, versioning
-      - [x] Create schema version table / migration registry <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: high -->
-        - `__schema_migrations` table (CREATE TABLE IF NOT EXISTS, shared DDL template: version TEXT PRIMARY KEY, applied INTEGER, checksum TEXT, batch INTEGER) — identical DDL for SQLite and MySQL. RegistryTable class provides ensureTable(), getAppliedVersions(), latestBatch(), insert(), isApplied(), getChecksum(), delete(), queryVersionDetails(). Bootstrap registers lazy singleton as `migration_registry`.
-      - [x] Implement migration discovery from application/core/plugin directories <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: high -->
-        - CorePromoter (priority 0, directory from `migrations.core_path` config or CORE_WEB_ROOT/migrations) and AppPromoter (priority 1, appRoot/migrations) discovered via persistent file scanning. Deterministic execution order: core → app → (extensions deferred). Migration::fromFile() validates version pattern and extracts checksum (sha256_file), up/down sections at `-- Down:` marker.
-      - [x] Implement incremental migration runner with dedup, sort, per-migration transaction loop, batch tracking <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: high -->
-        - Runner orchestrates deduplication by version (highest-priority promoter wins), deterministic sort, per-migration transaction begin/execute/commit loop. Returns list of applied version strings or throws RuntimeException on first failure with previous intact. Batch number incremented per run() call. Bootstrap registers lazy singleton as `migration_runner`.
-      - [x] Support driver-specific migration SQL or PHP migration classes <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: normal -->
-        - SqlMigrationDriver resolves dialect-specific companion files (*.sqlite.sql, *.mysql.sql) at execution time. Companion file up/down sections fully replace base file sections when present; single-section companions fall back to base for the other section. mariadb driver key aliased to mysql. Constructor accepts Connection + activeDriver; Bootstrap wire-in passes driverKey from container's db_driver resolution.
-      - [x] Add rollback/down migration strategy with full implementation <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: normal -->
-        - Runner::rollback(count) rolls back the most recent `count` batches in reverse-app-order, within each batch newest-first. Down SQL extracted at file parse time and stored immutable in Migration; SqlMigrationDriver resolves companions for down section just like up. Each rollback executes its own per-migration transaction + RegistryTable.delete(). Previously rolled-back migrations remain intact on failure.
-      - [x] Enforce single-statement migration sections <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: normal -->
-        - SqlMigrationDriver::execute() trims incoming SQL, allows zero or one trailing semicolon, and rejects when any additional semicolon appears before the final (optional) one. Throws RuntimeException with message "Migration SQL contains multiple statements; split them into separate migrations." No statement-splitting logic — just validation. Implemented: src/Migration/Driver/SqlMigrationDriver.php line 106-122.
-      - [x] Document migration naming, ordering, and failure behavior <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: normal -->
-        - Architecture, Runner, RegistryTable, Migration, MigrationPromoterInterface, CorePromoter, AppPromoter, SqlMigrationDriver docs written under docs/development/architecture/Migration/ and subdirectories.
-    - [ ] Database Seeding <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
-      - Provide repeatable seed data for installing applications, initializing core records, and preparing development/test environments.
-      - Tags: feature, database, seeding
-      - [ ] Implement seed discovery from application/core/plugin directories <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
-      - [ ] Implement idempotent seed runner <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
-        - Seeds should be safe to re-run without duplicating records where possible.
-      - [ ] Track applied seed sets and seed version/checksum metadata <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
-        - Allow seed updates to be detected while avoiding accidental duplicate inserts.
-      - [ ] Support environment-specific seed groups <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
-        - Examples: install, demo, development, testing.
-      - [ ] Document seeding conventions and relationship with migrations <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
+  - [x] Database Versioning / Migrations <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: high -->
+    - Track database schema versions and apply incremental updates safely across SQLite and MySQL/MariaDB deployments. Full rollback (up/down) support with dialect-resolving companion file overrides. No automatic execution — explicit CLI/manual trigger only. Per-migration transaction model. Version conflict detection via checksum validation.
+    - Tags: feature, database, migrations, versioning
+    - [x] Create schema version table / migration registry <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: high -->
+      - `__schema_migrations` table with dialect-aware DDL: SQLite uses `TEXT PRIMARY KEY` / `TEXT`; MySQL/MariaDB uses `VARCHAR(255) PRIMARY KEY` / `VARCHAR(64)` with InnoDB + utf8mb4. RegistryTable provides `ensureTable()`, `getAppliedVersions()`, `latestBatch()`, `insert()`, `isApplied()`, `getChecksum()`, `delete()`, `queryVersionDetails()`, and `dropTable()`. Bootstrap registers lazy singleton as `migration_registry`.
+    - [x] Implement migration discovery from core and application directories <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: high -->
+      - CorePromoter (priority 0, directory from `migrations.core_path` config or `CORE_WEB_ROOT/migrations`) and AppPromoter (priority 1, `$appRoot/migrations`) discover base `*.sql` migrations through deterministic filesystem scanning. Dialect companion files (`*.sqlite.sql`, `*.mysql.sql`, `*.mariadb.sql`) are excluded from discovery and resolved by `SqlMigrationDriver`. Extension migration discovery remains deferred.
+    - [x] Implement incremental migration runner with dedup, sort, per-migration transaction loop, batch tracking <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: high -->
+      - Runner orchestrates deduplication by version (highest-priority promoter wins), deterministic sort, per-migration transaction begin/execute/commit loop. Returns list of applied version strings or throws RuntimeException on first failure with previous intact. Batch number incremented per run() call. Bootstrap registers lazy singleton as `migration_runner`.
+    - [x] Support driver-specific SQL companion files <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: normal -->
+      - SqlMigrationDriver resolves dialect-specific companion files (`*.sqlite.sql`, `*.mysql.sql`, `*.mariadb.sql`) at execution time. Non-empty companion up/down sections override the corresponding base section; empty companion sections fall back to the base migration section. MariaDB uses the MySQL companion key. PHP migration classes are deferred.
+    - [x] Add rollback/down migration strategy with full implementation <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: normal -->
+      - Runner::rollback(count) rolls back the most recent `count` batches in reverse-app-order, within each batch newest-first. Down SQL extracted at file parse time and stored immutable in Migration; SqlMigrationDriver resolves companions for down section just like up. Each rollback executes its own per-migration transaction + RegistryTable.delete(). Previously rolled-back migrations remain intact on failure.
+    - [x] Enforce single-statement migration sections <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: normal -->
+      - SqlMigrationDriver::execute() trims incoming SQL, allows zero or one trailing semicolon, and rejects when any additional semicolon appears before the final optional semicolon. Throws RuntimeException with message "Migration SQL contains multiple statements; split them into separate migrations." No statement-splitting logic — just validation.
+    - [x] Document migration naming, ordering, and failure behavior <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: normal -->
+      - Architecture, Runner, RegistryTable, Migration, MigrationPromoterInterface, CorePromoter, AppPromoter, SqlMigrationDriver docs written under docs/development/architecture/Migration/ and subdirectories.
+  - [ ] Database Seeding <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+    - Provide repeatable seed data for installing applications, initializing core records, and preparing development/test environments.
+    - Tags: feature, database, seeding
+    - [ ] Implement seed discovery from application/core/plugin directories <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+    - [ ] Implement idempotent seed runner <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+      - Seeds should be safe to re-run without duplicating records where possible.
+    - [ ] Track applied seed sets and seed version/checksum metadata <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
+      - Allow seed updates to be detected while avoiding accidental duplicate inserts.
+    - [ ] Support environment-specific seed groups <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
+      - Examples: install, demo, development, testing.
+    - [ ] Document seeding conventions and relationship with migrations <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
   - [ ] Transaction API Enhancements <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
     - Build on the existing PDO transaction pass-throughs with safer application-level transaction helpers.
     - Tags: feature, database, transactions
