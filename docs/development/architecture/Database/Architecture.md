@@ -227,7 +227,7 @@ docs/development/architecture/Database/
 | MySQL / MariaDB driver      | ✅ Implemented   | Bootstrap resolves `mysql` and `mariadb` to Mysql class       |
 | PostgreSQL driver           | ❌ Not yet       | Out of scope for Phase 2A                                      |
 | Connection pooling          | ❌ Not yet       | SQLite does not need pool; MySQL version deferred              |
-| Query Builder               | ✅ Phase 1E implemented (SELECT + fetch()/all()) | DML INSERT/UPDATE/DELETE deferred to a later phase |
+| Query Builder               | ✅ Phase 1E implemented (SELECT + fetch()/all()) | INSERT/UPDATE/DELETE builders also implemented and wired through Database facade |
 | ORM / Active Record         | ❌ Future phase  | Beyond the scope of a driver layer                             |
 | Database migrations          | ❌ Future phase  | DESIGN.md states "No migration system in day-one"              |
 | Schema introspection        | ❌ Not yet       | Table/column metadata APIs not implemented                     |

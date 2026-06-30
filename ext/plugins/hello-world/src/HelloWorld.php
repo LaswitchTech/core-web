@@ -142,7 +142,149 @@ final class HelloWorld
             });
 
             /* ------------------------------------------------------------------ --/
-             /  Temporary CLI smoke command — transaction (Phase 1F)              */
+             /  Temporary CLI smoke command — insert builder (Phase 1F)           */
+            /* ------------------------------------------------------------------ */
+
+            $router->command('hello.insert', function () use ($c): Response {
+                try {
+                    /** @var \Laswitchtech\CoreWeb\Database\Database */
+                    $db = $c->resolve('database');
+
+                    // Setup: create table, clean slate.
+                    $pdo  = $db->pdo();
+                    $pdo->exec("CREATE TABLE IF NOT EXISTS insert_smoke (id INTEGER PRIMARY KEY, name TEXT, active INTEGER)");
+                    $pdo->exec("DELETE FROM insert_smoke WHERE id = 1");
+
+                    // Insert via builder → verify affected rows.
+                    $affected = $db->insert('insert_smoke', ['id' => 1, 'name' => 'inserted', 'active' => true])->execute();
+                    if ($affected < 1) {
+                        return Response::text("Insert FAILED: expected >= 1 affected rows\n", 500);
+                    }
+
+                    // Verify row exists and active was cast to integer (1).
+                    $row = $pdo->query("SELECT id, active FROM insert_smoke WHERE id = 1")->fetch(\PDO::FETCH_ASSOC);
+                    if (!\is_array($row) || $row['active'] !== 1) {
+                        return Response::text("Insert FAILED: row id=1 not found or active is " . var_export($row ?? null, true) . "\n", 500);
+                    }
+
+                    return Response::text("Insert OK\n");
+                } catch (\Throwable $_e) {
+                    return Response::text("Insert FAILED: " . $_e->getMessage() . "\n", 500);
+                }
+            });
+
+            /* ------------------------------------------------------------------ --/
+              /  Temporary CLI smoke command — update builder (Phase 1F)           */
+            /* ------------------------------------------------------------------ */
+
+            $router->command('hello.update', function () use ($c): Response {
+                try {
+                    /** @var \Laswitchtech\CoreWeb\Database\Database */
+                    $db    = $c->resolve('database');
+                    $pdo   = $db->pdo();
+
+                    // Setup: create / clean table.
+                    $pdo->exec("CREATE TABLE IF NOT EXISTS update_smoke (id INTEGER PRIMARY KEY, name TEXT, active INTEGER)");
+                    $pdo->exec("DELETE FROM update_smoke WHERE id = 1");
+
+                    // Seed row using raw PDO.
+                    $pdo->exec("INSERT INTO update_smoke (id, name, active) VALUES (1, 'original', 1)");
+
+                    // Update via fluent builder — active=false must cast to integer 0.
+                    $affected = $db->update('update_smoke', ['name' => 'updated', 'active' => false])
+                        ->where(['id' => 1])
+                        ->execute();
+
+                    if ($affected < 1) {
+                        return Response::text("Update FAILED: expected >= 1 affected rows\n", 500);
+                    }
+
+                    // Verify column values.
+                    $row = $pdo->query("SELECT name, active FROM update_smoke WHERE id = 1")->fetch(\PDO::FETCH_ASSOC);
+                    if (!\is_array($row)) {
+                        return Response::text("Update FAILED: result row missing\n", 500);
+                    }
+                    if ($row['name'] !== 'updated') {
+                        return Response::text("Update FAILED: name expected 'updated', got " . var_export($row ?? null, true) . "\n", 500);
+                    }
+                    if ($row['active'] !== 0) {
+                        return Response::text("Update FAILED: active expected 0, got " . var_export($row ?? null, true) . "\n", 500);
+                    }
+
+                    // Additional assertion exercising string-form where('id', 1).
+                    $affected = $db->update('update_smoke', ['name' => 're-verified'])
+                        ->where('id', 1)
+                        ->execute();
+                    if ($affected < 1) {
+                        return Response::text("Update FAILED: string where() did not affect row\n", 500);
+                    }
+
+                    $row = $pdo->query("SELECT name FROM update_smoke WHERE id = 1")->fetch(\PDO::FETCH_ASSOC);
+                    if (!\is_array($row) || $row['name'] !== 're-verified') {
+                        return Response::text("Update FAILED: string where() result mismatch\n", 500);
+                    }
+
+                    return Response::text("Update OK\n");
+                } catch (\Throwable $_e) {
+                    return Response::text("Update FAILED: " . $_e->getMessage() . "\n", 500);
+                }
+            });
+
+            /* ------------------------------------------------------------------ --/
+              /  Temporary CLI smoke command — delete builder (Phase 1F)           */
+            /* ------------------------------------------------------------------ */
+
+            $router->command('hello.delete', function () use ($c): Response {
+                try {
+                    /** @var \Laswitchtech\CoreWeb\Database\Database */
+                    $db    = $c->resolve('database');
+                    $pdo   = $db->pdo();
+
+                    // Setup: create / clean table.
+                    $pdo->exec("CREATE TABLE IF NOT EXISTS delete_smoke (id INTEGER PRIMARY KEY, name TEXT)");
+                    $pdo->exec("DELETE FROM delete_smoke WHERE id = 1");
+
+                    // Seed row using raw PDO.
+                    $pdo->exec("INSERT INTO delete_smoke (id, name) VALUES (1, 'to_delete')");
+
+                    // Verify row exists before delete.
+                    $row = $pdo->query("SELECT * FROM delete_smoke WHERE id = 1")->fetch(\PDO::FETCH_ASSOC);
+                    if (!\is_array($row) || $row['id'] !== 1) {
+                        return Response::text("Delete FAILED: seed row not found before delete\n", 500);
+                    }
+
+                    // Delete via fluent builder.
+                    $affected = $db->delete('delete_smoke')
+                        ->where(['id' => 1])
+                        ->execute();
+
+                    if ($affected < 1) {
+                        return Response::text("Delete FAILED: expected >= 1 affected rows\n", 500);
+                    }
+
+                    // Verify row no longer exists.
+                    $row = $pdo->query("SELECT * FROM delete_smoke WHERE id = 1")->fetch(\PDO::FETCH_ASSOC);
+                    if (\is_array($row) && $row['id'] === 1) {
+                        return Response::text("Delete FAILED: row still exists after delete\n", 500);
+                    }
+
+                    // Additional assertion exercising string-form where('id', 1).
+                    $pdo->exec("INSERT INTO delete_smoke (id, name) VALUES (1, 're-deleted')");
+                    $affected = $db->delete('delete_smoke')
+                        ->where('id', 1)
+                        ->execute();
+                    if ($affected < 1) {
+                        return Response::text("Delete FAILED: string where() did not affect row\n", 500);
+                    }
+
+                    return Response::text("Delete OK\n");
+                } catch (\Throwable $_e) {
+                    return Response::text("Delete FAILED: " . $_e->getMessage() . "\n", 500);
+                }
+            });
+
+            /* ------------------------------------------------------------------ --/
+              /  Temporary CLI smoke command — transaction (Phase 1F)              */
             /* ------------------------------------------------------------------ */
 
             /** @var \Laswitchtech\CoreWeb\Bootstrap */
@@ -328,36 +470,37 @@ final class HelloWorld
                     $db    = $c->resolve('database');
                     $pdo   = $db->pdo();
 
-                    // Create two temporary tables.
-                    $pdo->exec("DELETE FROM smoke_join_users");
-                    $pdo->exec("CREATE TABLE IF NOT EXISTS smoke_join_users (id INTEGER PRIMARY KEY, name TEXT)");
-                    $pdo->exec("DELETE FROM smoke_join_orders");
-                    $pdo->exec("CREATE TABLE IF NOT EXISTS smoke_join_orders (id INTEGER PRIMARY KEY, user_id INTEGER, total INTEGER)");
+                    // Create two temporary tables for JOIN validation.
+                    $pdo->exec("DROP TABLE IF EXISTS smoke_join_users");
+                    $pdo->exec("CREATE TABLE smoke_join_users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, role_id INTEGER NULL)");
 
-                    // Seed data.
-                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_users VALUES (1, 'alice')");
-                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_users VALUES (2, 'bob')");
-                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_users VALUES (3, 'carol')");
-                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_orders VALUES (1, 1, 100)");
-                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_orders VALUES (2, 1, 200)");
-                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_orders VALUES (3, 2, 50)");
+                    $pdo->exec("DROP TABLE IF EXISTS smoke_join_roles");
+                    $pdo->exec("CREATE TABLE smoke_join_roles (id INTEGER PRIMARY KEY, name TEXT NOT NULL)");
 
-                    // Inner JOIN: each user with their order count.
-                    $rows = $db->select('smoke_join_users', ['smoke_join_users.id', 'smoke_join_users.name'])
-                        ->join('smoke_join_orders', 'smoke_join_users.id', '=', 'smoke_join_orders.user_id')
+                    // Seed deterministic smoke rows.
+                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_roles VALUES (10, 'admin')");
+                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_users VALUES (1, 'Alice', 10)");
+                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_users VALUES (2, 'Bob', NULL)");
+
+                    // INNER JOIN: Alice should join to admin.
+                    // Select only the target table column to avoid key collisions with FETCH_ASSOC.
+                    $innerRows = $db->select('smoke_join_users', ['smoke_join_roles.name'])
+                        ->join('smoke_join_roles', 'smoke_join_users.role_id', '=', 'smoke_join_roles.id')
+                        ->where(['smoke_join_users.id' => 1])
                         ->all();
 
-                    if (count($rows) !== 3) {
-                        return Response::text("JOIN FAILED: inner join expected 3 rows, got " . count($rows) . "\n", 500);
+                    if (count($innerRows) !== 1 || ($innerRows[0]['name'] ?? null) !== 'admin') {
+                        return Response::text("INNER JOIN FAILED: expected Alice→admin\n", 500);
                     }
 
-                    // Left JOIN: users with orders (should include carol with all NULLs).
-                    $rows = $db->select('smoke_join_users', ['smoke_join_users.id', 'smoke_join_users.name'])
-                        ->leftJoin('smoke_join_orders', 'smoke_join_users.id', '=', 'smoke_join_orders.user_id')
+                    // LEFT JOIN: Bob (null role_id) should still appear with a valid name.
+                    $leftJoinRows = $db->select('smoke_join_users', ['smoke_join_users.name'])
+                        ->leftJoin('smoke_join_roles', 'smoke_join_users.role_id', '=', 'smoke_join_roles.id')
+                        ->where(['smoke_join_users.id' => 2])
                         ->all();
 
-                    if (count($rows) !== 3 || $rows[2]['name'] !== 'carol') {
-                        return Response::text("JOIN FAILED: left join expected carol as 3rd user\n", 500);
+                    if (count($leftJoinRows) !== 1 || ($leftJoinRows[0]['name'] ?? null) !== 'Bob') {
+                        return Response::text("LEFT JOIN FAILED: expected Bob with no matching role\n", 500);
                     }
 
                     return Response::text("JOIN OK\n");

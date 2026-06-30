@@ -149,4 +149,4 @@ Builder::fetch() or all()
 
 ## Status
 
-**[x] Complete (Phase 1E)** — Facade, wiring, and SELECT execution are complete; INSERT helper methods and fluent UPDATE/DELETE helpers await a future KANBAN task.
+**[x] Complete (Phase 1E)** — Facade, wiring, SELECT execution, INSERT helper, and fluent UPDATE/DELETE helpers are implemented and wired via the ``Database`` facade.

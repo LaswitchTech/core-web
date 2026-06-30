@@ -14,6 +14,9 @@ Active smoke-test plugin for CoreWeb's renderer and router subsystems.
 | `router.register` | `hello.world` (CLI) | Legacy CLI command (accepts optional name argument) |
 | **temporary** | `hello.db` **(CLI)** | **Database smoke validation — resolves `db_connection` and runs `SELECT sqlite_version()` — Phase 1 placeholder for core.db.** |
 | **temporary** | `hello.query` **(CLI)** | **Query Builder smoke validation — creates a temporary `query_smoke` table via raw PDO, inserts one row, queries it using `$db->select('query_smoke')->where(['id' => 1])->fetch()` — Phase 1F.** |
+| **temporary** | `hello.insert` **(CLI)** | **INSERT builder smoke validation — creates `insert_smoke` table, uses `$db->insert('insert_smoke', [...])->execute()`, verifies affected rows >= 1 and row id=1 has active cast to integer (1) — Phase 1F.** |
+| **temporary** | `hello.update` **(CLI)** | **UPDATE builder smoke validation — creates `update_smoke` table, inserts row via raw PDO, updates row using `$db->update('update_smoke', ['name' => 'updated', 'active' => false])->where(['id' => 1])->execute()`, verifies name='updated' and active cast to integer (0) — Phase 1F.** |
+| **temporary** | `hello.delete` **(CLI)** | **DELETE builder smoke validation — creates `delete_smoke` table, seeds row id=1 via raw PDO, deletes it using `$db->delete('delete_smoke')->where(['id' => 1])->execute()`, verifies affected >= 1 and row id=1 no longer exists — Phase 1F.** |
 | **temporary** | `hello.transaction` **(CLI)** | **Transaction API smoke test — exercises `$db->transaction()` (Connection + facade pass-through), verifies committed rows persist, rolled-back rows disappear, and `inTransaction()` returns false. Returns `Transaction OK` or `Transaction FAILED: {message}`.** |
 | **temporary** | `hello.migrate` **(CLI)** | **Migration Runner smoke test — creates temp SQLite DB + migrations dir / rollback verifies: run → zero applied again, registry row removed, table dropped.** |
 | **temporary** | `hello.log` **(CLI)** | **Logger smoke validation — writes "Hello logger smoke" via the logger service (resolves `logger.hello` or falls back to `logger_factory`), verifies log/hello.log exists and contains the message — Phase 1.** |
@@ -75,6 +78,9 @@ php cli hello.render           # → rendered layout → template → PHP view H
 php cli hello.latte            # → rendered layout → template → Latte view HTML
 php cli hello.db               # → database smoke validation: "SQLite OK: {version}\n"
 php cli hello.query            # → query builder smoke validation (Phase 1F)
+php cli hello.insert           # → insert builder smoke validation: "Insert OK\n" or "Insert FAILED: {message}\n" (Phase 1F)
+php cli hello.update           # → update builder smoke validation: "Update OK\n" or "Update FAILED: {message}\n" (Phase 1F)
+php cli hello.delete           # → delete builder smoke validation: "Delete OK\n" or "Delete FAILED: {message}\n" (Phase 1F)
 php cli hello.transaction        # → transaction API smoke test: "Transaction OK\n" or "Transaction FAILED: {message}\n"
 php cli hello.migrate          # → migration runner smoke test: "Migration OK\n"
 php cli hello.log              # → logger smoke validation: "Logger OK\n"
