@@ -181,12 +181,16 @@
     - [ ] Support environment-specific seed groups <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
       - Examples: install, demo, development, testing.
     - [ ] Document seeding conventions and relationship with migrations <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
-  - [ ] Transaction API Enhancements <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+  - [x] Transaction API Enhancements <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
     - Build on the existing PDO transaction pass-throughs with safer application-level transaction helpers.
+    - Implemented `Connection::inTransaction()`, `Connection::transaction(callable)`, and Database facade pass-throughs. `Connection::transaction()` passes the Connection wrapper to callbacks; `Database::transaction()` passes the Database facade. Nested transactions throw `RuntimeException`; savepoints are not implemented in V1.0. HelloWorld provides `hello.transaction` smoke validation for commit and rollback behavior.
     - Tags: feature, database, transactions
-    - [ ] Add `transaction(callable $callback)` helper that commits on success and rolls back on failure <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
-    - [ ] Add `inTransaction()` pass-through helper <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
-    - [ ] Document nested transaction behavior and driver limitations <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+    - [x] Add `transaction(callable $callback)` helper that commits on success and rolls back on failure <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
+      - `Connection::transaction()` begins a transaction, passes the Connection wrapper to the callback, commits on success, rolls back on `Throwable`, and rethrows the original exception. `Database::transaction()` delegates through Connection and passes the Database facade to the callback.
+    - [x] Add `inTransaction()` pass-through helper <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
+      - Added `Connection::inTransaction()` and `Database::inTransaction()` pass-throughs backed by `PDO::inTransaction()`.
+    - [x] Document nested transaction behavior and driver limitations <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
+      - Documented that nested transactions are rejected with `RuntimeException`, savepoints are not implemented in V1.0, and rollback occurs on callback failure. Documentation updated in `docs/development/architecture/Database/Connection.md` and `docs/development/architecture/Database/Database.md`.
   - [x] Config Manager <!-- created_at: 2026-06-18T11:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
     - Tags: feature
