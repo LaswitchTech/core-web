@@ -120,6 +120,15 @@
   - [ ] Design plugin authentication provider interface <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
   - [ ] Seed default groups: Administrators, Users, Guests <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
   - [ ] Document authorization assignment rules for roles and groups <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
+- [ ] PostgreSQL Driver <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
+  - PostgreSQL database driver built on the existing database abstraction layer. Extends the query compiler and connection system to support PostgreSQL while preserving the database-agnostic developer API.
+  - Tags: feature, database, postgresql, v.2.0
+  - [ ] Implement PDO PostgreSQL driver with configurable DSN/host/port/database/schema/charset/user/password <!-- created_at: 2026-06-30T00:00:00-04:00 priority: high -->
+  - [ ] Add `database.driver = postgresql` support in Bootstrap database registration <!-- created_at: 2026-06-30T00:00:00-04:00 priority: high -->
+  - [ ] Implement PostgreSQL query compiler <!-- created_at: 2026-06-30T00:00:00-04:00 priority: high -->
+  - [ ] Support PostgreSQL-specific migration companion files (`*.postgresql.sql`) <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
+  - [ ] Add CLI smoke validation for PostgreSQL connection testing <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
+  - [ ] Document PostgreSQL configuration and SQL dialect differences <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
 
 ## In Progress
 - [~] Database <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
