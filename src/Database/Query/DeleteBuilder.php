@@ -1,0 +1,206 @@
+<?php declare(strict_types = 1);
+
+namespace Laswitchtech\CoreWeb\Database\Query;
+
+use InvalidArgumentException;
+use Laswitchtech\CoreWeb\Database\Connection;
+use Laswitchtech\CoreWeb\Database\Query\Clause\WhereClause;
+
+/**
+ * Immutable DELETE builder — holds a table name, WHERE conditions, and a connection.
+ *
+ * Compiles through the assigned ``CompilerInterface``, prepares via ``$connection->prepare()``,
+ * binds every parameter at its 1-based positional index, executes, and returns ``rowCount()``.
+ *
+ * ```php
+ * $db->delete('users')
+ *    ->where(['id' => 1])
+ *    ->execute();                 // int — rows affected
+ * ```
+ */
+final class DeleteBuilder {
+
+    /* ------------------------------------------------------------------ */
+    /*  Properties                                                         */
+    /* ------------------------------------------------------------------ */
+
+    /** @var string Table name (non-empty). */
+    private readonly string $table;
+
+    /** @var list<WhereClause> WHERE conditions collected via where() / orWhere(). */
+    private array $whereClauses = [];
+
+    /* ------------------------------------------------------------------ */
+    /*  Constructor                                                        */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Create a new DELETE builder.
+     *
+     * @param Connection        $connection the database connection (never null).
+     * @param CompilerInterface $compiler   the SQL dialect compiler (never null).
+     * @param string            $table      table to delete from (non-empty).
+     */
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly CompilerInterface $compiler,
+        string $table,
+    ) {
+        if ($table === '') {
+            throw new InvalidArgumentException('DeleteBuilder table must not be empty.');
+        }
+
+        $this->table = $table;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  WHERE clause helpers                                               */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Add a WHERE condition (AND).
+     *
+     * Supports the following call forms:
+     * - ``where(['id' => 1])`` — single-key array maps to column=value with '=' operator.
+     * - ``where('id', 1)`` — column and value; '=' defaulted for non-null, 'IS NULL' for null.
+     * - ``where('id', '=', 1)`` — explicit column, operator, value.
+     */
+    public function where(string|array $column, mixed $operatorOrValue = null, mixed $value = null): self {
+        if (is_array($column)) {
+            foreach ($column as $k => $v) {
+                $op = '=';
+                if (is_null($v)) {
+                    $op = 'IS NULL';
+                }
+
+                $whereClause = new WhereClause($k, $op, $v);
+                $this->whereClauses[] = $whereClause;
+            }
+
+            return $this;
+        }
+
+        // String column: determine the actual operator and value from parameters.
+        if (is_string($operatorOrValue) && in_array(strtoupper($operatorOrValue), ['=', '!=', '<', '>', '<=', '>=', 'LIKE', 'IN', 'IS NULL', 'IS NOT NULL'], true)) {
+            // Explicit operator: where('id', '=', 1).
+            $operator = $operatorOrValue;
+            if ($value === null && !in_array($operator, ['IS NULL', 'IS NOT NULL'], true)) {
+                $operator = 'IS NULL';
+                $value    = null;
+            }
+            $whereClause = new WhereClause($column, $operator, $value);
+            $this->whereClauses[] = $whereClause;
+        } elseif ($operatorOrValue === null) {
+            // where('col') or where('col', null) → col IS NULL.
+            $whereClause = new WhereClause($column, 'IS NULL', null);
+            $this->whereClauses[] = $whereClause;
+        } else {
+            // where('id', 1) — second param is value, '=' defaulted.
+            $whereClause = new WhereClause($column, '=', $operatorOrValue);
+            $this->whereClauses[] = $whereClause;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Add a WHERE condition combined via OR.
+     *
+     * Mirrors ``where()`` call forms but sets the internal ``$or`` flag to true so
+     * the compiler emits this clause with ``OR`` instead of ``AND``.
+     */
+    public function orWhere(string|array $column, mixed $operatorOrValue = null, mixed $value = null): self {
+        if (is_array($column)) {
+            foreach ($column as $k => $v) {
+                $op = '=';
+                if (is_null($v)) {
+                    $op = 'IS NULL';
+                }
+
+                $whereClause = new WhereClause($k, $op, $v, or: true);
+                $this->whereClauses[] = $whereClause;
+            }
+
+            return $this;
+        }
+
+        if (is_string($operatorOrValue) && in_array(strtoupper($operatorOrValue), ['=', '!=', '<', '>', '<=', '>=', 'LIKE', 'IN', 'IS NULL', 'IS NOT NULL'], true)) {
+            // Explicit operator: orWhere('id', '=', 1).
+            $operator = $operatorOrValue;
+            if ($value === null && !in_array($operator, ['IS NULL', 'IS NOT NULL'], true)) {
+                $operator = 'IS NULL';
+                $value    = null;
+            }
+            $whereClause = new WhereClause($column, $operator, $value, or: true);
+            $this->whereClauses[] = $whereClause;
+        } elseif ($operatorOrValue === null) {
+            // orWhere('col') or orWhere('col', null) → col IS NULL.
+            $whereClause = new WhereClause($column, 'IS NULL', null, or: true);
+            $this->whereClauses[] = $whereClause;
+        } else {
+            // orWhere('id', 1) — second param is value, '=' defaulted.
+            $whereClause = new WhereClause($column, '=', $operatorOrValue, or: true);
+            $this->whereClauses[] = $whereClause;
+        }
+
+        return $this;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Accessors                                                          */
+    /* ------------------------------------------------------------------ */
+
+    /** Return the table name. */
+    public function table(): string {
+        return $this->table;
+    }
+
+    /** Return all WHERE clauses. */
+    public function wheres(): array {
+        return $this->whereClauses;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Execution                                                          */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Execute the DELETE and return rows affected.
+     *
+     * Prepares the compiled SQL via ``$connection->prepare()``, binds every
+     * parameter at its 1-based positional index (PDO parameter numbers are
+     * one-indexed), executes, and returns ``rowCount()``.
+     *
+     * If ``prepare()`` returns ``false`` a ``RuntimeException`` is thrown with
+     * a message derived from ``errorInfo()``.  Any ``PDOException`` propagated
+     * by ``execute()`` will bubble up unfiltered.
+     *
+     * @return int Rows affected.
+     */
+    public function execute(): int {
+        $compiled = $this->compiler->compileDelete($this);
+
+        $stmt = $this->connection->prepare($compiled['sql']);
+
+        if ($stmt === false) {
+            $errorInfo = $this->connection->pdo()->errorInfo();
+            throw new \RuntimeException(
+                sprintf('Query prepare failed: %s', $errorInfo[2] ?? 'unknown error')
+            );
+        }
+
+        // Bind parameters by 1-based positional index.
+        $i = 1;
+        foreach ($compiled['params'] as $param) {
+            $stmt->bindValue($i, $param);
+            $i++;
+        }
+
+        if (!$stmt->execute()) {
+            throw new \RuntimeException('DELETE execution failed without throwing PDOException.');
+        }
+
+        return $stmt->rowCount();
+    }
+
+}
