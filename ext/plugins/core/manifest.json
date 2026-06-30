@@ -1,0 +1,9 @@
+{
+    "type": "plugin",
+    "name": "Core",
+    "version": "0.1.0",
+    "description": "Testing harness — Core extension.",
+    "hooks": [
+        "router.register::Laswitchtech\\CoreWeb\\Plugin\\Core::registerRoutes"
+    ]
+}

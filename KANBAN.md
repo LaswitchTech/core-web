@@ -91,11 +91,15 @@
     - Tags: feature
     - [ ] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 priority: normal -->
     - [ ] `core.auth create-user <username> <password>` — create admin users from CLI <!-- created_at: 2026-06-18T13:07:00-04:00 priority: normal -->
-    - [ ] `core.db connect <driver> --path=<sqlite path>|--dsn=mysql://...` — test and configure database connectivity (includes MySQL/MariaDB smoke validation) <!-- created_at: 2026-06-18T13:08:00-04:00 priority: normal -->
+    - [x] `core.db connect` — test configured database connectivity <!-- created_at: 2026-06-30T14:52:13-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
+      - Implemented in temporary Core plugin as `php cli core.db connect`. It validates the active configured driver using the Database facade and `SELECT 1 AS ok`. Driver reconfiguration flags (`--path`, `--dsn`) remain deferred to the permanent CLI command framework. <!-- created_at: 2026-06-18T13:08:00-04:00 completed_at: 2026-06-30T14:41:55-04:00 priority: normal -->
+    - [x] `core.db read/create/update/delete` — temporary database CRUD CLI commands <!-- created_at: 2026-06-30T00:00:00-04:00 completed_at: 2026-06-30T14:42:00-04:00 priority: normal -->
+      - Implemented in temporary Core plugin as a single `core.db` dispatcher with subcommands: `read`, `create`, `update`, `delete`, and `smoke`. CRUD commands use the Database facade and query builders, validate table/column names, support a single quoted WHERE expression for read/update/delete, require WHERE for update/delete safety, and output JSON for reads.
+      - Validation: `php cli core.db connect` returns `Database OK: <driver>` and `php cli core.db smoke` returns `Core DB Smoke OK`.
     - [ ] `core.config show --key=<path.to.key>` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 priority: normal -->
     - [ ] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 priority: normal -->
     - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
-    - [ ] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 priority: normal -->
+    - [x] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
 - [ ] Installer-generated Server Config <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
   - Future enhancement: `core.install` CLI command to auto-write router server config files during framework bootstrap.
 - [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
@@ -131,18 +135,18 @@
       - Sqlite driver resolves `database.path` from config, supports relative paths (resolved against basePath), absolute paths, and empty-path rejection. Path resolution with isAbsPath() helper for Unix/Windows detection in docs/development/architecture/Database/Driver/Sqlite.md.
     - [x] Auto-create data directory on connection <!-- created_at: 2026-06-18T10:55:00-04:00 completed_at: 2026-06-23 priority: normal -->
       - Sqlite driver checks \is_dir() on $parentDir; calls \mkdir(parentDir, 0755, true) with race-safe fallback checks and throws DatabaseException on failure. Directory creation only runs during lazy connection (first resolve('db_connection') call).
-  - [~] MySQL / MariaDB Driver <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+  - [x] MySQL / MariaDB Driver <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-30T14:41:15-04:00 priority: high -->
     - Implementation: src/Database/Driver/Mysql.php. Documentation: docs/development/architecture/Database/Driver/Mysql.md. Bootstrap supports both `mysql` and `mariadb` as `database.driver` values, which resolve to the Mysql driver class. Config keys: `host`, `port`, `database`, `charset`, `username`, `password`, optional `dsn`.
     - Tags: feature, database, mysql, mariadb, v.1.0
     - [x] Implement PDO MySQL driver with configurable DSN/host/port/database/charset/user/password <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: high -->
     - [x] Support `database.driver = mysql` and `database.driver = mariadb` aliases in Bootstrap database registration <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: high -->
     - [x] Add configuration documentation for MySQL/MariaDB connection settings <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: normal -->
-    - [ ] Add CLI smoke validation for MySQL/MariaDB connection testing <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
-      - Deferred to the CLI Command Framework / permanent `core.db.*` commands. Current temporary `hello.db` smoke command validates the default SQLite path only.
+    - [x] Add CLI smoke validation for MySQL/MariaDB connection testing <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-30T14:41:13-04:00 priority: normal -->
+      - Implemented through the temporary Core plugin `core.db` dispatcher. `php cli core.db connect` resolves the configured database facade, calls `pdo()`, reads `PDO::ATTR_DRIVER_NAME`, and validates connectivity with `SELECT 1 AS ok`. This validates whichever driver is configured, including SQLite, MySQL, or MariaDB.
   - [x] Query Builder Foundation <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-30T11:51:14-04:00 priority: high -->
-    - Add a database-agnostic fluent query layer for safe SELECT composition now, with INSERT/UPDATE/DELETE composition deferred, while keeping raw PDO available through `Connection::pdo()`.
+    - Database-agnostic fluent query layer for safe SELECT/INSERT/UPDATE/DELETE composition while keeping raw PDO available through `Connection::pdo()`.
     - Developers should use one consistent API regardless of the configured driver; the query builder and driver-specific compiler/grammar are responsible for translating query intent into SQLite or MySQL/MariaDB SQL.
-    - Preferred SELECT syntax direction:
+    - Preferred SELECT syntax direction: `$db->select('users')->where(['id' => 1])->fetch();`
     - Tags: feature, database, query-builder, v.1.0
     - [x] Design fluent query builder API before implementation <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: high -->
       - Methods: `select(table, columns)`, `where(...)`, `orWhere(...)`, `join()` / `leftJoin()`, `orderBy()`, `limit()`, `offset()`, `fetch()`, and `all()`. Verified in `src/Database/Query/Builder.php`.
