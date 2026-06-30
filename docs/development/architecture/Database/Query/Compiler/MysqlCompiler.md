@@ -58,6 +58,20 @@ MySQL/MariaDB stores booleans as TINYINT(1). `MysqlCompiler` casts all `bool` pa
 | LIMIT | ✅ | Non-negative integer literal appended directly to SQL. |
 | OFFSET | ✅ | Non-negative integer, including 0; integer literal appended to SQL. |
 
+## Operators
+
+Join ON conditions accept six comparison operators, validated by `JoinClause`:
+
+````text
+=  !=  <  >  <=  >=
+````
+
+## Deferred Features
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| RIGHT JOIN | ❌ deferred | Not yet implemented; reserved for post-V1.0. |
+
 ## SQL Output Examples
 
 ### Simple query

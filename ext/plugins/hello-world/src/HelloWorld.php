@@ -319,7 +319,55 @@ final class HelloWorld
             });
 
             /* ------------------------------------------------------------------ --/
-             /  Temporary CLI smoke command — logger (Phase 1)                   */
+              /  Temporary CLI smoke command — JOIN validation (Phase 2A)          */
+            /* ------------------------------------------------------------------ */
+
+            $router->command('hello.join', function () use ($c): Response {
+                try {
+                    /** @var \Laswitchtech\CoreWeb\Database\Database */
+                    $db    = $c->resolve('database');
+                    $pdo   = $db->pdo();
+
+                    // Create two temporary tables.
+                    $pdo->exec("DELETE FROM smoke_join_users");
+                    $pdo->exec("CREATE TABLE IF NOT EXISTS smoke_join_users (id INTEGER PRIMARY KEY, name TEXT)");
+                    $pdo->exec("DELETE FROM smoke_join_orders");
+                    $pdo->exec("CREATE TABLE IF NOT EXISTS smoke_join_orders (id INTEGER PRIMARY KEY, user_id INTEGER, total INTEGER)");
+
+                    // Seed data.
+                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_users VALUES (1, 'alice')");
+                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_users VALUES (2, 'bob')");
+                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_users VALUES (3, 'carol')");
+                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_orders VALUES (1, 1, 100)");
+                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_orders VALUES (2, 1, 200)");
+                    $pdo->exec("INSERT OR REPLACE INTO smoke_join_orders VALUES (3, 2, 50)");
+
+                    // Inner JOIN: each user with their order count.
+                    $rows = $db->select('smoke_join_users', ['smoke_join_users.id', 'smoke_join_users.name'])
+                        ->join('smoke_join_orders', 'smoke_join_users.id', '=', 'smoke_join_orders.user_id')
+                        ->all();
+
+                    if (count($rows) !== 3) {
+                        return Response::text("JOIN FAILED: inner join expected 3 rows, got " . count($rows) . "\n", 500);
+                    }
+
+                    // Left JOIN: users with orders (should include carol with all NULLs).
+                    $rows = $db->select('smoke_join_users', ['smoke_join_users.id', 'smoke_join_users.name'])
+                        ->leftJoin('smoke_join_orders', 'smoke_join_users.id', '=', 'smoke_join_orders.user_id')
+                        ->all();
+
+                    if (count($rows) !== 3 || $rows[2]['name'] !== 'carol') {
+                        return Response::text("JOIN FAILED: left join expected carol as 3rd user\n", 500);
+                    }
+
+                    return Response::text("JOIN OK\n");
+                } catch (\Throwable $_e) {
+                    return Response::text("JOIN FAILED: " . $_e->getMessage() . "\n", 500);
+                }
+            });
+
+            /* ------------------------------------------------------------------ --/
+              /  Temporary CLI smoke command — logger (Phase 1)                   */
             /* ------------------------------------------------------------------ */
 
             $router->command('hello.log', function (Cli $_req) use ($c): Response {

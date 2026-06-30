@@ -145,8 +145,9 @@
       - MysqlCompiler in src/Database/Query/Compiler/MysqlCompiler.php. Backtick identifiers, positional ? parameters, bool→int casting, same feature set as SqliteCompiler documented in docs/development/architecture/Database/Query/Compiler/.
     - [x] Implement basic SELECT builder with WHERE conditions and bound parameters <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: high -->
       - src/Database/Query/Builder.php with where() (incl. array notation), orWhere(), fetch(): ?array, all(): list<array>. WHERE operators: =, !=, <, >, <=, >=, LIKE, IN, IS NULL, IS NOT NULL. Positioned 1-based parameter binding via bindValue().
-    - [~] Add support for table joins (INNER, LEFT, RIGHT deferred) <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - [x] Add support for table joins (INNER, LEFT, RIGHT deferred) <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-26 priority: high -->
       - INNER and LEFT supported: join() and leftJoin() methods in Builder.php with column-to-column ON conditions (no expression-based joins). JoinClause restricts to INNER/LEFT types; RIGHT JOIN deferred. WHERE operators for JOIN comparisons: =, !=, <, >, <=, >= per JoinClause validation.
+      - Validation: `hello.join` CLI smoke command verifies INNER JOIN and LEFT JOIN against temporary SQLite tables. SQLite and MySQL compilers produce equivalent JOIN SQL aside from identifier quoting. Documentation covers `join()`, `leftJoin()`, supported comparison operators, column-to-column limitation, and RIGHT JOIN deferral.
     - [x] Implement ORDER BY, LIMIT, and OFFSET support <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: normal -->
       - orderBy(column, dir) accepts ASC/DESC; limit(n)/offset(n) accept non-negative int (rejects negative). Stored as OrderByClause VOs; validated by compilers.
     - [ ] Implement INSERT/UPDATE/DELETE helpers with parameter binding <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
