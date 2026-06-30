@@ -3,10 +3,10 @@
 namespace Laswitchtech\CoreWeb\Database\Query\Compiler;
 
 use Laswitchtech\CoreWeb\Database\Query\Builder;
-use Laswitchtech\CoreWeb\Database\Query\Clause\JoinClause;
-use Laswitchtech\CoreWeb\Database\Query\Clause\OrderByClause;
-use Laswitchtech\CoreWeb\Database\Query\Clause\WhereClause;
 use Laswitchtech\CoreWeb\Database\Query\CompilerInterface;
+use Laswitchtech\CoreWeb\Database\Query\DeleteBuilder;
+use Laswitchtech\CoreWeb\Database\Query\InsertBuilder;
+use Laswitchtech\CoreWeb\Database\Query\UpdateBuilder;
 
 /**
  * SQLite dialect compiler.
@@ -190,6 +190,7 @@ final readonly class SqliteCompiler implements CompilerInterface {
     /*  CompilerInterface                                                  */
     /* ------------------------------------------------------------------ */
 
+    /** Compile a SELECT query builder into raw SQL and parameters. */
     public function compile(Builder $builder): array {
         $params = [];
 
@@ -224,6 +225,171 @@ final readonly class SqliteCompiler implements CompilerInterface {
             'sql'    => $sql,
             'params' => $params,
         ];
+    }
+
+    /** Compile an INSERT builder into raw SQL and parameters (SQLite dialect). */
+    public function compileInsert(InsertBuilder $builder): array {
+        $params = [];
+        $table  = $this->quoteTable($builder->table());
+
+        // Columns: double-quoted identifiers.
+        $columns = $builder->columns();
+        $quotedColumns = [];
+        foreach ($columns as $col) {
+            $quotedColumns[] = $this->quoteIdentifier($col);
+        }
+
+        // Values: `?` placeholder + append value to params (booleans → int).
+        $placeholders = [];
+        foreach ($columns as $col) {
+            $value      = $builder->data()[$col];
+            $placeholder = $this->addParam($value, $params);
+            $placeholders[] = $placeholder;
+        }
+
+        $sql = sprintf(
+            'INSERT INTO %s (%s) VALUES (%s)',
+            $table,
+            implode(', ', $quotedColumns),
+            implode(', ', $placeholders),
+        );
+
+        return [
+            'sql'    => $sql,
+            'params' => $params,
+        ];
+    }
+
+    /** Compile an UPDATE query builder into raw SQL and parameters (SQLite dialect). */
+    public function compileUpdate(UpdateBuilder $builder): array {
+        $params = [];
+        $table  = $this->quoteTable($builder->table());
+
+        // SET clause: double-quoted identifiers + placeholders for values.
+        $setCols = [];
+        $setData = $builder->data();
+        foreach ($setData as $col => $value) {
+            $placeHolder = $this->addParam($value, $params);
+            $setCols[] = sprintf('%s %s %s', $this->quoteIdentifier($col), '=', $placeHolder);
+        }
+
+        $sql = sprintf(
+            'UPDATE %s SET %s',
+            $table,
+            implode(', ', $setCols),
+        );
+
+        // WHERE clause (collects additional params).
+        $wheres = $builder->wheres();
+        if (!empty($wheres)) {
+            $sql .= $this->compileWheresUpdate($wheres, $params);
+        }
+
+        return [
+            'sql'    => $sql,
+            'params' => $params,
+        ];
+    }
+
+    /** Compile WHERE clauses for UPDATE (SET params already appended). */
+    private function compileWheresUpdate(array $wheres, array &$params): string {
+        if (empty($wheres)) {
+            return '';
+        }
+
+        $sql = ' WHERE';
+        $first = true;
+
+        foreach ($wheres as $clause) {
+            // Separate AND / OR.
+            $sql .= $first ? ' ' : ($clause->or ? '  OR ' : ' AND ');
+            $first = false;
+
+            $column = $this->quoteDotIdentifier($clause->column);
+
+            // Operators that do NOT bind parameters (IS NULL / IS NOT NULL).
+            $noParamOperators = ['IS NULL', 'IS NOT NULL'];
+            if (in_array($clause->operator, $noParamOperators, true)) {
+                $sql .= sprintf('%s %s', $column, $clause->operator);
+                continue;
+            }
+
+            // IN operator: expand to (?, ?, ...).
+            if ($clause->operator === 'IN' && is_array($clause->value)) {
+                $placeholders = [];
+                foreach ($clause->value as $item) {
+                    $placeholders[] = $this->addParam($item, $params);
+                }
+                $sql .= sprintf('%s IN (%s)', $column, implode(', ', $placeholders));
+                continue;
+            }
+
+            // Normal operators: compare operator + placeholder.
+            $placeholder = $this->addParam($clause->value, $params);
+            $sql .= sprintf('%s %s %s', $column, $clause->operator, $placeholder);
+        }
+
+        return $sql;
+    }
+
+    /** Compile a DELETE query builder into raw SQL and parameters (SQLite dialect). */
+    public function compileDelete(DeleteBuilder $builder): array {
+        $params = [];
+        $table  = $this->quoteTable($builder->table());
+
+        $sql = sprintf('DELETE FROM %s', $table);
+
+        // WHERE clause (collects additional params).
+        $wheres = $builder->wheres();
+        if (!empty($wheres)) {
+            $sql .= $this->compileWheresDelete($wheres, $params);
+        }
+
+        return [
+            'sql'    => $sql,
+            'params' => $params,
+        ];
+    }
+
+    /** Compile WHERE clauses for DELETE. */
+    private function compileWheresDelete(array $wheres, array &$params): string {
+        if (empty($wheres)) {
+            return '';
+        }
+
+        $sql = ' WHERE';
+        $first = true;
+
+        foreach ($wheres as $clause) {
+            // Separate AND / OR.
+            $sql .= $first ? ' ' : ($clause->or ? '  OR ' : ' AND ');
+            $first = false;
+
+            $column = $this->quoteDotIdentifier($clause->column);
+
+            // Operators that do NOT bind parameters (IS NULL / IS NOT NULL).
+            $noParamOperators = ['IS NULL', 'IS NOT NULL'];
+            if (in_array($clause->operator, $noParamOperators, true)) {
+                $sql .= sprintf('%s %s', $column, $clause->operator);
+                continue;
+            }
+
+            // IN operator: expand to (?, ?, ...).
+            if ($clause->operator === 'IN' && is_array($clause->value)) {
+                $placeholders = [];
+                foreach ($clause->value as $item) {
+                    $placeholders[] = $this->addParam($item, $params);
+                }
+                $sql .= sprintf('%s IN (%s)', $column, implode(', ', $placeholders));
+                continue;
+            }
+
+            // Normal operators: compare operator + placeholder.
+            $placeholder = $this->addParam($clause->value, $params);
+            $sql .= sprintf('%s %s %s', $column, $clause->operator, $placeholder);
+        }
+
+        return $sql;
     }
 
 }

@@ -6,6 +6,9 @@ use PDO;
 use PDOStatement;
 use Laswitchtech\CoreWeb\Database\Query\Builder;
 use Laswitchtech\CoreWeb\Database\Query\CompilerInterface;
+use Laswitchtech\CoreWeb\Database\Query\InsertBuilder;
+use Laswitchtech\CoreWeb\Database\Query\DeleteBuilder;
+use Laswitchtech\CoreWeb\Database\Query\UpdateBuilder;
 
 /**
  * Database facade / public entry point for the database subsystem.
@@ -85,7 +88,7 @@ final class Database {
      *
      * ```php
      * $db->transaction(function ($db) {
-     *     $db->select('users')->where(['id' => 1])->update([...]);
+     *     $db->update('users', ['name' => 'Bob'])->where(['id' => 1])->execute();
      * });
      * ```
      *
@@ -122,6 +125,63 @@ final class Database {
      */
     public function select(string $table, array $columns = ['*']): Builder {
         return new Builder($this->connection, $this->compiler, $table, $columns);
+    }
+
+    /**
+     * Start a fluent INSERT query against the given table.
+     *
+     * Each call creates a fresh ``InsertBuilder`` instance so that calling code can
+     * chain ``execute()`` independently without mutating shared state.
+     *
+     * ```php
+     * $db->insert('users', ['name' => 'Alice'])
+     *    ->execute();              // int — rows affected
+     * ```
+     *
+     * @param string           $table  table to insert into (non-empty).
+     * @param array<string, mixed> $data column-value pairs (non-empty, keys must be non-empty strings).
+     * @return InsertBuilder           a fresh builder for the given target.
+     */
+    public function insert(string $table, array $data): InsertBuilder {
+        return new InsertBuilder($this->connection, $this->compiler, $table, $data);
+    }
+
+    /** Start a fluent UPDATE query against the given table.
+     *
+     * Each call creates a fresh ``UpdateBuilder`` instance so that calling code can
+     * chain ``where()`` and ``execute()`` independently without mutating shared state.
+     *
+     * ```php
+     * $db->update('users', ['name' => 'Bob'])
+     *    ->where(['id' => 1])
+     *    ->execute();              // int — rows affected
+     * ```
+     *
+     * @param string          $table  table to update (non-empty).
+     * @param array<string, mixed> $data column-value pairs (non-empty, keys must be non-empty strings).
+     * @return UpdateBuilder           a fresh builder for the given target.
+     */
+    public function update(string $table, array $data): UpdateBuilder {
+        return new UpdateBuilder($this->connection, $this->compiler, $table, $data);
+    }
+
+    /**
+     * Start a fluent DELETE query against the given table.
+     *
+     * Each call creates a fresh ``DeleteBuilder`` instance so that calling code can
+     * chain ``where()`` and ``execute()`` independently without mutating shared state.
+     *
+     * ```php
+     * $db->delete('users')
+     *    ->where(['id' => 1])
+     *    ->execute();              // int — rows affected
+     * ```
+     *
+     * @param string          $table  table to delete from (non-empty).
+     * @return DeleteBuilder           a fresh builder for the given target.
+     */
+    public function delete(string $table): DeleteBuilder {
+        return new DeleteBuilder($this->connection, $this->compiler, $table);
     }
 
 }

@@ -110,3 +110,42 @@ SELECT * FROM "users" WHERE "status" = ? OR "status" = ?
 ```
 
 Params: `['approved', 'pending']`
+
+### INSERT (compileInsert)
+
+```php
+$db->insert('users', ['name' => 'Alice', 'active' => true])->execute();
+```
+
+```sql
+INSERT INTO "users" ("name", "active") VALUES (?, ?)
+```
+
+Params: `['Alice', 1]` — boolean `true` cast to `(int)` `1`. Param order follows `$data` key insertion order.
+
+### UPDATE (compileUpdate)
+
+```php
+$db->update('users', ['status' => 'inactive'])
+    ->where(['id' => 5])
+    ->orWhere('archived', true)
+    ->execute();
+```
+
+````sql
+UPDATE "users" SET "status" = ? WHERE "id" = ? OR "archived" = ?
+````
+
+Params: `['inactive', 5, 1]` — **SET values appear before WHERE values** in the params array (index 0 is SET param; indices 1–2 are WHERE params). Boolean `true` cast to `(int)` `1`.
+
+### DELETE (compileDelete)
+
+```php
+$db->delete('users')->where(['id' => 1])->execute();
+```
+
+````sql
+DELETE FROM "users" WHERE "id" = ?
+````
+
+Params: `[1]` — WHERE params follow clause-addition order.
