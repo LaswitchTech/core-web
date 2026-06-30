@@ -2,7 +2,7 @@
 
 ## Todo <!-- hide: archive -->
 - [ ] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Tags: framework, extensions
+  - Tags: framework, extensions, v.1.0
   - [~] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
   - [x] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - Discover, parse, and validate extension manifests (`manifest.json` and `extension.json`).
@@ -80,7 +80,7 @@
   - [ ] Developer Console (variable introspection) <!-- created_at: 2026-06-18T12:14:00-04:00 priority: normal -->
   - [ ] Theme Preview (test against all UI components) <!-- created_at: 2026-06-18T12:15:00-04:00 priority: normal -->
 - [ ] CLI System <!-- created_at: 2026-06-18T13:00:00-04:00 priority: normal -->
-  - Tags: framework, cli
+  - Tags: framework, cli, v.1.0
   - [ ] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
     - Command infrastructure built on top of the unified Router. Responsible for command discovery, argument parsing, command metadata, help output, and extension command registration.
     - Tags: feature
@@ -100,10 +100,26 @@
   - Future enhancement: `core.install` CLI command to auto-write router server config files during framework bootstrap.
 - [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
   - Future enhancement: before/after hooks per route and global middleware support.
+- [ ] Auth Middleware / Authorization System <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
+  - Deferred to Version 2.0. Add authentication and authorization as middleware so access rules can be enforced consistently before route/controller execution.
+  - Core entity model: Users, Organizations, Groups, and Roles.
+  - Default groups to seed: Administrators, Users, Guests. A request without a logged-in user should be treated as a Guest context.
+  - Roles should be assignable to Users, Groups, and Organizations.
+  - Groups should be assignable to Users and Organizations.
+  - Default authentication provider: local database credentials.
+  - Authentication provider model must be plugin-extensible so future extensions can add LDAP, SMTP-backed authentication, and OAuth providers.
+  - Authorization should support route/middleware checks for what each type of user can access and do.
+  - Tags: framework, auth, authorization, middleware, security, v.2.0
+  - [ ] Design auth middleware pipeline integration <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
+  - [ ] Design user, organization, group, and role schema <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
+  - [ ] Design local database authentication provider <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
+  - [ ] Design plugin authentication provider interface <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
+  - [ ] Seed default groups: Administrators, Users, Guests <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
+  - [ ] Document authorization assignment rules for roles and groups <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
 
 ## In Progress
 - [~] Database <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Tags: framework, database, config
+  - Tags: framework, database, config, v.1.0
   - [~] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - [x] SQLite Driver <!-- created_at: 2026-06-18T10:52:22-04:00 completed_at: 2026-06-23 priority: high -->
     - Zero-config database backend, file-based storage. PDO-based SQLite driver with lazy connection via container binding. Implementation: src/Database/Connection.php (thin wrapper), src/Database/Driver/Sqlite.php (driver with path resolution + auto-mkdir), src/Database/Driver/DriverInterface.php (contract). Container bindings: `db_driver` (singleton → Sqlite or Mysql depending on `database.driver`), `db_connection` (lazy singleton → Connection, resolved on first access). SQLite3 native class is not used — PDO only. Migrations and ORM remain deferred to later tasks; query builder work is tracked separately under Query Builder Foundation.
@@ -117,22 +133,17 @@
       - Sqlite driver checks \is_dir() on $parentDir; calls \mkdir(parentDir, 0755, true) with race-safe fallback checks and throws DatabaseException on failure. Directory creation only runs during lazy connection (first resolve('db_connection') call).
   - [~] MySQL / MariaDB Driver <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
     - Implementation: src/Database/Driver/Mysql.php. Documentation: docs/development/architecture/Database/Driver/Mysql.md. Bootstrap supports both `mysql` and `mariadb` as `database.driver` values, which resolve to the Mysql driver class. Config keys: `host`, `port`, `database`, `charset`, `username`, `password`, optional `dsn`.
-    - Tags: feature, database, mysql, mariadb
+    - Tags: feature, database, mysql, mariadb, v.1.0
     - [x] Implement PDO MySQL driver with configurable DSN/host/port/database/charset/user/password <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: high -->
     - [x] Support `database.driver = mysql` and `database.driver = mariadb` aliases in Bootstrap database registration <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: high -->
     - [x] Add configuration documentation for MySQL/MariaDB connection settings <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24 priority: normal -->
     - [ ] Add CLI smoke validation for MySQL/MariaDB connection testing <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
       - Deferred to the CLI Command Framework / permanent `core.db.*` commands. Current temporary `hello.db` smoke command validates the default SQLite path only.
-  - [~] Query Builder Foundation <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+  - [x] Query Builder Foundation <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-30T11:51:14-04:00 priority: high -->
     - Add a database-agnostic fluent query layer for safe SELECT composition now, with INSERT/UPDATE/DELETE composition deferred, while keeping raw PDO available through `Connection::pdo()`.
     - Developers should use one consistent API regardless of the configured driver; the query builder and driver-specific compiler/grammar are responsible for translating query intent into SQLite or MySQL/MariaDB SQL.
     - Preferred SELECT syntax direction:
-      ```php
-      $db->select('users')
-         ->where(['id' => 1])
-         ->fetch();
-      ```
-    - Tags: feature, database, query-builder
+    - Tags: feature, database, query-builder, v.1.0
     - [x] Design fluent query builder API before implementation <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: high -->
       - Methods: `select(table, columns)`, `where(...)`, `orWhere(...)`, `join()` / `leftJoin()`, `orderBy()`, `limit()`, `offset()`, `fetch()`, and `all()`. Verified in `src/Database/Query/Builder.php`.
     - [x] Implement query representation independent of SQL dialect <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-24T00:00:00-04:00 priority: high -->
@@ -158,7 +169,7 @@
       - Documented in `docs/development/architecture/Database/Architecture.md`, `Query/Builder.md`, and `Query/Compiler/*.md`. Key differences: SQLite uses double-quoted identifiers (`"table"."column"`); MySQL/MariaDB use backticks. Both use positional `?` params, bool→int casting, `SELECT *` unquoted, and column-to-column JOINs only in Phase 1E.
   - [x] Database Versioning / Migrations <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: high -->
     - Track database schema versions and apply incremental updates safely across SQLite and MySQL/MariaDB deployments. Full rollback (up/down) support with dialect-resolving companion file overrides. No automatic execution — explicit CLI/manual trigger only. Per-migration transaction model. Version conflict detection via checksum validation.
-    - Tags: feature, database, migrations, versioning
+    - Tags: feature, database, migrations, versioning, v.1.0
     - [x] Create schema version table / migration registry <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: high -->
       - `__schema_migrations` table with dialect-aware DDL: SQLite uses `TEXT PRIMARY KEY` / `TEXT`; MySQL/MariaDB uses `VARCHAR(255) PRIMARY KEY` / `VARCHAR(64)` with InnoDB + utf8mb4. RegistryTable provides `ensureTable()`, `getAppliedVersions()`, `latestBatch()`, `insert()`, `isApplied()`, `getChecksum()`, `delete()`, `queryVersionDetails()`, and `dropTable()`. Bootstrap registers lazy singleton as `migration_registry`.
     - [x] Implement migration discovery from core and application directories <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: high -->
@@ -175,7 +186,8 @@
       - Architecture, Runner, RegistryTable, Migration, MigrationPromoterInterface, CorePromoter, AppPromoter, SqlMigrationDriver docs written under docs/development/architecture/Migration/ and subdirectories.
   - [ ] Database Seeding <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
     - Provide repeatable seed data for installing applications, initializing core records, and preparing development/test environments.
-    - Tags: feature, database, seeding
+    - V1.0 scope should provide the framework seeding foundation; Auth V2.0 will use it to seed default groups (`Administrators`, `Users`, `Guests`).
+    - Tags: feature, database, seeding, v.1.0
     - [ ] Implement seed discovery from application/core/plugin directories <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
     - [ ] Implement idempotent seed runner <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
       - Seeds should be safe to re-run without duplicating records where possible.
@@ -187,7 +199,7 @@
   - [x] Transaction API Enhancements <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
     - Build on the existing PDO transaction pass-throughs with safer application-level transaction helpers.
     - Implemented `Connection::inTransaction()`, `Connection::transaction(callable)`, and Database facade pass-throughs. `Connection::transaction()` passes the Connection wrapper to callbacks; `Database::transaction()` passes the Database facade. Nested transactions throw `RuntimeException`; savepoints are not implemented in V1.0. HelloWorld provides `hello.transaction` smoke validation for commit and rollback behavior.
-    - Tags: feature, database, transactions
+    - Tags: feature, database, transactions, v.1.0
     - [x] Add `transaction(callable $callback)` helper that commits on success and rolls back on failure <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
       - `Connection::transaction()` begins a transaction, passes the Connection wrapper to the callback, commits on success, rolls back on `Throwable`, and rethrows the original exception. `Database::transaction()` delegates through Connection and passes the Database facade to the callback.
     - [x] Add `inTransaction()` pass-through helper <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
@@ -196,7 +208,7 @@
       - Documented that nested transactions are rejected with `RuntimeException`, savepoints are not implemented in V1.0, and rollback occurs on callback failure. Documentation updated in `docs/development/architecture/Database/Connection.md` and `docs/development/architecture/Database/Database.md`.
   - [x] Config Manager <!-- created_at: 2026-06-18T11:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
-    - Tags: feature
+    - Tags: feature, config, v.1.0
     - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
@@ -219,10 +231,8 @@
   - Logs are stored as plain text files under configurable `logging.path` (default `log/`) with the `.log` extension.
   - Supports named log channels/files through `logger_factory` and common container services such as `logger`, `logger.app`, `logger.error`, `logger.database`, `logger.auth`, `logger.migration`, and `logger.debug`.
   - Log format:
-    ```text
-    [<ISO-8601 timestamp with timezone and microseconds>]	[<channel>:<LEVEL>]	<message>	<context>
-    ```
-  - Tags: framework, logging, audit, debug
+  - Validation:
+  - Tags: framework, logging, audit, debug, v.1.0
   - [x] Design logger API and channel model <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 priority: high -->
     - Implemented `Logger` and `Level` under `src/Logger/`. Channels are validated with `/^[a-z][a-z0-9_-]*$/i`, normalized to lowercase, and map directly to `{channel}.log` files.
   - [x] Implement text-file logger backend <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 priority: high -->
@@ -241,7 +251,6 @@
     - Initial integration exposes logger services to core systems, plugins, CLI commands, and tests. HelloWorld provides `hello.log` smoke validation.
   - [x] Document logging configuration and usage conventions <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
     - Documentation added under `docs/development/architecture/Logger/Level.md` and `docs/development/architecture/Logger/Logger.md`.
-  - Validation:
     - Full `php -l` syntax pass across `src/` and `ext/`.
     - `php cli hello.log` returns `Logger OK`.
 - [x] Renderer <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-23 priority: normal -->
@@ -251,7 +260,7 @@
   - Views provide page-specific data, fragments, and controller-facing content.
   - Renderer resources are registered through a registry instead of fixed folder-only discovery.
   - Plugins, themes, applications, and core may all provide registered layouts, templates, and views.
-  - Tags: framework, renderer
+  - Tags: framework, renderer, v.1.0
   - [x] Implement `Renderer\Registry` for named layout/template/view registrations <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-22 priority: high -->
     - Immutable `Entry` value object with type/provider constants, readonly properties, `providerRank()`, and immutability helpers.
     - Stores multiple entries per (name, type) pair; resolution precedence by highest priority → provider rank (app > theme > plugin > core) → lowest order.
@@ -299,12 +308,12 @@
       - HelloWorld plugin validates both PHP and Latte rendering pipelines through WEB and CLI routes.
 - [x] Bootstrap Architecture <!-- created_at: 2026-06-18T14:10:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - Design document for the mode-driven bootstrap system and both entry-point patterns.
-  - Tags: framework, bootstrap, documentation
+  - Tags: framework, bootstrap, documentation, v.1.0
   - [x] Document BOOTSTRAP_MODES table (WEB vs CLI responsibilities) <!-- created_at: 2026-06-18T14:10:30-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Document exact 2-line entry pattern for `/index.php` and `/cli` <!-- created_at: 2026-06-18T14:11:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Specify config resolution conventions for Config references <!-- created_at: 2026-06-18T14:11:30-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
 - [x] DI Container <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - Tags: framework, container
+  - Tags: framework, container, v.1.0
   - [x] Container Implementation <!-- created_at: 2026-06-18T11:15:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - Lightweight dependency injection container for core services.
     - Supports `register()`, `registerSingleton()`, `singleton()`, `resolve()`, `set()`, singleton caching, direct values, and introspection.
@@ -314,7 +323,7 @@
     - [x] Implement singleton cache behavior for `resolve()` <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - [x] Preserve `singleton($key)` compatibility by returning resolved instance <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
 - [x] Hook Registry <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - Tags: framework, hooks
+  - Tags: framework, hooks, v.1.0
   - [x] Hook System <!-- created_at: 2026-06-18T12:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - Central hook registration and triggering system for layout slots, plugin events, and core lifecycle.
     - Tags: feature
@@ -327,7 +336,7 @@
 - [x] Bootstrap Implementation <!-- created_at: 2026-06-18T14:15:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - Orchestration class (`Laswitchtech\CoreWeb\Bootstrap`) — mode-driven single-entry boot for WEB and CLI.
   - Completed bootstrap foundation; unified Router now handles both WEB and CLI dispatch.
-  - Tags: framework, bootstrap, feature
+  - Tags: framework, bootstrap, feature, v.1.0
   - [x] Implement `new Bootstrap("WEB")` / `new Bootstrap("CLI")` constructor with static `container()` getter <!-- created_at: 2026-06-18T14:15:30-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Implement `initConfig()` — load `core.cfg`, deep-merge `local.cfg` on top, store in Config singleton <!-- created_at: 2026-06-18T14:16:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Implement `initContainer()` — create DI container instance as static singleton <!-- created_at: 2026-06-18T14:16:30-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
@@ -339,7 +348,7 @@
   - [x] Validate bootstrap in WEB and CLI mode with Hello World plugin <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
 - [x] Routing <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-22 priority: high -->
   - Unified routing subsystem for both WEB and CLI modes, with Request/Response objects, dynamic path parameters, HTTP method support, server-config generators, and Hello World end-to-end validation.
-  - Tags: framework, routing
+  - Tags: framework, routing, v.1.0
   - [x] Router Class <!-- created_at: 2026-06-18T10:59:23-04:00 completed_at: 2026-06-22 priority: high -->
     - Unified Router supporting HTTP routing, CLI command dispatch, path parameter extraction, Request/Response abstractions, and extension route registration.
     - Tags: feature
