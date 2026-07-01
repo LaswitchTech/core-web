@@ -181,8 +181,10 @@ final class Core
         try {
             /** @var \Laswitchtech\CoreWeb\Database\Connection */
             $conn = $c->resolve('db_connection');
+            /** @var \Laswitchtech\CoreWeb\Database\Database */
+            $db = $c->resolve('database');
 
-            // Create a temporary seed group with a single harmless INSERT.
+            // Create a temporary seed group with a harmless table mutation.
             $tmpDir  = sys_get_temp_dir() . '/core-web-seed-smoke-' . uniqid('', true);
             $groupDir = $tmpDir . '/seeds/smoke_test';
             mkdir($groupDir, 0755, true);
@@ -191,7 +193,15 @@ final class Core
             $timestamp = date('YmdHis');
             $fileName   = "{$timestamp}_smoke.sql";
             $sqlFile    = "{$groupDir}/{$fileName}";
-            if (file_put_contents($sqlFile, "SELECT 1 AS smoke_ok") === false) {
+            $seedSql = <<<'SQL'
+CREATE TABLE IF NOT EXISTS core_seed_smoke (
+    id INTEGER PRIMARY KEY,
+    name TEXT
+);
+DELETE FROM core_seed_smoke WHERE id = 1;
+INSERT INTO core_seed_smoke (id, name) VALUES (1, 'seed-smoke');
+SQL;
+            if (file_put_contents($sqlFile, $seedSql) === false) {
                 throw new \RuntimeException("Could not write temporary seed file");
             }
 
@@ -202,10 +212,15 @@ final class Core
             $reg    = new \Laswitchtech\CoreWeb\Database\Seeding\RegistryTable($conn);
             $seeder = new \Laswitchtech\CoreWeb\Database\Seeding\Seeder($conn, $loader, $reg);
 
-            // First run — expect one applied seed.
+            // First run — expect one applied seed and a real database row.
             $result1 = $seeder->run('smoke_test');
             if ($result1 === [] || $result1[0]['status'] !== 'applied') {
                 throw new \RuntimeException("First seed run expected 1 applied result: " . json_encode($result1));
+            }
+
+            $row = $db->select('core_seed_smoke')->where(['id' => 1])->fetch();
+            if ($row === null || ($row['name'] ?? null) !== 'seed-smoke') {
+                throw new \RuntimeException("Seed smoke row verification failed: " . json_encode($row));
             }
 
             // Second run — idempotency check: same group, expect one skipped seed.
@@ -215,6 +230,7 @@ final class Core
             }
 
             /* Clean up */
+            $db->delete('core_seed_smoke')->where(['id' => 1])->execute();
             unlink($sqlFile);
             rmdir($groupDir);
             rmdir("{$tmpDir}/seeds");
