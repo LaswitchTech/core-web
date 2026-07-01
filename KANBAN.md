@@ -1,22 +1,6 @@
 # Kanban
 
 ## Todo <!-- hide: archive -->
-- [ ] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Tags: framework, extensions, v.1.0
-  - [~] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
-    - [ ] Support multi-base extension discovery <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
-      - Discover both framework-shipped extensions from the package core `ext/` directory and application extensions from the application `ext/` directory during the same bootstrap pass.
-      - Tags: framework, extensions, discovery, v.1.0
-    - [ ] Add app-over-core extension override precedence <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
-      - If an application extension in `ext/plugins` or `ext/themes` has the same extension identity as a framework-shipped extension in `vendor/laswitchtech/core-web/ext`, the application extension should override the framework copy deterministically.
-      - Tags: framework, extensions, precedence, overrides, v.1.0
-    - [ ] Preserve package-shipped plugins when application extensions exist <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
-      - Current discovery uses the first existing `ext/` base only. Replace this fallback behavior with additive discovery so core/vendor plugins remain available when an application also defines its own `ext/` directory.
-      - Tags: framework, extensions, plugins, v.1.0
-    - [ ] Document extension discovery roots and override rules <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
-      - Document the discovery order, extension identity rules, app-over-core override behavior, and expected Composer package layout.
-      - Tags: documentation, extensions, v.1.0
-  - [x] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - Discover, parse, and validate extension manifests (`manifest.json` and `extension.json`).
     - Supports required `type`, `name`, `version` fields, version normalization (`X.Y.Z`), hook format validation, layouts, and dependency declarations.
     - Discovery is tolerant: malformed manifests are logged to `STDERR` and skipped so one broken extension does not block valid extensions.
@@ -69,8 +53,12 @@
     - Tags: framework, helpers, renderer, extensions, v.1.0
     - [ ] Implement `Helper\Registry` for registering named helper objects <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
       - Support deterministic registration by name with provider metadata for core, application, and plugin helpers.
+    - [ ] Define `Helper\HelperInterface` contract <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Provide a common interface for all helper implementations. Initial V1.0 scope should expose a `name(): string` method while allowing future metadata and capabilities to be added without changing the registry API.
     - [ ] Implement helper container/bag for runtime access <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
       - Expose helpers through a single object (for example `$helpers`) using property and/or method access.
+    - [ ] Organize helper subsystem structure <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Standardize the subsystem around `Helper\Registry`, `Helper\Bag`, `Helper\HelperInterface`, and helper-specific exceptions to keep registration, lookup, and helper implementations clearly separated.
     - [ ] Register core helper services during Bootstrap <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
       - Bind the helper registry and helper bag into the container as lazy services.
     - [ ] Inject helper bag into renderer context <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
@@ -161,8 +149,72 @@
   - [ ] Support PostgreSQL-specific migration companion files (`*.postgresql.sql`) <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
   - [ ] Add CLI smoke validation for PostgreSQL connection testing <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
   - [ ] Document PostgreSQL configuration and SQL dialect differences <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
+- [ ] Registry Architecture Consolidation <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+  - Future Version 2.0 architecture cleanup to standardize registry-style subsystems around common contracts, naming conventions, metadata handling, and deterministic resolution behavior.
+  - Tags: architecture, registry, refactor, v.2.0
+  - [ ] Design common registry contracts <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Evaluate whether `Hook\Registry`, `Renderer\Registry`, future `Helper\Registry`, and future `Extension\Registry` should share a small common interface or base abstractions for named entries, metadata, provider ownership, and deterministic resolution.
+  - [ ] Reorganize registry namespaces by subsystem <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Consider a grouped namespace layout such as `src/Registry/Hook`, `src/Registry/Renderer`, `src/Registry/Helper`, and `src/Registry/Extension` while preserving backward compatibility or providing a clear migration path.
+  - [ ] Standardize registry entry metadata <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Define common metadata fields such as name, provider, priority, source, order, capabilities, and arbitrary metadata where appropriate.
+  - [ ] Standardize deterministic resolution rules <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Document and align precedence rules across registries, including provider precedence, priority ordering, insertion order, and explicit override behavior.
+  - [ ] Review broader namespace grouping opportunities <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Evaluate whether other related classes should also be grouped by domain or subsystem in Version 2.0 without disrupting the V1.0 public API.
 
 ## In Progress
+- [~] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 started_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+  - Tags: framework, extensions, v.1.0
+  - [~] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
+    - Phase 2E — Extension Discovery Improvements
+      - Scope: multi-base discovery, vendor + application extension loading, deterministic app-over-core override precedence, and documentation.
+    - [ ] Support multi-base extension discovery <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Discover both framework-shipped extensions from the package core `ext/` directory and application extensions from the application `ext/` directory during the same bootstrap pass.
+      - Tags: framework, extensions, discovery, v.1.0
+    - [ ] Add app-over-core extension override precedence <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - If an application extension in `ext/plugins` or `ext/themes` has the same extension identity as a framework-shipped extension in `vendor/laswitchtech/core-web/ext`, the application extension should override the framework copy deterministically.
+      - Tags: framework, extensions, precedence, overrides, v.1.0
+    - [ ] Preserve package-shipped plugins when application extensions exist <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Current discovery uses the first existing `ext/` base only. Replace this fallback behavior with additive discovery so core/vendor plugins remain available when an application also defines its own `ext/` directory.
+      - Tags: framework, extensions, plugins, v.1.0
+    - [ ] Document extension discovery roots and override rules <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Document the discovery order, extension identity rules, app-over-core override behavior, and expected Composer package layout.
+      - Tags: documentation, extensions, v.1.0
+  - [x] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
+    - Discover, parse, and validate extension manifests (`manifest.json` and `extension.json`).
+    - Supports required `type`, `name`, `version` fields, version normalization (`X.Y.Z`), hook format validation, layouts, and dependency declarations.
+    - Discovery is tolerant: malformed manifests are logged to `STDERR` and skipped so one broken extension does not block valid extensions.
+    - Bootstrap still fails fast on unresolved dependencies between successfully parsed manifests.
+    - Walk `ext/themes/*` and `ext/plugins/*` subdirectories, validate manifests, register extension `src/` autoload roots, index extension metadata, and register hooks into the Hook Registry.
+    - Current status: app-root and Composer package-root extension discovery works; missing `ext/` directory is non-fatal; `app_root` and `extension_base` diagnostic bindings are registered; `plugin.started` is triggered in both WEB and CLI modes; Hello World test plugin works in both modes.
+    - Tags: feature
+    - [x] Implement manifest schema validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Support `manifest.json` and `extension.json` discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Document tolerant discovery behavior <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Implement directory walker manifest discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Add app-root extension base detection <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Add package-root extension base fallback for Composer installs <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Register extension autoloader before hook callback validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Trigger `plugin.started` in WEB and CLI boot paths <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Validate with Hello World plugin in WEB and CLI modes <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Implement actual plugin/theme lifecycle (activation/deactivation) <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Implement extension status persistence <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Implement extension loading order based on dependencies <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [ ] PSR-4 Extension Autoloading <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
+    - Support arbitrary extension namespaces instead of only `Laswitchtech\CoreWeb\Plugin\` and `Laswitchtech\CoreWeb\Theme\` prefixes.
+    - Tags: enhancement
+    - [ ] Add namespace mapping support in manifest <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Register Composer-style namespace mappings for extension `src/` directories <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Validate class hook callbacks using declared namespace mappings <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [~] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
+    - Docs: lifecycle documented in docs/development/extensions/Lifecycle.md (placeholder — no implementation yet)
+    - Tags: feature
+    - [ ] Enable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Disable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Persist enabled/disabled state <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Enforce dependencies before activation <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Add lifecycle hooks for activation/deactivation <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
 - [ ] Configuration Manager <!-- created_at: 2026-06-18T11:00:00-04:00 priority: high -->
   - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
   - Tags: feature, config, v.1.0
