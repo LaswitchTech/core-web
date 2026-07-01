@@ -8,7 +8,7 @@
     - Tags: feature
     - [ ] Implement SMTP mailer driver <!-- created_at: 2026-06-18T11:31:00-04:00 priority: normal -->
     - [ ] Define plugin interface for additional providers <!-- created_at: 2026-06-18T11:32:00-04:00 priority: normal -->
-- [ ] UI Builder <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+- [ ] Presentation Layer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Centralize renderer runtime settings so applications can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
   - Tags: framework, ui, renderer, config
   - [ ] Component Library <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
@@ -32,10 +32,7 @@
       - Make the helper bag available to layouts, templates, and views without requiring controllers to pass it explicitly.
     - [ ] Add `helper.register` hook for extension helper registration <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
       - Allow plugins and applications to register helper objects during bootstrap.
-    - [ ] Support helper override precedence <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
-      - Allow applications to override core helpers while preventing accidental replacement of existing helper names. Plugin helpers should extend the helper ecosystem by default, with explicit override behavior designed and documented for Version 2.0.
-      - Tags: framework, helpers, precedence, v.2.0
-    - [ ] Implement core helper set <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+  - [ ] Implement core helper set <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
       - Initial helpers should include URL, HTML, String, Date, Config, and Asset helpers.
     - [ ] Document helper conventions and extension guidelines <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
       - Document registration, naming conventions, dependency injection, renderer availability, and best practices.
@@ -60,7 +57,8 @@
   - `/admin` panel with all required sub-systems.
   - Tags: feature, admin
   - [ ] Dashboard (system status overview) <!-- created_at: 2026-06-18T12:11:00-04:00 priority: normal -->
-  - [ ] Updates system (kernel + application version checking) <!-- created_at: 2026-06-18T12:12:00-04:00 priority: normal -->
+  - [ ] Update Manager UI <!-- created_at: 2026-06-18T12:12:00-04:00 priority: normal -->
+    - Provides the administration interface for the existing update subsystem; does not implement update logic.
   - [ ] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 priority: normal -->
   - [ ] Developer Console (variable introspection) <!-- created_at: 2026-06-18T12:14:00-04:00 priority: normal -->
   - [ ] Theme Preview (test against all UI components) <!-- created_at: 2026-06-18T12:15:00-04:00 priority: normal -->
@@ -83,14 +81,19 @@
       - Validation: `php cli core.db connect` returns `Database OK: <driver>` and `php cli core.db smoke` returns `Core DB Smoke OK`.
     - [ ] `core.config show --key=<path.to.key>` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 priority: normal -->
     - [ ] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 priority: normal -->
-    - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
+    - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility)
+      - Generates Apache, Nginx, and IIS router configuration files during installation so users can deploy on any supported web server without manual routing setup.
     - [x] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
-- [ ] Installer-generated Server Config <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
-  - Future enhancement: `core.install` CLI command to auto-write router server config files during framework bootstrap.
 - [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
   - Future enhancement: before/after hooks per route and global middleware support.
+  - [ ] Authentication middleware
+    - Verify user credentials on each request, establish and maintain session state, and enforce login requirements for protected routes.
+      Default implementation uses local database credentials; the authentication provider model must be plugin-extensible so future extensions can add LDAP, SMTP-backed authentication, and OAuth providers.
+  - [ ] Authorization middleware
+    - Enforce route- and controller-level access rules based on user roles and groups after authentication has succeeded.
+    - Supports what each type of user (Administrators, Users, Guests) can access and do, with roles assignable to users, groups, and organizations, and groups assignable to organizations.
 - [ ] Auth Middleware / Authorization System <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
-  - Deferred to Version 2.0. Add authentication and authorization as middleware so access rules can be enforced consistently before route/controller execution.
+  - Implementation of the auth middleware components defined under Middleware Pipeline (Authentication middleware and Authorization middleware). Deferred to Version 2.0.
   - Core entity model: Users, Organizations, Groups, and Roles.
   - Default groups to seed: Administrators, Users, Guests. A request without a logged-in user should be treated as a Guest context.
   - Roles should be assignable to Users, Groups, and Organizations.
@@ -103,7 +106,6 @@
   - [ ] Design user, organization, group, and role schema <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
   - [ ] Design local database authentication provider <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
   - [ ] Design plugin authentication provider interface <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
-  - [ ] Seed default groups: Administrators, Users, Guests <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
   - [ ] Document authorization assignment rules for roles and groups <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
 - [ ] PostgreSQL Driver <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
   - PostgreSQL database driver built on the existing database abstraction layer. Extends the query compiler and connection system to support PostgreSQL while preserving the database-agnostic developer API.
@@ -111,11 +113,10 @@
   - [ ] Implement PDO PostgreSQL driver with configurable DSN/host/port/database/schema/charset/user/password <!-- created_at: 2026-06-30T00:00:00-04:00 priority: high -->
   - [ ] Add `database.driver = postgresql` support in Bootstrap database registration <!-- created_at: 2026-06-30T00:00:00-04:00 priority: high -->
   - [ ] Implement PostgreSQL query compiler <!-- created_at: 2026-06-30T00:00:00-04:00 priority: high -->
-  - [ ] Support PostgreSQL-specific migration companion files (`*.postgresql.sql`) <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
   - [ ] Add CLI smoke validation for PostgreSQL connection testing <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
   - [ ] Document PostgreSQL configuration and SQL dialect differences <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
-- [ ] Registry Architecture Consolidation <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
-  - Future Version 2.0 architecture cleanup to standardize registry-style subsystems around common contracts, naming conventions, metadata handling, and deterministic resolution behavior.
+- [ ] Registry Standardization (Version 2.0) <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+  - Future architectural work to standardize registry-style subsystems around common contracts, naming conventions, metadata handling, and deterministic resolution behavior. This is not an implementation task; it belongs in Version 2.0 planning.
   - Tags: architecture, registry, refactor, v.2.0
   - [ ] Design common registry contracts <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
     - Evaluate whether `Hook\Registry`, `Renderer\Registry`, future `Helper\Registry`, and future `Extension\Registry` should share a small common interface or base abstractions for named entries, metadata, provider ownership, and deterministic resolution.
@@ -147,11 +148,14 @@
       - Document the discovery order, extension identity rules, app-over-core override behavior, and expected Composer package layout.
       - Tags: documentation, extensions, v.1.0
   - [x] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
-    - Discover, parse, and validate extension manifests (`manifest.json` and `extension.json`).
-    - Supports required `type`, `name`, `version` fields, version normalization (`X.Y.Z`), hook format validation, layouts, and dependency declarations.
+    - Directory Walker discovers extensions from `ext/themes/*` and `ext/plugins/*` subdirectories.
+    - Manifest Parser parses and validates extension manifests (`manifest.json` and `extension.json`).
+    - Manifest Parser extracts metadata (type, name, version, hooks, layouts, dependencies).
+    - Manifest Parser registers autoloaders for each discovered extension.
+    - Manifest Parser registers hooks into the Hook Registry.
+    - Supports required `type`, `name`, `version` fields, version normalization (`X.Y.Z`), hook format validation, layout declarations, and dependency declarations.
     - Discovery is tolerant: malformed manifests are logged to `STDERR` and skipped so one broken extension does not block valid extensions.
     - Bootstrap still fails fast on unresolved dependencies between successfully parsed manifests.
-    - Walk `ext/themes/*` and `ext/plugins/*` subdirectories, validate manifests, register extension `src/` autoload roots, index extension metadata, and register hooks into the Hook Registry.
     - Current status: app-root and Composer package-root extension discovery works; missing `ext/` directory is non-fatal; `app_root` and `extension_base` diagnostic bindings are registered; `plugin.started` is triggered in both WEB and CLI modes; Hello World test plugin works in both modes.
     - Tags: feature
     - [x] Implement manifest schema validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
@@ -166,9 +170,6 @@
     - [x] Register extension autoloader before hook callback validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Trigger `plugin.started` in WEB and CLI boot paths <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Validate with Hello World plugin in WEB and CLI modes <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Implement actual plugin/theme lifecycle (activation/deactivation) <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Implement extension status persistence <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Implement extension loading order based on dependencies <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
   - [ ] PSR-4 Extension Autoloading <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
     - Support arbitrary extension namespaces instead of only `Laswitchtech\CoreWeb\Plugin\` and `Laswitchtech\CoreWeb\Theme\` prefixes.
     - Tags: enhancement
