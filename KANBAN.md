@@ -1,14 +1,6 @@
 # Kanban
 
 ## Todo <!-- hide: archive -->
-- [ ] Configuration Manager <!-- created_at: 2026-06-18T11:00:00-04:00 priority: high -->
-  - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
-  - Tags: feature, config, v.1.0
-  - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 priority: normal -->
-    - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
 - [ ] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, messaging
   - [ ] Message Provider Interface <!-- created_at: 2026-06-18T11:30:00-04:00 priority: normal -->
@@ -16,6 +8,28 @@
     - Tags: feature
     - [ ] Implement SMTP mailer driver <!-- created_at: 2026-06-18T11:31:00-04:00 priority: normal -->
     - [ ] Define plugin interface for additional providers <!-- created_at: 2026-06-18T11:32:00-04:00 priority: normal -->
+- [ ] CLI System <!-- created_at: 2026-06-18T13:00:00-04:00 priority: normal -->
+  - Tags: framework, cli, v.1.0
+  - [ ] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
+    - Command infrastructure built on top of the unified Router. Responsible for command discovery, argument parsing, command metadata, help output, and extension command registration.
+    - Tags: feature
+    - [ ] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 priority: normal -->
+    - [ ] Implement plugin discovery for CLI commands alongside core kernel commands <!-- created_at: 2026-06-18T13:03:00-04:00 priority: high -->
+  - [ ] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 priority: normal -->
+    - Bootstrap commands for testing, configuring, and managing the framework.
+    - Tags: feature
+    - [ ] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 priority: normal -->
+    - [ ] `core.auth create-user <username> <password>` — create admin users from CLI <!-- created_at: 2026-06-18T13:07:00-04:00 priority: normal -->
+    - [x] `core.db connect` — test configured database connectivity <!-- created_at: 2026-06-30T14:52:13-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
+      - Implemented in temporary Core plugin as `php cli core.db connect`. It validates the active configured driver using the Database facade and `SELECT 1 AS ok`. Driver reconfiguration flags (`--path`, `--dsn`) remain deferred to the permanent CLI command framework. <!-- created_at: 2026-06-18T13:08:00-04:00 completed_at: 2026-06-30T14:41:55-04:00 priority: normal -->
+    - [x] `core.db read/create/update/delete` — temporary database CRUD CLI commands <!-- created_at: 2026-06-30T00:00:00-04:00 completed_at: 2026-06-30T14:42:00-04:00 priority: normal -->
+      - Implemented in temporary Core plugin as a single `core.db` dispatcher with subcommands: `read`, `create`, `update`, `delete`, and `smoke`. CRUD commands use the Database facade and query builders, validate table/column names, support a single quoted WHERE expression for read/update/delete, require WHERE for update/delete safety, and output JSON for reads.
+      - Validation: `php cli core.db connect` returns `Database OK: <driver>` and `php cli core.db smoke` returns `Core DB Smoke OK`.
+    - [ ] `core.config show --key=<path.to.key>` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 priority: normal -->
+    - [ ] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 priority: normal -->
+    - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
+      - Generates Apache, Nginx, and IIS router configuration files during installation so users can deploy on any supported web server without manual routing setup.
+    - [x] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
 - [ ] Presentation Layer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Centralize renderer runtime settings so applications can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
   - Tags: framework, ui, renderer, config
@@ -49,28 +63,14 @@
   - [ ] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 priority: normal -->
   - [ ] Developer Console (variable introspection) <!-- created_at: 2026-06-18T12:14:00-04:00 priority: normal -->
   - [ ] Theme Preview (test against all UI components) <!-- created_at: 2026-06-18T12:15:00-04:00 priority: normal -->
-- [ ] CLI System <!-- created_at: 2026-06-18T13:00:00-04:00 priority: normal -->
-  - Tags: framework, cli, v.1.0
-  - [ ] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
-    - Command infrastructure built on top of the unified Router. Responsible for command discovery, argument parsing, command metadata, help output, and extension command registration.
-    - Tags: feature
-    - [ ] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 priority: normal -->
-    - [ ] Implement plugin discovery for CLI commands alongside core kernel commands <!-- created_at: 2026-06-18T13:03:00-04:00 priority: high -->
-  - [ ] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 priority: normal -->
-    - Bootstrap commands for testing, configuring, and managing the framework.
-    - Tags: feature
-    - [ ] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 priority: normal -->
-    - [ ] `core.auth create-user <username> <password>` — create admin users from CLI <!-- created_at: 2026-06-18T13:07:00-04:00 priority: normal -->
-    - [x] `core.db connect` — test configured database connectivity <!-- created_at: 2026-06-30T14:52:13-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
-      - Implemented in temporary Core plugin as `php cli core.db connect`. It validates the active configured driver using the Database facade and `SELECT 1 AS ok`. Driver reconfiguration flags (`--path`, `--dsn`) remain deferred to the permanent CLI command framework. <!-- created_at: 2026-06-18T13:08:00-04:00 completed_at: 2026-06-30T14:41:55-04:00 priority: normal -->
-    - [x] `core.db read/create/update/delete` — temporary database CRUD CLI commands <!-- created_at: 2026-06-30T00:00:00-04:00 completed_at: 2026-06-30T14:42:00-04:00 priority: normal -->
-      - Implemented in temporary Core plugin as a single `core.db` dispatcher with subcommands: `read`, `create`, `update`, `delete`, and `smoke`. CRUD commands use the Database facade and query builders, validate table/column names, support a single quoted WHERE expression for read/update/delete, require WHERE for update/delete safety, and output JSON for reads.
-      - Validation: `php cli core.db connect` returns `Database OK: <driver>` and `php cli core.db smoke` returns `Core DB Smoke OK`.
-    - [ ] `core.config show --key=<path.to.key>` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 priority: normal -->
-    - [ ] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 priority: normal -->
-    - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
-      - Generates Apache, Nginx, and IIS router configuration files during installation so users can deploy on any supported web server without manual routing setup.
-    - [x] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
+- [ ] Configuration Manager <!-- created_at: 2026-06-18T11:00:00-04:00 priority: high -->
+  - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
+  - Tags: feature, config, v.1.0
+  - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 priority: normal -->
+    - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
 - [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
   - Future enhancement: before/after hooks per route and global middleware support.
   - [ ] Authentication middleware <!-- created_at: 2026-07-01T11:52:25-04:00 priority: normal -->
