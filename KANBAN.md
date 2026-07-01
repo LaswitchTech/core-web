@@ -3,7 +3,7 @@
 ## Todo <!-- hide: archive -->
 - [~] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, extensions, v.1.0
-  - [~] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
+  - [x] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 completed_at: 2026-07-01T15:19:16-04:00 priority: high -->
     - Phase 2E — Extension Discovery Improvements
     - [x] Support multi-base extension discovery <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
       - Discover both framework-shipped extensions from the package core `ext/` directory and application extensions from the application `ext/` directory during the same bootstrap pass.
@@ -17,7 +17,7 @@
     - [x] Document extension discovery roots and override rules <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
       - Document the discovery order, extension identity rules, app-over-core override behavior, and expected Composer package layout.
       - Tags: documentation, extensions, v.1.0
-  - [ ] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 priority: high -->
+  - [~] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 priority: high -->
     - Receives discovered extension paths from the Directory Walker.
     - Manifest Parser parses and validates extension manifests (`manifest.json` and `extension.json`).
     - Manifest Parser extracts metadata (type, name, version, hooks, layouts, dependencies).
@@ -30,10 +30,10 @@
     - Tags: feature
     - [x] Implement manifest schema validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Support `manifest.json` and `extension.json` discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Add kernel compatibility metadata to extension manifests <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - [x] Add kernel compatibility metadata to extension manifests <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T15:19:32-04:00 priority: high -->
       - Extension manifests should declare compatible Core-Web/kernel versions so discovery, installation, updates, and future marketplace tooling can determine whether an extension is compatible with the running framework version. V1.0 should validate and expose the metadata; install/update enforcement can build on it later.
       - Tags: framework, extensions, manifest, compatibility, v.1.0
-      - [ ] Validate kernel compatibility during extension discovery <!-- created_at: 2026-07-01T11:52:25-04:00 priority: normal -->
+    - [ ] Validate kernel compatibility during extension discovery <!-- created_at: 2026-07-01T11:52:25-04:00 priority: normal -->
     - [x] Document tolerant discovery behavior <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Implement directory walker manifest discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Add app-root extension base detection <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
