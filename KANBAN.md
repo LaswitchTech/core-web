@@ -213,6 +213,16 @@
     - [ ] Persist enabled/disabled state <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [ ] Enforce dependencies before activation <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [ ] Add lifecycle hooks for activation/deactivation <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Add `core.extension status` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Display discovered extensions, enabled/disabled state, origin, type, version, compatibility status, and dependency readiness.
+    - [ ] Add `core.extension list` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - List installed plugins and themes using selectors such as `plugins`, `themes`, or a specific `{plugins,themes}.{slug}` target.
+    - [ ] Add `core.extension enable {plugins,themes}.{slug}` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Enable an installed extension by persisted lifecycle state after validating dependencies and compatibility warnings.
+    - [ ] Add `core.extension disable {plugins,themes}.{slug}` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Disable an installed extension by persisted lifecycle state without deleting its files.
+    - [ ] Document extension lifecycle CLI usage <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Document `php cli core.extension {status,list,enable,disable} {plugins,themes}.{slug}` usage, selector rules, examples, and lifecycle persistence behavior.
 
 ## Validation
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
