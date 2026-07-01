@@ -126,20 +126,79 @@ The identifier is used purely as a name; no template resolution or slot composit
 
 ## Extension Discovery
 
-Bootstrap walks the `ext/` directory tree during `Bootstrap::registerExtensions()` (called from `initExtensions()` before Router/CLI subsystems boot):
+Bootstrap discovers extensions from **two base directories** during `Bootstrap::registerExtensions()` (called from `initExtensions()` before Router/CLI subsystems boot). Both roots are walked in a single pass:
 
-1. **Walk** `ext/{themes,plugins}/` directories inside app `ext/` and package `vendor/core-web/ext/` roots
-2. **Read** each extension's `manifest.json` or `extension.json`
-3. **Validate** required fields (`type`, `name`, `version`) via `Manifest\Parser::validate()`
-4. **Fail fast** on unresolved dependencies between successfully parsed manifests (flat existence check in Bootstrap)
-5. **Register an autoloader** for `Laswitchtech\CoreWeb\Plugin\*` and `Laswitchtech\CoreWeb\Theme\*` from all extension `src/` directories
-6. **Resolve each hook string**:
+1. **Framework root**. The package/vendor install directory (`vendor/laswitchtech/core-web/ext`).
+2. **Application root**. The user's application directory (`<app-root>/ext`).
+
+Discovery order matters because it determines override precedence (see below).
+
+### Discovery Steps
+
+Both roots are walked in the order listed above and their results merged before any downstream processing:
+
+1. Discover & parse every manifest.json / extension.json across **both** roots
+2. Deduplicate by extension `name`. The *last* entry for a given name wins, which means an application extension always overrides a framework extension with the same name.
+3. Fail fast on unresolved dependencies between successfully parsed (deduplicated) manifests (flat existence check in Bootstrap).
+4. Register an autoloader for `Laswitchtech\CoreWeb\Plugin\*` and `Laswitchtech\CoreWeb\Theme\*` from **deduplicated** extension `src/` directories.
+5. Resolve each hook string on the deduplicated list:
    - Dotted-only → placeholder callback on the named hook
    - Contains `::` → split into hook name + class/method; register via `Hook\Registry::addClassCall()` (fails bootstrap if class or method does not exist)
-7. **Resolve each layout string** → placeholder callback on `layout.{name}` hook
-8. **Index extension metadata** into the Container under `extension_index` keyed by `$manifest->name`, storing: `type`, `version`, `directory`, `depends`
+6. Resolve each layout string → placeholder callback on `layout.{name}` hook (deduplicated).
+7. Index extension metadata into the Container under `extension_index` keyed by `$manifest->name`, storing: `type`, `version`, `directory`, `depends`, `origin`, and `kernelCompat`.
 
-Discovery is tolerant: individual malformed manifests are logged to STDERR and skipped so one broken extension does not block discovery of valid extensions. If no `ext/` directory exists, an empty Hook\Registry and empty `extension_index` are registered and the process returns silently.
+All downstream operations (dependency checking, autoloading, hook registration, metadata indexing) operate **only on the deduplicated set**.
+
+### Override Behavior
+
+Extension identity is its `"name"` field. When two manifests from different bases share the same name:
+
+- The application root manifest overrides the framework root manifest.
+- Only the winning (deduplicated) extension is used for dependencies, autoloading, and hooks.
+- Override happens via last-write-wins during the associative-array merge step; no explicit origin comparison is needed because Bootstrap always processes framework first, then app.
+
+This makes it possible for a user to shadow any bundled framework extension simply by placing an extension of the same name in their own `ext/` directory.
+
+### Origin Metadata
+
+Each parsed `Extension` value object carries an `$origin` property indicating where it was discovered:
+
+| Value       | Meaning                                         |
+|-------------|-------------------------------------------------|
+| `'framework'` | Extension lives in the framework/package `ext/` root.  |
+| `'app'`         | Extension lives in the application `ext/` root.    |
+
+The origin is set by `Parser::discover($baseDir, $origin)` at parse time and can be inspected at runtime (e.g., for diagnostics). It is not used to enforce policy — it is metadata only.
+
+### Kernel Compatibility Metadata
+
+Each manifest may optionally declare a `"kernel-compat"` field:
+
+```json
+{
+  "type": "plugin",
+  "name": "example",
+  "version": "1.0.0",
+  "kernel-compat": "^1.0"
+}
+```
+
+| Field           | Type   | Description                                      | Constrained by |
+|-----------------|--------|--------------------------------------------------|----------------|
+| `kernel-compat` | string | Kernel compatibility constraint (e.g. `"^1.0"`). | Stored as-is; not enforced in V1.0. |
+
+The value is passed through unchanged to the Extension value object (`$kernelCompat`). **It is stored but not enforced** — later tasks may add actual version-checking logic. In V1.0, any valid string (or absence of the field) is accepted.
+
+### Multi-Root Diagnostics
+
+Bootstrap binds diagnostic keys into the Container for each discovered root:
+
+| Key | Value |
+|-----|-------|
+| `extension_base.framework` | Absolute path to framework `ext/` root (if found). |
+| `extension_base.app`       | Absolute path to application `ext/` root (if found). |
+
+Discovery is tolerant: individual malformed manifests are logged to STDERR and skipped so one broken extension does not block discovery of valid extensions. If no `ext/` directory exists on any base, an empty Hook\Registry and empty `extension_index` are registered and the process returns silently.
 
 ## Lifecycle
 

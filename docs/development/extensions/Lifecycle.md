@@ -9,21 +9,45 @@ Extensions participate in three phases of the Core-Web bootstrap lifecycle: **Di
 The sequence is fixed — no hooks fire during discovery itself:
 
 ```
-1. Manifest Discovery          Parser::discover($extBase)  →  list<Manifest>
-2. Dependency Validation        $knownNames + in_array()    →  fail-fast on unresolved deps
-3. Autoloader Installation      spl_autoload_register()     →  Laswitchtech\CoreWeb\Plugin\* / Theme\*
-4. Hook Registration            Registry::addCallback()     →  dotted-only hooks → empty placeholder callbacks
-5. Layout Registration          Registry::addClassCall()    →  class::method → fail-fast if unresolved
-6. Metadata Indexing            Container::set()            →  extension_index keyed by name
+1. Multi-Root Discovery        Parser::discover(root, origin) → list<Extension>
+2. Name Deduplication          associative-array overwrites   → app wins framework collisions
+3. Dependency Validation       $knownNames + in_array()      → fail-fast on unresolved deps
+4. Autoloader Installation     spl_autoload_register()       → Laswitchtech\CoreWeb\Plugin\* / Theme\*
+5. Hook Registration           Registry::addCallback()       → dotted-only hooks → empty placeholders
+6. Layout Registration         Registry::addClassCall()      → class::method registrations
+7. Metadata Indexing           Container::set()              → extension_index keyed by name
 ```
 
 ### Phase Details
 
-#### 1. Manifest Discovery
+#### 1. Manifest Discovery (Multi-Base)
 
-`Parser::discover($extBase)` walks `themes/` and `plugins/` subdirectories, attempts to parse each `manifest.json` or `extension.json`, normalizes fields via `Parser::validate()`, and returns a list of `Manifest\Extension` value objects. Malformed manifests are logged to STDERR and removed from the list (tolerant — no bootstrap failure).
+Bootstrap walks **two extension bases** in a fixed order:
 
-If no `ext/` directory exists, discovery returns an empty array; Bootstrap registers an empty Hook\Registry and `extension_index` object and proceeds without extensions.
+| Order | Root | Description |
+|-------|------|-------------|
+| 1 | Framework | `$vendor/laswitchtech/core-web/ext` — shipped framework extensions |
+| 2 | Application | `<app-root>/ext` — user-provided extensions |
+
+For each base, `Parser::discover($baseDir, $origin)` walks `themes/` and `plugins/` subdirectories, parses each `manifest.json` or `extension.json`, normalizes fields via `Parser::validate()`, and returns a list of `Manifest\Extension` value objects. Each parsed extension carries an `$origin` property (`'framework'` or `'app'`) indicating where it was discovered.
+
+Malformed manifests are logged to STDERR and removed from the list per-base (tolerant — no bootstrap failure).
+
+If **neither** base directory exists, discovery returns an empty array; Bootstrap registers an empty Hook\Registry and `extension_index` object and proceeds without extensions.
+
+#### 1b. Name Deduplication (Between-Base Merge)
+
+After both bases are parsed, their results are merged into a single flat list. Any two entries sharing the same `$name` are **deduplicated** using last-write-wins semantics:
+
+```php
+$deduplicated = [];
+foreach ($mergedManifests as $ext) {
+    $deduplicated[$ext->name] = $ext;   // app overwrites framework on collision
+}
+$deduplicated = array_values($deduplicated);   // re-index to [0..n-1]
+```
+
+Because the framework base is always processed first, any identically-named extension in the application base naturally wins. **All downstream phases operate only on this deduplicated set.**
 
 #### 2. Dependency Validation
 
@@ -71,14 +95,16 @@ Layouts do **not** register via `addClassCall()`; they are purely placeholder ho
 
 #### 6. Metadata Indexing
 
-Each extension's metadata is stored in the Container under `extension_index`, keyed by `$manifest->name`:
+Each extension's metadata is stored in the Container under `extension_index`, keyed by `$manifest->name`. The index stores six fields: type, version, directory, depends, origin, and kernelCompat.
 
 ```
 extension_index["example-plugin"] = {
-    type:     "plugin",
-    version:  "1.0.0",
-    directory: "/absolute/path/to/ext/plugins/example-plugin",
-    depends:  ["core.authentication"],
+    type:          "plugin",
+    version:       "1.0.0",
+    directory:     "/absolute/path/to/ext/plugins/example-plugin",
+    depends:        ["core.authentication"],
+    origin:         "app",
+    kernelCompat:   "^1.0",
 }
 ```
 

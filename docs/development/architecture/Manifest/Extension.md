@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`Manifest\Extension` is an immutable value object representing a single parsed extension manifest. It carries all metadata extracted from the source `manifest.json`, including type, name, version, hooks, layouts, dependencies, and directory path. Created exclusively by `Manifest\Parser::validate()`.
+`Manifest\Extension` is an immutable value object representing a single parsed extension manifest. It carries all metadata extracted from the source `manifest.json`, including type, name, version, hooks, layouts, dependencies, directory path, kernel compatibility constraint, and discovery origin label. Created exclusively by `Manifest\Parser::validate()`.
 
 ## Class Definition
 
@@ -19,7 +19,9 @@ final readonly class Extension {
         array  $hooks,      // required — defaults to [] inside parser, but passed explicitly here
         array  $layouts,    // required — same
         string $directory,  // required — dirname of the manifest file
-        array  $depends = [], // only optional parameter (rightmost)
+        array  $depends = [],            // optional
+        ?string $kernelCompat = null,   // optional — kernel compatibility constraint
+        string $origin = 'framework',   // optional — discovery origin label
     ) {
 }
 ```
@@ -29,18 +31,20 @@ final readonly class Extension {
 
 ## Constructor Parameter Order
 
-Parameters are ordered to satisfy PHP 8.0+ rules: **all required parameters must precede optional ones**. Currently only `$depends` has a default (`[]`).
+Parameters are ordered to satisfy PHP 8.0+ rules: **all required parameters must precede optional ones**. Three parameters have defaults: `$depends` (`[]`), `$kernelCompat` (`null`), and `$origin` (`'framework'`).
 
 ```php
 public function __construct(
-    string $file,       // required — never null
-    string $type,       // required — validated by parser
-    string $name,       // required — trimmed by parser
-    string $version,    // required — normalized by parser
-    array  $hooks,      // required — defaults to [] inside parser, but passed explicitly here
-    array  $layouts,    // required — same
-    string $directory,  // required — dirname of the manifest file
-    array  $depends = [], // only optional parameter (rightmost)
+    string $file,           // required — never null
+    string $type,           // required — validated by parser
+    string $name,           // required — trimmed by parser
+    string $version,        // required — normalized by parser
+    array  $hooks,          // required — defaults to [] inside parser, but passed explicitly here
+    array  $layouts,        // required — same
+    string $directory,      // required — dirname of the manifest file
+    array  $depends = [],   // optional — extension name-slug dependencies
+    ?string $kernelCompat = null,  // optional — kernel compatibility constraint
+    string $origin = 'framework', // optional — discovery origin label ('app' | 'framework')
 )
 ```
 
@@ -48,7 +52,7 @@ All parameters are public properties declared inline (`phpdoc` + type). No `$thi
 
 ## Properties
 
-| Property      | Type           | Source / Notes                                          |
+| Property        | Type           | Source / Notes                                          |
 |---------------|----------------|----------------------------------------------------------|
 | `$file`       | `string`       | Absolute path to the parsed `manifest.json`.             |
 | `$type`       | `string`       | Lowercased `'theme'` or `'plugin'`, enforced by parser. |
@@ -58,6 +62,8 @@ All parameters are public properties declared inline (`phpdoc` + type). No `$thi
 | `$layouts`    | `list<string>` | Layout identifiers provided by this extension.           |
 | `$directory`  | `string`       | Absolute directory of the manifest file (realpath'd).   |
 | `$depends`    | `list<string>` | Name-slugs of required extensions. Defaults to `[]`.     |
+| `$kernelCompat` | `?string`    | Kernel compatibility constraint from manifest (`null` if absent). Stored as-is; not enforced in V1.0. |
+| `$origin`     | `string`       | Discovery origin label — `'app'` or `'framework'`. Defaults to `'framework'`. |
 
 ## Factory Method
 
@@ -74,6 +80,8 @@ return new Extension(
     layouts:   $layouts,            // array_values() deduped
     depends:   $depends,            // non-empty-string entries only
     directory: dirname($filePath),  // absolute path to extension base dir
+    kernelCompat: $kernelCompat,    // manifest field or null
+    origin:    $origin,             // 'app' | 'framework'
 );
 ```
 
@@ -136,12 +144,25 @@ All eight fields are declared inline as public properties in the constructor par
 - Property access is as cheap as direct field reads.
 - Serialization/unserialization behavior matches standard public property layouts via `__serialize()`.
 
-### `$depends` Is the Only Optional Parameter
+### Optional Parameters
 
-All seven other properties are required parameters (no defaults). `$depends` alone has a default of `[]` to maintain backward-compatibility with any existing callsites that may pass fewer than the full parameter set. This is the only way to keep the PHP 8.4 invariant of "required params before optional params" while still allowing callers who know they don't have deps to omit it:
+Three parameters have defaults, all positioned rightmost to satisfy PHP's "required before optional" rule:
+
+| Parameter | Default | Notes |
+|---|---|---|
+| `$depends` | `[]` | Extension name-slug dependencies |
+| `$kernelCompat` | `null` | Kernel compatibility constraint (optional manifest field) |
+| `$origin` | `'framework'` | Discovery origin label — `'app'` or `'framework'` |
+
+All eight remaining properties are required parameters (no defaults). The three optional parameters can be omitted in any combination because they sit at the end of the parameter list:
 
 ```php
-// Both work because $depends = [] is rightmost:
-new Extension($file, ...);                          // 7 args
-new Extension($file, ..., [], 'hook.layout.footer'); // 8 args with explicit empty depends
+// Minimal — only required params:
+new Extension($file, $type, $name, $version, $hooks, $layouts, $directory);
+
+// Include depends only:
+new Extension($file, $type, $name, $version, $hooks, $layouts, $directory, [], ...);
+
+// Include all optional:
+new Extension($file, $type, $name, $version, $hooks, $layouts, $directory, ['dep'], '^1.0', 'app');
 ```

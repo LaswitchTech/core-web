@@ -12,9 +12,9 @@ namespace Laswitchtech\CoreWeb\Manifest;
 final class Parser {
     public const array VALID_MANIFEST_NAMES = ['manifest.json', 'extension.json'];
 
-    public static function discover(string $baseDir): list<Extension> { ... }
-    public static function parse(string $filePath): Extension { ... }
-    public static function validate(array $data, string $filePath = ''): Extension { ... }
+    public static function discover(string $baseDir, string $origin = 'framework'): list<Extension> { ... }
+    public static function parse(string $filePath, string $origin = 'framework'): Extension { ... }
+    public static function validate(array $data, string $filePath = '', string $origin = 'framework'): Extension { ... }
 }
 ```
 
@@ -33,11 +33,12 @@ final class Parser {
 
 ### Optional keys (defaults applied during validate)
 
-| Key       | Type         | Default  | Notes                                        |
-|-----------|--------------|----------|----------------------------------------------|
-| `hooks`   | list<string> | `[]`     | Each entry: dotted namespace or `Class::method`. |
-| `layouts` | list<string> | `[]`     | Layout identifiers (themes only).            |
-| `depends` | list<string> | `[]`     | Extension name-slug dependencies; must be non-empty strings. |
+| Key            | Type         | Default  | Notes                                        |
+|----------------|--------------|----------|----------------------------------------------|
+| `hooks`        | list<string> | `[]`     | Each entry: dotted namespace or `Class::method`. |
+| `layouts`      | list<string> | `[]`     | Layout identifiers (themes only).            |
+| `depends`      | list<string> | `[]`     | Extension name-slug dependencies; must be non-empty strings. |
+| `kernel-compat`| string       | `null`   | Kernel compatibility constraint stored as-is; not enforced in V1.0. |
 
 ## Public API
 
@@ -49,9 +50,11 @@ public const array = ['manifest.json', 'extension.json'];
 
 Defines the two accepted manifest filenames. `discover()` iterates this constant, checking each candidate in order and taking the first file that exists on disk. If an extension directory contains both filenames, `manifest.json` is preferred.
 
-### `discover(string $baseDir): list<Extension>`
+### `discover(string $baseDir, string $origin = 'framework'): list<Extension>`
 
 Finds all extension directories in `$baseDir/themes/*` and `$baseDir/plugins/*`, parses each manifest, and returns a list of `Extension` objects.
+
+**The `$origin` parameter** labels every returned `Extension` value object with its discovery source. It is diagnostic-only; the parser does not use it to enforce behavior. By convention Bootstrap calls this method once per extension base, passing `'framework'` first (the package's built-in extensions) and `'app'` second (the user's application directory).
 
 **Walk rules:**
 
@@ -92,7 +95,7 @@ foreach (['themes', 'plugins'] as $typeDir) {
 
 **Return**: `list<Extension>` — empty list if `$baseDir` does not exist or contains no valid manifests.
 
-### `parse(string $filePath): Extension`
+### `parse(string $filePath, string $origin = 'framework'): Extension`
 
 Parses and validates a single manifest file.
 
@@ -100,7 +103,7 @@ Parses and validates a single manifest file.
 - Throws `\JsonException` (via `json_decode → JSON_THROW_ON_ERROR`) if the content is invalid JSON.
 - Delegates required-field validation to `validate()`.
 
-### `validate(array $data, string $filePath = ''): Extension`
+### `validate(array $data, string $filePath = '', string $origin = 'framework'): Extension`
 
 Validates a decoded manifest array and produces an `Extension` value object. Called by both `parse()` (with file path) and external callers (without).
 
@@ -112,6 +115,7 @@ Validates a decoded manifest array and produces an `Extension` value object. Cal
 4. **Version normalization**: Strips leading `v/V=/ ` (via `ltrim(trim($version), 'vV= ')`) then validates `/^\d+\.\d+\.\d+$/` — the entire trimmed string must match exactly with no trailing content (e.g., `"1.2.3-extra"` is invalid).
 5. **Optional fields**: Default to `[]` if not present in JSON. Hooks entries are validated individually; layouts and depends are value-normalized via `array_values()`.
 6. **Dependencies validation**: Each entry must be a non-empty string. Throws `\InvalidArgumentException` otherwise.
+7. **kernel-compat** (optional): If `"kernel-compat"` is present and is a non-empty string, it is stored verbatim on the `Extension` value object (`$kernelCompat`). No parsing or version resolution is performed — later tasks may add enforcement.
 
 **Version normalization:**
 
