@@ -516,32 +516,71 @@ class Bootstrap
             }
         }
 
-        // ── 4. Collect src/ directories from all extensions (before any hook processing) --
-        $srcDirs = [];
+        // ── 4. Collect manifests with PSR-4 autoload support + src/ fallback dirs --
+        $psr4Manifests = [];   // prefix → [Manifest\Extension, Manifest\Extension, ...]
+        $srcDirs       = [];  // legacy fallback directories
+
         foreach ($manifests as $manifest) {
             if (is_dir("{$manifest->directory}/src")) {
                 $srcDirs[] = "{$manifest->directory}/src";
             }
+
+            // Gather PSR-4 mappings from every manifest.
+            if ($manifest->psr4Mappings === []) {
+                continue;
+            }
+
+            foreach ($manifest->psr4Mappings as $mapping) {
+                $prefix    = rtrim($mapping['prefix'], '\\') . '\\';  // normalise to single trailing \
+                $extDir    = $mapping['directory'];                    // already slash-normalised in the parser
+                $candidate = "{$manifest->directory}/{$extDir}";
+
+                if (is_dir($candidate)) {
+                    $psr4Manifests[$prefix][] = ['manifest' => $manifest, 'dir' => $candidate];
+                }
+            }
         }
 
-        // ── 5. Register extension autoloader BEFORE parsing hooks --------------
+        // Sort PSR-4 keys by longest prefix first so the most specific prefix wins.
+        uksort($psr4Manifests, static fn ($a, $b) => strlen($b) <=> strlen($a));
+
+        // ── 5. Register extension autoloader (PSR-4 first, legacy fallback after) --
         $uniqueSrcDirs = array_values(array_unique($srcDirs));
 
-        spl_autoload_register(function (string $class) use ($uniqueSrcDirs): void {
+        spl_autoload_register(function (string $class) use ($psr4Manifests, $uniqueSrcDirs): void {
+            // --- PSR-4 resolution (most specific prefix wins) ---
+            foreach ($psr4Manifests as $prefix => $_entries) {
+                if (!str_starts_with($class, $prefix)) {
+                    continue;
+                }
+
+                $relPath  = substr($class, strlen($prefix));
+                $relPathF = str_replace('\\', '/', $relPath);
+
+                foreach ($_entries as ['manifest' => $m, 'dir' => $d]) {
+                    $fpath = "{$d}/{$relPathF}.php";
+                    if (is_file($fpath)) {
+                        require_once $fpath;
+                        return;
+                    }
+                }
+            }
+
+            // --- Legacy fallback: Laswitchtech\\CoreWeb\\Plugin\\ / \\Theme\\ ----------
             if (str_starts_with($class, 'Laswitchtech\\CoreWeb\\Plugin\\') === false
                 && str_starts_with($class, 'Laswitchtech\\CoreWeb\\Theme\\') === false) {
                 return;
             }
 
-            $prefix   = str_starts_with($class, 'Laswitchtech\\CoreWeb\\Plugin\\')
+            $prefixLen = str_starts_with($class, 'Laswitchtech\\CoreWeb\\Plugin\\')
                 ? strlen('Laswitchtech\\CoreWeb\\Plugin\\')
                 : strlen('Laswitchtech\\CoreWeb\\Theme\\');
-            $relPath  = str_replace('\\', '/', substr($class, $prefix));
+            $relPath   = str_replace('\\', '/', substr($class, $prefixLen));
 
             foreach ($uniqueSrcDirs as $dir) {
-                $file = "{$dir}/{$relPath}.php";
-                if (is_file($file)) {
-                    require_once $file;
+                $fpath = "{$dir}/{$relPath}.php";
+                if (is_file($fpath)) {
+                    require_once $fpath;
                     return;
                 }
             }

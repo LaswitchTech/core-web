@@ -196,12 +196,15 @@
     - [x] Register extension autoloader before hook callback validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Trigger `plugin.started` in WEB and CLI boot paths <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Validate with Hello World plugin in WEB and CLI modes <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [ ] PSR-4 Extension Autoloading <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
+  - [x] PSR-4 Extension Autoloading <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
     - Support arbitrary extension namespaces instead of only `Laswitchtech\CoreWeb\Plugin\` and `Laswitchtech\CoreWeb\Theme\` prefixes.
     - Tags: enhancement
-    - [ ] Add namespace mapping support in manifest <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Register Composer-style namespace mappings for extension `src/` directories <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Validate class hook callbacks using declared namespace mappings <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Add namespace mapping support in manifest <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Implemented optional `autoload.psr-4` manifest mappings and stored valid mappings on `Extension::psr4Mappings`.
+    - [x] Register Composer-style namespace mappings for extension `src/` directories <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Bootstrap now registers declared PSR-4 mappings before the legacy `Laswitchtech\CoreWeb\Plugin\` and `Laswitchtech\CoreWeb\Theme\` fallback autoloader.
+    - [x] Validate class hook callbacks using declared namespace mappings <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Class-based hooks may now reference extension-declared PSR-4 namespaces before `Hook\Registry::addClassCall()` validates the callback.
   - [~] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
     - Docs: lifecycle documented in docs/development/extensions/Lifecycle.md (placeholder — no implementation yet)
     - Tags: feature

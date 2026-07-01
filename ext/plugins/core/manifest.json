@@ -7,5 +7,10 @@
     "hooks": [
         "router.register::Laswitchtech\\CoreWeb\\Plugin\\Core::registerRoutes",
         "helper.register::Laswitchtech\\CoreWeb\\Plugin\\Core::registerSmokeHelper"
-    ]
+    ],
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\": "src/"
+        }
+    }
 }

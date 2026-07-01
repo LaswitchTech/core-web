@@ -63,7 +63,8 @@ All parameters are public properties declared inline (`phpdoc` + type). No `$thi
 | `$directory`  | `string`       | Absolute directory of the manifest file (realpath'd).   |
 | `$depends`    | `list<string>` | Name-slugs of required extensions. Defaults to `[]`.     |
 | `$kernelCompat` | `?string`    | Kernel compatibility constraint from manifest (`null` if absent). Stored as-is; not enforced in V1.0. |
-| `$origin`     | `string`       | Discovery origin label — `'app'` or `'framework'`. Defaults to `'framework'`. |
+| `$origin`     | `string`       | Discovery origin label — `'app'` or `'framework'`. Defaults to `'framework'`.  |
+| `$psr4Mappings` | `list<array{prefix: string, directory: string}>` | PSR-4 namespace mappings declared by manifest `autoload.psr-4`. Defaults to `[]`. |
 
 ## Factory Method
 

@@ -162,6 +162,42 @@ final class Parser
             $kernelCompat = $data['kernel-compat'];
         }
 
+        // -- autoload.psr-4 (optional, additive) -----------------------
+        $psr4Mappings = [];
+        if (
+            isset($data['autoload']) && is_array($data['autoload'])
+            && isset($data['autoload']['psr-4']) && is_array($data['autoload']['psr-4'])
+        ) {
+            foreach ($data['autoload']['psr-4'] as $rawPrefix => $relativeDir) {
+                // prefix: non-empty string ending with backslash.
+                if (
+                    !is_string($rawPrefix) || $rawPrefix === ''
+                    || substr($rawPrefix, -1) !== '\\'
+                ) {
+                    fwrite(STDERR, "Manifest autoload.psr-4: invalid namespace prefix for key '{$rawPrefix}' in {$filePath}\n");
+                    continue;
+                }
+
+                // directory: non-empty string.
+                if (!is_string($relativeDir) || $relativeDir === '') {
+                    fwrite(STDERR, "Manifest autoload.psr-4: empty directory for namespace '{$rawPrefix}' in {$filePath}\n");
+                    continue;
+                }
+
+                // Strip leading/trailing forward-slashes and backslashes from path.
+                $normalizedDir = trim($relativeDir, '/\\');
+                if ($normalizedDir === '') {
+                    fwrite(STDERR, "Manifest autoload.psr-4: empty normalized directory for namespace '{$rawPrefix}' in {$filePath}\n");
+                    continue;
+                }
+
+                $psr4Mappings[] = [
+                    'prefix'   => $rawPrefix,  // trailing backslash preserved as declared.
+                    'directory'=> str_replace('\\', '/', $normalizedDir),
+                ];
+            }
+        }
+
         return new Extension(
             file:      $filePath,
             type:      $type,
@@ -173,6 +209,7 @@ final class Parser
             directory: dirname($filePath),
             kernelCompat: $kernelCompat,
             origin:    $origin,
+            psr4Mappings: $psr4Mappings,
         );
     }
 

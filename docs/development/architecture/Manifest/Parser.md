@@ -40,7 +40,8 @@ final class Parser {
 | `hooks`        | list<string> | `[]`     | Each entry: dotted namespace or `Class::method`. |
 | `layouts`      | list<string> | `[]`     | Layout identifiers (themes only).            |
 | `depends`      | list<string> | `[]`     | Extension name-slug dependencies; must be non-empty strings. |
-| `kernel-compat`| string       | `null`   | Kernel compatibility constraint; validated during discovery, stored as-is. Enforce­ment is tolerant — incompatible extensions warn but are not rejected. |
+| `kernel-compat`| string       | `null`   | Kernel compatibility constraint; validated during discovery, stored as-is. Tolerant enforcement — incompatible extensions warn but are not rejected. |
+| `autoload.psr-4`| object      | `{}`     | Composer-style PSR-4 namespace mappings; see "PSR-4 Autoload Mappings" below. Stored on `Extension::psr4Mappings` as `list<array{prefix: string, directory: string}>`. |
 
 ## Public API
 
@@ -198,6 +199,87 @@ $ext = Parser::parse('/path/to/ext/themes/default/manifest.json');
 // Step 3: validate an already-decoded array
 $decoded = json_decode(file_get_contents('manifest.json'), true);
 $ext2 = Parser::validate($decoded, 'test-manifest.json');
+```
+
+### PSR-4 Autoload Mappings
+
+When a manifest declares `"autoload.psr-4"`, the parser treats it as an **optional, additive** Composer-style mapping block. It is merged into `Extension::psr4Mappings` as a list of `{ prefix, directory }` pairs that Bootstrap later injects into `spl_autoload_register()` alongside the legacy `src/` directory fallback.
+
+**Accepted JSON shape:**
+
+```json
+{
+    "autoload": {
+        "psr-4": {
+            "Vendor\\Plugin\\": "src/"
+        }
+    }
+}
+```
+
+**Validation rules per mapping entry:**
+
+| Field      | Constraint                                    | Behavior on failure                    |
+|------------|-----------------------------------------------|----------------------------------------|
+| `prefix`   | Must be a non-empty string ending with `\`.  | Skipped; STDERR warning printed.       |
+| `directory`| Non-empty relative path (string).             | Skipped; STDERR warning printed.       |
+
+**Directory normalization:** Leading/trailing `/` and `\` are stripped from the directory value. If the result is empty after stripping, the mapping is skipped with an STDERR warning. The directory is then converted to forward-slash separators (`str_replace('\\', '/', ...)`).
+
+**Prefix enforcement:** The prefix must end with a trailing backslash (\); prefixes without one are invalid and skipped during parsing. The trailing backslash is preserved **as declared** in the manifest and not further normalized.
+
+**Skipped vs blocked:** Invalid mappings are skipped individually — they produce a STDERR warning but do not prevent valid mappings from being stored or the extension from loading. This keeps autoloading tolerant in V1.0: a malformed PSR-4 entry should not break extension discovery.
+
+**Output format on `Extension::psr4Mappings`:**
+
+```php
+// Given manifest:
+// { "autoload": { "psr-4": { "MyCorp\\Plugin\\": "/lib/" } } }
+
+$extension->psr4Mappings === [
+    [ 'prefix' => 'MyCorp\\Plugin\\', 'directory' => 'lib' ]
+];
+```
+
+#### Example manifests
+
+```json
+// Single mapping — plugin autoloading:
+{
+    "type": "plugin",
+    "name": "Example",
+    "version": "1.0.0",
+    "autoload": {
+        "psr-4": {
+            "ExamplePlugin\\": "src/"
+        }
+    }
+}
+
+// Multiple mappings in one manifest:
+{
+    "type": "plugin",
+    "name": "MultiLoad",
+    "version": "1.0.0",
+    "autoload": {
+        "psr-4": {
+            "MultiLoad\\Classes\\": "classes/",
+            "MultiLoad\\Tests\\": "tests/"
+        }
+    }
+}
+
+// Invalid — prefix missing trailing backslash (will be skipped silently):
+{
+    "type": "plugin",
+    "name": "BadPrefix",
+    "version": "1.0.0",
+    "autoload": {
+        "psr-4": {
+            "BadPrefix\\Service": "src/"  // ❌ no trailing backslash
+        }
+    }
+}
 ```
 
 ## Design Decisions

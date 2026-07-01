@@ -38,6 +38,9 @@ final readonly class Extension
 
         /** @var string Discovery origin: 'app' or 'framework'. Defaults to 'framework'. */
         public string $origin = 'framework',
+
+        /** @var list<array{prefix: string, directory: string}> PSR-4 namespace mappings declared by the extension manifest. */
+        public array $psr4Mappings = [],
     ) {
         if ($origin !== 'app' && $origin !== 'framework') {
             throw new \InvalidArgumentException(sprintf(
