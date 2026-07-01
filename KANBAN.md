@@ -1,6 +1,68 @@
 # Kanban
 
 ## Todo <!-- hide: archive -->
+- [~] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+  - Tags: framework, extensions, v.1.0
+  - [~] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
+    - Phase 2E — Extension Discovery Improvements
+    - [x] Support multi-base extension discovery <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Discover both framework-shipped extensions from the package core `ext/` directory and application extensions from the application `ext/` directory during the same bootstrap pass.
+      - Tags: framework, extensions, discovery, v.1.0
+    - [x] Add app-over-core extension override precedence <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - If an application extension in `ext/plugins` or `ext/themes` has the same extension identity as a framework-shipped extension in `vendor/laswitchtech/core-web/ext`, the application extension should override the framework copy deterministically.
+      - Tags: framework, extensions, precedence, overrides, v.1.0
+    - [x] Preserve package-shipped plugins when application extensions exist <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Current discovery uses the first existing `ext/` base only. Replace this fallback behavior with additive discovery so core/vendor plugins remain available when an application also defines its own `ext/` directory.
+      - Tags: framework, extensions, plugins, v.1.0
+    - [x] Document extension discovery roots and override rules <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Document the discovery order, extension identity rules, app-over-core override behavior, and expected Composer package layout.
+      - Tags: documentation, extensions, v.1.0
+  - [ ] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 priority: high -->
+    - Receives discovered extension paths from the Directory Walker.
+    - Manifest Parser parses and validates extension manifests (`manifest.json` and `extension.json`).
+    - Manifest Parser extracts metadata (type, name, version, hooks, layouts, dependencies).
+    - Manifest Parser registers autoloaders for each discovered extension.
+    - Manifest Parser registers hooks into the Hook Registry.
+    - Supports required `type`, `name`, `version` fields, version normalization (`X.Y.Z`), hook format validation, layout declarations, and dependency declarations.
+    - Discovery is tolerant: malformed manifests are logged to `STDERR` and skipped so one broken extension does not block valid extensions.
+    - Bootstrap still fails fast on unresolved dependencies between successfully parsed manifests.
+    - Current status: app-root and Composer package-root extension discovery works; missing `ext/` directory is non-fatal; `app_root` and `extension_base` diagnostic bindings are registered; `plugin.started` is triggered in both WEB and CLI modes; Hello World test plugin works in both modes.
+    - Tags: feature
+    - [x] Implement manifest schema validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Support `manifest.json` and `extension.json` discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Add kernel compatibility metadata to extension manifests <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Extension manifests should declare compatible Core-Web/kernel versions so discovery, installation, updates, and future marketplace tooling can determine whether an extension is compatible with the running framework version. V1.0 should validate and expose the metadata; install/update enforcement can build on it later.
+      - Tags: framework, extensions, manifest, compatibility, v.1.0
+      - [ ] Validate kernel compatibility during extension discovery <!-- created_at: 2026-07-01T11:52:25-04:00 priority: normal -->
+    - [x] Document tolerant discovery behavior <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Implement directory walker manifest discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Add app-root extension base detection <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Add package-root extension base fallback for Composer installs <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Register extension autoloader before hook callback validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Trigger `plugin.started` in WEB and CLI boot paths <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Validate with Hello World plugin in WEB and CLI modes <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [ ] PSR-4 Extension Autoloading <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
+    - Support arbitrary extension namespaces instead of only `Laswitchtech\CoreWeb\Plugin\` and `Laswitchtech\CoreWeb\Theme\` prefixes.
+    - Tags: enhancement
+    - [ ] Add namespace mapping support in manifest <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Register Composer-style namespace mappings for extension `src/` directories <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Validate class hook callbacks using declared namespace mappings <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [~] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
+    - Docs: lifecycle documented in docs/development/extensions/Lifecycle.md (placeholder — no implementation yet)
+    - Tags: feature
+    - [ ] Enable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Disable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Persist enabled/disabled state <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Enforce dependencies before activation <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Add lifecycle hooks for activation/deactivation <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+- [ ] Configuration Manager <!-- created_at: 2026-06-18T11:00:00-04:00 priority: high -->
+  - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
+  - Tags: feature, config, v.1.0
+  - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 priority: normal -->
+    - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
 - [ ] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, messaging
   - [ ] Message Provider Interface <!-- created_at: 2026-06-18T11:30:00-04:00 priority: normal -->
@@ -15,27 +77,6 @@
     - Renderable UI components with plugin extensibility.
     - Tags: feature
     - [ ] Implement base UIComponent interface and HTML sanitizer <!-- created_at: 2026-06-18T11:41:00-04:00 priority: normal -->
-  - [ ] Helper System <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
-    - Centralized helper registry providing injectable helper objects to controllers, the renderer, layouts, templates, views, and extensions. Helpers are registered services rather than global functions and may be provided by the framework, the application, or plugins.
-    - Tags: framework, helpers, renderer, extensions, v.1.0
-    - [ ] Implement `Helper\Registry` for registering named helper objects <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
-      - Support deterministic registration by name with provider metadata for core, application, and plugin helpers.
-    - [ ] Define `Helper\HelperInterface` contract <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
-      - Provide a common interface for all helper implementations. Initial V1.0 scope should expose a `name(): string` method while allowing future metadata and capabilities to be added without changing the registry API.
-    - [ ] Implement helper container/bag for runtime access <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
-      - Expose helpers through a single object (for example `$helpers`) using property and/or method access.
-    - [ ] Organize helper subsystem structure <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
-      - Standardize the subsystem around `Helper\Registry`, `Helper\Bag`, `Helper\HelperInterface`, and helper-specific exceptions to keep registration, lookup, and helper implementations clearly separated.
-    - [ ] Register core helper services during Bootstrap <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
-      - Bind the helper registry and helper bag into the container as lazy services.
-    - [ ] Inject helper bag into renderer context <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
-      - Make the helper bag available to layouts, templates, and views without requiring controllers to pass it explicitly.
-    - [ ] Add `helper.register` hook for extension helper registration <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
-      - Allow plugins and applications to register helper objects during bootstrap.
-    - [ ] Implement core helper set <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
-      - Initial helpers should include URL, HTML, String, Date, Config, and Asset helpers.
-    - [ ] Document helper conventions and extension guidelines <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
-      - Document registration, naming conventions, dependency injection, renderer availability, and best practices.
   - [ ] Configure default rendering engine through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
   - [ ] Configure Latte cache path through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
   - [ ] Configure Latte strict mode / debug mode <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
@@ -129,68 +170,27 @@
     - Evaluate whether other related classes should also be grouped by domain or subsystem in Version 2.0 without disrupting the V1.0 public API.
 
 ## In Progress
-- [~] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Tags: framework, extensions, v.1.0
-  - [~] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
-    - Phase 2E — Extension Discovery Improvements
-    - [x] Support multi-base extension discovery <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
-      - Discover both framework-shipped extensions from the package core `ext/` directory and application extensions from the application `ext/` directory during the same bootstrap pass.
-      - Tags: framework, extensions, discovery, v.1.0
-    - [x] Add app-over-core extension override precedence <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
-      - If an application extension in `ext/plugins` or `ext/themes` has the same extension identity as a framework-shipped extension in `vendor/laswitchtech/core-web/ext`, the application extension should override the framework copy deterministically.
-      - Tags: framework, extensions, precedence, overrides, v.1.0
-    - [x] Preserve package-shipped plugins when application extensions exist <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
-      - Current discovery uses the first existing `ext/` base only. Replace this fallback behavior with additive discovery so core/vendor plugins remain available when an application also defines its own `ext/` directory.
-      - Tags: framework, extensions, plugins, v.1.0
-    - [x] Document extension discovery roots and override rules <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
-      - Document the discovery order, extension identity rules, app-over-core override behavior, and expected Composer package layout.
-      - Tags: documentation, extensions, v.1.0
-  - [ ] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 priority: high -->
-    - Receives discovered extension paths from the Directory Walker.
-    - Manifest Parser parses and validates extension manifests (`manifest.json` and `extension.json`).
-    - Manifest Parser extracts metadata (type, name, version, hooks, layouts, dependencies).
-    - Manifest Parser registers autoloaders for each discovered extension.
-    - Manifest Parser registers hooks into the Hook Registry.
-    - Supports required `type`, `name`, `version` fields, version normalization (`X.Y.Z`), hook format validation, layout declarations, and dependency declarations.
-    - Discovery is tolerant: malformed manifests are logged to `STDERR` and skipped so one broken extension does not block valid extensions.
-    - Bootstrap still fails fast on unresolved dependencies between successfully parsed manifests.
-    - Current status: app-root and Composer package-root extension discovery works; missing `ext/` directory is non-fatal; `app_root` and `extension_base` diagnostic bindings are registered; `plugin.started` is triggered in both WEB and CLI modes; Hello World test plugin works in both modes.
-    - Tags: feature
-    - [x] Implement manifest schema validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Support `manifest.json` and `extension.json` discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Add kernel compatibility metadata to extension manifests <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
-      - Extension manifests should declare compatible Core-Web/kernel versions so discovery, installation, updates, and future marketplace tooling can determine whether an extension is compatible with the running framework version. V1.0 should validate and expose the metadata; install/update enforcement can build on it later.
-      - Tags: framework, extensions, manifest, compatibility, v.1.0
-      - [ ] Validate kernel compatibility during extension discovery <!-- created_at: 2026-07-01T11:52:25-04:00 priority: normal -->
-    - [x] Document tolerant discovery behavior <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Implement directory walker manifest discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Add app-root extension base detection <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Add package-root extension base fallback for Composer installs <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Register extension autoloader before hook callback validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Trigger `plugin.started` in WEB and CLI boot paths <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Validate with Hello World plugin in WEB and CLI modes <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [ ] PSR-4 Extension Autoloading <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
-    - Support arbitrary extension namespaces instead of only `Laswitchtech\CoreWeb\Plugin\` and `Laswitchtech\CoreWeb\Theme\` prefixes.
-    - Tags: enhancement
-    - [ ] Add namespace mapping support in manifest <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Register Composer-style namespace mappings for extension `src/` directories <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Validate class hook callbacks using declared namespace mappings <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [~] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
-    - Docs: lifecycle documented in docs/development/extensions/Lifecycle.md (placeholder — no implementation yet)
-    - Tags: feature
-    - [ ] Enable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Disable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Persist enabled/disabled state <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Enforce dependencies before activation <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Add lifecycle hooks for activation/deactivation <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-- [ ] Configuration Manager <!-- created_at: 2026-06-18T11:00:00-04:00 priority: high -->
-  - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
-  - Tags: feature, config, v.1.0
-  - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 priority: normal -->
-    - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
+- [ ] Helper System <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+  - Centralized helper registry providing injectable helper objects to controllers, the renderer, layouts, templates, views, and extensions. Helpers are registered services rather than global functions and may be provided by the framework, the application, or plugins.
+  - Tags: framework, helpers, renderer, extensions, v.1.0
+  - [ ] Implement `Helper\Registry` for registering named helper objects <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - Support deterministic registration by name with provider metadata for core, application, and plugin helpers.
+  - [ ] Define `Helper\HelperInterface` contract <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Provide a common interface for all helper implementations. Initial V1.0 scope should expose a `name(): string` method while allowing future metadata and capabilities to be added without changing the registry API.
+  - [ ] Implement helper container/bag for runtime access <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - Expose helpers through a single object (for example `$helpers`) using property and/or method access.
+  - [ ] Organize helper subsystem structure <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Standardize the subsystem around `Helper\Registry`, `Helper\Bag`, `Helper\HelperInterface`, and helper-specific exceptions to keep registration, lookup, and helper implementations clearly separated.
+  - [ ] Register core helper services during Bootstrap <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Bind the helper registry and helper bag into the container as lazy services.
+  - [ ] Inject helper bag into renderer context <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - Make the helper bag available to layouts, templates, and views without requiring controllers to pass it explicitly.
+  - [ ] Add `helper.register` hook for extension helper registration <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - Allow plugins and applications to register helper objects during bootstrap.
+  - [ ] Implement core helper set <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Initial helpers should include URL, HTML, String, Date, Config, and Asset helpers.
+  - [ ] Document helper conventions and extension guidelines <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Document registration, naming conventions, dependency injection, renderer availability, and best practices.
 
 ## Validation
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
