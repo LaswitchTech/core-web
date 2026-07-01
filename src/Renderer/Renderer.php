@@ -2,6 +2,7 @@
 
 namespace Laswitchtech\CoreWeb\Renderer;
 
+use Laswitchtech\CoreWeb\Helper\Bag;
 use Laswitchtech\CoreWeb\Renderer\Error\RenderException;
 use Laswitchtech\CoreWeb\Renderer\Resource\Entry;
 
@@ -12,6 +13,8 @@ use Laswitchtech\CoreWeb\Renderer\Resource\Entry;
  */
 final class Renderer
 {
+    private ?Bag $helpers = null;
+
     private Registry $registry;
     private Engine\Registry $engineRegistry;
 
@@ -33,7 +36,12 @@ final class Renderer
         string $view,
         array $data = [],
     ): string {
-        // 1. Resolve view entry.
+        // 1. Inject helpers into data so they are available in all layers (view → template → layout).
+        if ($this->helpers !== null) {
+            $data = array_merge($data, ['helpers' => $this->helpers]);
+        }
+
+        // 2. Resolve view entry.
         $viewEntry = $this->registry->resolve($view, Entry::TYPE_VIEW);
         if ($viewEntry === null) {
             throw new RenderException(
@@ -89,6 +97,17 @@ final class Renderer
             throw new RenderException("Render path is not readable: {$entry->path}");
         }
 
+        // Inject helpers into data so they are available in the rendered entry.
+        if ($this->helpers !== null) {
+            $data = array_merge($data, ['helpers' => $this->helpers]);
+        }
+
         return $this->engineRegistry->resolve($entry)->render($entry, $data);
+    }
+
+    /** Inject the helper Bag so ``$helpers`` becomes available in all view/template/layout layers. */
+    public function setHelpers(Bag $bag): void
+    {
+        $this->helpers = $bag;
     }
 }

@@ -24,6 +24,15 @@ use Laswitchtech\CoreWeb\Database\Seeding\Seeder;
 use Laswitchtech\CoreWeb\Database\Seeding\RegistryTable as SeedRegistryTable;
 use Laswitchtech\CoreWeb\Logger\Logger;
 use Laswitchtech\CoreWeb\Logger\Level;
+use Laswitchtech\CoreWeb\Helper\HelperInterface;
+use Laswitchtech\CoreWeb\Helper\Url;
+use Laswitchtech\CoreWeb\Helper\Html;
+use Laswitchtech\CoreWeb\Helper\Str;
+use Laswitchtech\CoreWeb\Helper\Date;
+use Laswitchtech\CoreWeb\Helper\Asset;
+use Laswitchtech\CoreWeb\Helper\Config as ConfigHelper;
+use Laswitchtech\CoreWeb\Helper\Registry as HelperRegistry;
+use Laswitchtech\CoreWeb\Helper\Bag;
 
 /**
 
@@ -88,6 +97,7 @@ class Bootstrap
             $this->registerDbServices($c);
             $this->registerSeedingServices($c);
             $this->initExtensions();
+            $this->registerHelperServices($c);
 
             switch ($this->mode) {
                 case self::MODE_WEB:
@@ -359,6 +369,50 @@ class Bootstrap
     }
 
     /* ------------------------------------------------------------------ --/
+      /  Helper Services                                                    */
+    /* ------------------------------------------------------------------ */
+
+    /** Register helper services into the container.
+     *
+     * Creates a Helper\\Registry, registers the six core helpers (Url, Html, Str, Date, Asset, Config),
+     * fires ``helper.register`` so extensions can add their own, then binds the registry (wrapped
+     * in Bag) to the ``helpers`` container key. */
+    private function registerHelperServices(Container $c): void
+    {
+        // 1. Create registry and register core helpers.
+        $registry = new HelperRegistry();
+
+        $coreHelpers = [
+            new Url(),
+            new Html(),
+            new Str(),
+            new Date(),
+            new Asset(),
+            new ConfigHelper(),
+        ];
+
+        foreach ($coreHelpers as $helper) {
+            if ($helper instanceof HelperInterface) {
+                $registry->register($helper);
+            }
+        }
+
+        // 2. Trigger helper.register so extensions can add helpers.
+        $hookRegistry = static::$instance->resolve('hook_registry');
+        if ($hookRegistry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
+            $hookRegistry->trigger('helper.register', [
+                'registry'  => $registry,
+                'container' => static::$instance,
+                'mode'      => strtolower($this->mode),
+            ]);
+        }
+
+        // 3. Bind registry (Bag wraps it as a singleton below).
+        $c->set('helper_registry', $registry);
+        $c->registerSingleton('helpers', static fn ($container) => new Bag($container->resolve('helper_registry')));
+    }
+
+    /* ------------------------------------------------------------------ --/
       /  Extensions                                                          */
     /* ------------------------------------------------------------------ */
 
@@ -604,6 +658,14 @@ class Bootstrap
         // Initialize renderer, engine registry and all bindings.
         $renderer = $this->initRenderer('web');
 
+        // Wire helpers into renderer context so every render call gets $helpers available.
+        if (static::$instance !== null) {
+            $helperBag = static::$instance->resolve('helpers');
+            if ($helperBag instanceof \Laswitchtech\CoreWeb\Helper\Bag) {
+                $renderer->setHelpers($helperBag);
+            }
+        }
+
         // Fire renderer.register hook so plugins can register layouts, templates, views.
         $hookRegistry = static::$instance->resolve('hook_registry');
         if ($hookRegistry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
@@ -645,6 +707,14 @@ class Bootstrap
 
         // Initialize renderer, engine registry and all bindings.
         $renderer = $this->initRenderer('cli');
+
+        // Wire helpers into renderer context so every render call gets $helpers available.
+        if (static::$instance !== null) {
+            $helperBag = static::$instance->resolve('helpers');
+            if ($helperBag instanceof \Laswitchtech\CoreWeb\Helper\Bag) {
+                $renderer->setHelpers($helperBag);
+            }
+        }
 
         // Fire renderer.register hook so plugins can register layouts, templates, views.
         $hookRegistry = static::$instance->resolve('hook_registry');

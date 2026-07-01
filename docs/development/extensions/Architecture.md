@@ -200,6 +200,64 @@ Bootstrap binds diagnostic keys into the Container for each discovered root:
 
 Discovery is tolerant: individual malformed manifests are logged to STDERR and skipped so one broken extension does not block discovery of valid extensions. If no `ext/` directory exists on any base, an empty Hook\Registry and empty `extension_index` are registered and the process returns silently.
 
+## Helper Registration
+
+Plugins may register helpers via the `helper.register` hook. The hook fires during bootstrap, after manifest parsing but before the active subsystem (Router/CLI) boots. It receives the helper registry (`Helper\Registry`) as context:
+
+```
+Trigger hook "helper.register" → [registry => Registry]
+```
+
+### Registration Details
+
+| Aspect | Detail |
+|--------|--------|
+| **Hook name** | `helper.register` |
+| **Context** | `['registry' => Laswitchtech\CoreWeb\Helper\Registry]` |
+| **Provider values** | `'core'`, `'app'`, `'plugin'` |
+| **Resolution order** | Higher priority wins → provider precedence (app > plugin > core) → later registration wins |
+| **Bag injection** | A `Helper\Bag` instance (wrapping the registry) is injected into layouts, templates, and views as `$helpers` |
+
+### Plugin Usage
+
+```php
+// In a plugin's hook callback:
+public function onHelperRegister(array $ctx): void {
+    $registry = $ctx['registry'];
+    $helper   = new Url(); // implements HelperInterface
+
+    // Register with provider and priority for conflict resolution
+    $registry->register($helper, 'plugin', 0, [/* optional metadata */]);
+}
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$registry` | `Registry` | The helper registry used by all registration code. Callers register via `register()` and introspect via `has()`, `get()`, `entry()`. |
+
+### Bag Access in Templates
+
+```php
+// Method-style:
+$helper = $helpers->resolve('url');
+
+// Property-style (no arguments):
+$helper = $helpers->url;
+
+// Call-style (zero args — returns helper object itself):
+$helper = $helpers->url();
+
+// Use the helper directly:
+echo $helper->to('/about');
+```
+
+### V1.0 Constraints
+
+- No global helper functions (e.g., `url()`, `e()`) — helpers are resolved via `Bag` or registry only.
+- No registry standardization refactor.
+- No compatibility enforcement tied to helpers.
+- No automatic asset manifest compilation.
+
 ## Lifecycle
 
 Extensions participate in the bootstrap lifecycle at two stages:

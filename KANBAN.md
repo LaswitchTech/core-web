@@ -170,26 +170,26 @@
     - Evaluate whether other related classes should also be grouped by domain or subsystem in Version 2.0 without disrupting the V1.0 public API.
 
 ## In Progress
-- [ ] Helper System <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+- [x] Helper System <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T14:46:06-04:00 priority: normal -->
   - Centralized helper registry providing injectable helper objects to controllers, the renderer, layouts, templates, views, and extensions. Helpers are registered services rather than global functions and may be provided by the framework, the application, or plugins.
   - Tags: framework, helpers, renderer, extensions, v.1.0
-  - [ ] Implement `Helper\Registry` for registering named helper objects <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+  - [x] Implement `Helper\Registry` for registering named helper objects <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
     - Support deterministic registration by name with provider metadata for core, application, and plugin helpers.
-  - [ ] Define `Helper\HelperInterface` contract <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+  - [x] Define `Helper\HelperInterface` contract <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
     - Provide a common interface for all helper implementations. Initial V1.0 scope should expose a `name(): string` method while allowing future metadata and capabilities to be added without changing the registry API.
-  - [ ] Implement helper container/bag for runtime access <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+  - [x] Implement helper container/bag for runtime access <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
     - Expose helpers through a single object (for example `$helpers`) using property and/or method access.
-  - [ ] Organize helper subsystem structure <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+  - [x] Organize helper subsystem structure <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
     - Standardize the subsystem around `Helper\Registry`, `Helper\Bag`, `Helper\HelperInterface`, and helper-specific exceptions to keep registration, lookup, and helper implementations clearly separated.
-  - [ ] Register core helper services during Bootstrap <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+  - [x] Register core helper services during Bootstrap <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
     - Bind the helper registry and helper bag into the container as lazy services.
-  - [ ] Inject helper bag into renderer context <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+  - [x] Inject helper bag into renderer context <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
     - Make the helper bag available to layouts, templates, and views without requiring controllers to pass it explicitly.
-  - [ ] Add `helper.register` hook for extension helper registration <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+  - [x] Add `helper.register` hook for extension helper registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T14:28:59-04:00 priority: high -->
     - Allow plugins and applications to register helper objects during bootstrap.
-  - [ ] Implement core helper set <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+  - [x] Implement core helper set <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T14:46:03-04:00 priority: normal -->
     - Initial helpers should include URL, HTML, String, Date, Config, and Asset helpers.
-  - [ ] Document helper conventions and extension guidelines <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+  - [x] Document helper conventions and extension guidelines <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T14:46:04-04:00 priority: normal -->
     - Document registration, naming conventions, dependency injection, renderer availability, and best practices.
 
 ## Validation

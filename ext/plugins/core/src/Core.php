@@ -481,4 +481,30 @@ SQL;
             return Response::text("Delete FAILED: {$_e->getMessage()}\n", 500);
         }
     }
+
+    /* ================================================================== */
+    /*  helper.register smoke verification                                  */
+    /* ================================================================== */
+
+    /** Register a harmless smoke helper during the ``helper.register`` hook. */
+    public static function registerSmokeHelper(array $context): void
+    {
+        // Idempotent guard — skip when registry is missing or not a Registry instance.
+        if (! isset($context['registry']) || ! method_exists($context['registry'], 'register')) {
+            return;
+        }
+
+        /** @var \Laswitchtech\CoreWeb\Helper\Registry */
+        $registry = $context['registry'];
+
+        // Register only if not already present (double-hook safety).
+        if (! $registry->has('smoke')) {
+            $helper = new class implements \Laswitchtech\CoreWeb\Helper\HelperInterface {
+                public function name(): string { return 'smoke'; }
+                public function test(): string  { return 'helper.register is working'; }
+            };
+
+            $registry->register($helper, 'plugin');
+        }
+    }
 }
