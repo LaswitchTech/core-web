@@ -132,7 +132,7 @@ $results = $seeder->run('default');
 
 There is **no automatic seeding** on framework boot, during migrations, or through any other lifecycle hook. Every invocation of `$seeder->run($group)` is a deliberate provisioning action (one-shot at install time, explicit in tests, etc.).
 
-   Calling `run(null)` executes all discovered seed groups sequentially in alphabetical group order (the loader's default behavior when group parameter omitted). The `'default'` string remains the primary group for normal application seeding.
+Calling `run(null)` executes all discovered seed groups sequentially in alphabetical group order (the loader's default behavior when group parameter omitted). The `'default'` string remains the primary group for normal application seeding.
 
 ## Registry Behavior
 
@@ -158,14 +158,14 @@ Running `$seeder->run('default')` multiple times is safe:
 
 1. Every seed is read at discovery time with its current SHA-256 checksum computed.
 2. `__schema_seeds` is queried for all applied version keys.
- 3. Seeds whose `group_name` + `version` already exist in the registry are **skipped silently** (idempotent no-op).
+3. Seeds whose `group_name` + `version` already exist in the registry are **skipped silently** (idempotent no-op).
 4. Only unapplied seeds have their SQL executed inside an individual transaction.
 
 Multiple identical runs produce exactly one application per seed regardless of call count.
 
 ## Checksum Conflict Behavior
 
- If a `group_name` + `version` pair exists in `__schema_seeds` but the stored checksum differs from the current file checksum, the framework **throws a `\RuntimeException`**:
+If a `group_name` + `version` pair exists in `__schema_seeds` but the stored checksum differs from the current file checksum, the framework **throws a `\RuntimeException`**:
 
 ```
 Seed '20260630140000_app_name.sql' (v20260630140000) was applied with a different checksum.
