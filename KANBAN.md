@@ -155,6 +155,28 @@
   - [ ] Implement PostgreSQL query compiler <!-- created_at: 2026-06-30T00:00:00-04:00 priority: high -->
   - [ ] Add CLI smoke validation for PostgreSQL connection testing <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
   - [ ] Document PostgreSQL configuration and SQL dialect differences <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
+
+- [ ] Locale / Translation System <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+  - Locale and translation subsystem for Version 2.0. Supports locale-aware language strings loaded from the kernel, application, themes, and plugins.
+  - Tags: framework, locale, translation, i18n, extensions, v.2.0
+  - [ ] Design locale identifier and fallback rules <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Support locale identifiers such as `en-ca`, `en-us`, `fr-ca`, and `fr-fr`, including deterministic fallback behavior when a locale-specific string is missing.
+  - [ ] Define translation file/database loading strategy <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Determine how language strings are loaded from file-based translation resources, database-backed translation tables, or both.
+  - [ ] Load kernel translation resources <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Provide framework-level strings for core UI, errors, validation messages, and system output.
+  - [ ] Load application translation resources <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Allow the application to define and override translation strings independently of the kernel package.
+  - [ ] Load theme translation resources <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Allow themes to provide localized strings for theme-specific layouts, templates, and presentation elements.
+  - [ ] Load plugin translation resources <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Allow plugins to provide localized strings for plugin routes, UI, commands, and validation messages.
+  - [ ] Define translation precedence order <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Document deterministic override behavior between kernel, application, themes, and plugins.
+  - [ ] Expose translation helper/service API <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Provide an API for resolving translated strings from controllers, services, templates, CLI commands, and helpers.
+  - [ ] Document locale resource conventions <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Document expected directory structure, naming conventions, fallback rules, extension integration, and database-backed translation behavior.
 - [ ] Registry Standardization (Version 2.0) <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
   - Future architectural work to standardize registry-style subsystems around common contracts, naming conventions, metadata handling, and deterministic resolution behavior. This is not an implementation task; it belongs in Version 2.0 planning.
   - Tags: architecture, registry, refactor, v.2.0
