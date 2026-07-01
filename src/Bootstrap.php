@@ -386,38 +386,56 @@ class Bootstrap
             throw new \RuntimeException('Container not yet initialised when initExtensions() runs.');
         }
 
-        // Resolve extension base directories — app root first, then vendor fallback.
-        $candidates = [
-            "{$this->appRoot}/ext",                    // primary: user's application root
-            dirname(__DIR__) . '/ext',                  // fallback: package/vendor install
-        ];
+        // Resolve existing extension roots (order matters: framework first, then app).
+        $roots = [];
 
-        // If no ext/ directory is found, register empty hooks and return early.
-        // Composer installs may ship without extensions by default.
-        foreach ($candidates as $dir) {
-            if (is_dir($dir)) {
-                $extBase = $dir;
-                break;
-            }
+        // 1. Framework root — package/vendor install with shipped extensions.
+        $frameworkExt = dirname(__DIR__) . '/ext';
+        if (is_dir($frameworkExt)) {
+            $roots[] = [$frameworkExt, 'framework'];
         }
 
-        // Diagnostic bindings: useful for debugging install layout and extension discovery.
-        // These are informational values, not required runtime services.
-        $c->set('app_root',      $this->appRoot);
-        $c->set('extension_base', isset($extBase) ? $extBase : null);
+        // 2. Application root — user's application directory.
+        $appExt = "{$this->appRoot}/ext";
+        if (is_dir($appExt)) {
+            $roots[] = [$appExt, 'app'];
+        }
 
-        if (!isset($extBase)) {
-            // No ext/ directory found — register empty hooks and return.
-            // This is normal for Composer installs that ship without extensions
-            // by default; users create ext/{name}/manifest.json when ready.
+        // If no extension roots exist, register empty hooks and return early.
+        // Composer installs may ship without extensions by default.
+        if ($roots === []) {
+            $c->set('extension_base', null);
             $c->set('hook_registry', new \Laswitchtech\CoreWeb\Hook\Registry());
             $c->set('extension_index', (object) []);
 
             return;
         }
 
-        // ── 2. Discover & parse every manifest (tolerant — bad manifests are logged and skipped). -
-        $manifests = Manifest\Parser::discover($extBase);
+        // Diagnostic bindings.
+        $c->set('app_root',      $this->appRoot);
+        $c->set('extension_base', $frameworkExt ?? ($appExt));
+
+        // ── Discover & parse every manifest across all existing roots (tolerant). -
+        $manifests = [];
+        foreach ($roots as [$root, $origin]) {
+            $discovered = Manifest\Parser::discover($root, $origin);
+            if ($discovered !== []) {
+                $manifests[] = $discovered;
+            }
+
+            // Diagnostic binding: track where the last root was located.
+            $c->set("extension_base.{$origin}", $root);
+        }
+        $manifests = $manifests === [] ? [] : \array_merge(...$manifests);
+
+        // ── 2½. Deduplicate by extension name: last-write wins → app over framework (app is processed second). -
+        $deduplicated = [];
+        foreach ($manifests as $ext) {
+            // Associative-array key collision naturally replaces a framework extension
+            // with an identically named app extension without any origin comparison.
+            $deduplicated[$ext->name] = $ext;
+        }
+        $manifests = array_values($deduplicated);   // re-index to [0..n-1].
 
         if ($manifests === []) {
             // Register empty registry so `bootWeb()` / `bootCli()` can still resolve 'hook_registry'.
@@ -518,10 +536,12 @@ class Bootstrap
 
             // -- Index extension metadata into Container ---------------------------
             $extIndex[$manifest->name] = [
-                'type'      => $manifest->type,
-                'version'   => $manifest->version,
-                'directory' => $manifest->directory,
-                'depends'   => $manifest->depends,
+                'type'         => $manifest->type,
+                'version'      => $manifest->version,
+                'directory'    => $manifest->directory,
+                'depends'      => $manifest->depends,
+                'origin'       => $manifest->origin,
+                'kernelCompat' => $manifest->kernelCompat,
             ];
         }
 

@@ -151,6 +151,12 @@ final class Parser
             }
         }
 
+        // -- kernel-compat (optional, stored as-is) --------------------
+        $kernelCompat = null;
+        if (isset($data['kernel-compat']) && is_string($data['kernel-compat']) && $data['kernel-compat'] !== '') {
+            $kernelCompat = $data['kernel-compat'];
+        }
+
         return new Extension(
             file:      $filePath,
             type:      $type,
@@ -160,6 +166,7 @@ final class Parser
             layouts:   $layouts,
             depends:   $depends,
             directory: dirname($filePath),
+            kernelCompat: $kernelCompat,
             origin:    $origin,
         );
     }

@@ -18,23 +18,26 @@ final readonly class Extension
         /** @var string Display name/slug for this extension */
         public string $name,
 
-    /** @var string Semantic version (X.Y.Z) */
-    public string $version,
+        /** @var string Semantic version (X.Y.Z) */
+        public string $version,
 
-    /** @var list<string> Hook callback definitions registered by this extension. */
-    public array $hooks,
+        /** @var list<string> Hook callback definitions registered by this extension. */
+        public array $hooks,
 
-    /** @var list<string> Layout names provided (themes only). */
-    public array $layouts,
+        /** @var list<string> Layout names provided (themes only). */
+        public array $layouts,
 
-    /** @var string Absolute directory containing the manifest */
-    public string $directory,
+        /** @var string Absolute directory containing the manifest */
+        public string $directory,
 
-    /** @var list<string> Extension name-slug dependencies that must be loaded first. */
-    public array $depends = [],
+        /** @var list<string> Extension name-slug dependencies that must be loaded first. */
+        public array $depends = [],
 
-    /** @var string Discovery origin: 'app' or 'framework'. Defaults to 'framework'. */
-    public string $origin = 'framework',
+        /** @var ?string Kernel compatibility constraint (e.g. "^1.0"), or null if not declared. */
+        public ?string $kernelCompat = null,
+
+        /** @var string Discovery origin: 'app' or 'framework'. Defaults to 'framework'. */
+        public string $origin = 'framework',
     ) {
         if ($origin !== 'app' && $origin !== 'framework') {
             throw new \InvalidArgumentException(sprintf(
