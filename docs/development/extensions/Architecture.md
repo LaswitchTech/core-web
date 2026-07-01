@@ -139,13 +139,14 @@ Both roots are walked in the order listed above and their results merged before 
 
 1. Discover & parse every manifest.json / extension.json across **both** roots
 2. Deduplicate by extension `name`. The *last* entry for a given name wins, which means an application extension always overrides a framework extension with the same name.
-3. Fail fast on unresolved dependencies between successfully parsed (deduplicated) manifests (flat existence check in Bootstrap).
-4. Register an autoloader for `Laswitchtech\CoreWeb\Plugin\*` and `Laswitchtech\CoreWeb\Theme\*` from **deduplicated** extension `src/` directories.
-5. Resolve each hook string on the deduplicated list:
+3. Tolerant kernel-compat validation for each extension on the deduplicated list (see [Kernel Compatibility Metadata](#kernel-compatibility-metadata)). Incompatible extensions produce warnings to STDERR but are **not** blocked from discovery — discovery continues regardless of result.
+4. Fail fast on unresolved dependencies between successfully parsed (deduplicated) manifests (flat existence check in Bootstrap).
+5. Register an autoloader for `Laswitchtech\CoreWeb\Plugin\*` and `Laswitchtech\CoreWeb\Theme\*` from **deduplicated** extension `src/` directories.
+6. Resolve each hook string on the deduplicated list:
    - Dotted-only → placeholder callback on the named hook
    - Contains `::` → split into hook name + class/method; register via `Hook\Registry::addClassCall()` (fails bootstrap if class or method does not exist)
-6. Resolve each layout string → placeholder callback on `layout.{name}` hook (deduplicated).
-7. Index extension metadata into the Container under `extension_index` keyed by `$manifest->name`, storing: `type`, `version`, `directory`, `depends`, `origin`, and `kernelCompat`.
+7. Resolve each layout string → placeholder callback on `layout.{name}` hook (deduplicated).
+8. Index extension metadata into the Container under `extension_index` keyed by `$manifest->name`, storing: `type`, `version`, `directory`, `depends`, `origin`, `kernelCompat`, and `compatStatus`.
 
 All downstream operations (dependency checking, autoloading, hook registration, metadata indexing) operate **only on the deduplicated set**.
 
@@ -185,9 +186,25 @@ Each manifest may optionally declare a `"kernel-compat"` field:
 
 | Field           | Type   | Description                                      | Constrained by |
 |-----------------|--------|--------------------------------------------------|----------------|
-| `kernel-compat` | string | Kernel compatibility constraint (e.g. `"^1.0"`). | Stored as-is; not enforced in V1.0. |
+| `kernel-compat` | string | Kernel compatibility constraint (e.g. `"^1.0"`). | Validated during discovery (see Discovery Steps); stored as `$compatStatus`. |
 
-The value is passed through unchanged to the Extension value object (`$kernelCompat`). **It is stored but not enforced** — later tasks may add actual version-checking logic. In V1.0, any valid string (or absence of the field) is accepted.
+The value is passed through to the Extension value object (`$kernelCompat`) and validated against the framework kernel version during discovery using a three-operator format:
+
+| Operator | Meaning | Example |
+|----------|---------|---------|
+| `^X.Y.Z` | Same major version, patch ≥ constraint patch (e.g. `^1.2.3` matches `1.2.3`, `1.3.0`, `1.99.99`) | `"^1.0"` |
+| `~X.Y.Z` | Same major & minor version, patch ≥ constraint patch (e.g. `~1.2.3` matches `1.2.3`, `1.2.10`) | `"~1.2"` |
+| *(none)*  | Exact match (no prefix — any string that is only digits/dots) requires identical `X.Y.Z` | `"1.0.0"` |
+
+The validation result is stored alongside each extension in `extension_index` as `$compatStatus`:
+
+| compatStatus    | Meaning |
+|-----------------|---------|
+| `unconstrained` | Extension declares no `kernel-compat` field, or the string is empty/whitespace only. |
+| `compatible`    | The constraint parsed and matched the running kernel version. |
+| `incompatible`  | The constraint parsed but did not match; a warning is emitted to STDERR but discovery continues. |
+
+In V1: unrecognized constraint patterns **default to `compatible`** (tolerant by design). Validation does not block extension loading — incompatible extensions are fully functional with a STDERR advisory. The kernel version itself is defined as the framework constant `Manifest\Parser::KERNEL_VERSION`.
 
 ### Multi-Root Diagnostics
 

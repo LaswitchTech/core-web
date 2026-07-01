@@ -24,6 +24,11 @@ final class Parser
      */
     const VALID_MANIFEST_NAMES = ['manifest.json', 'extension.json'];
 
+    /**
+     * AUTO-UPDATE: bump on framework release.
+     */
+    public const KERNEL_VERSION = '1.0.0';
+
     // ---- discovery --------------------------------------------------
 
     /**
@@ -169,6 +174,74 @@ final class Parser
             kernelCompat: $kernelCompat,
             origin:    $origin,
         );
+    }
+
+    // ---- compatibility checker --------------------------------------
+
+    /**
+     * Check whether a kernel-compat constraint matches a given kernel version.
+     *
+     * Supported operators:
+     *   "^X.Y.Z" → same major version as kernel.
+     *   "~X.Y.Z" → same major and minor as kernel, kernel patch >= constraint patch.
+     *   "1.0.0"  → exact version match (uses PHP's version_compare with '==').
+     * Unrecognized or empty constraints always return true by default
+     * so that unknown patterns don't block valid extensions.
+     */
+    public static function checkCompat(string $constraint, string $kernel): bool
+    {
+        $constraint = trim($constraint);
+        if ($constraint === '') {
+            return true;
+        }
+
+        // -- caret: ^X.Y.Z (or ^A.B variants) -------------------------
+        if ($constraint[0] === '^') {
+            [$cmaj, $cmin, $cpatch] = self::tokenVersion(substr($constraint, 1));
+            [$kmaj, $kmin, $kpatch] = self::tokenVersion($kernel);
+            return $cmaj !== null && $cmaj === $kmaj;
+        }
+
+        // -- tilde: ~X.Y.Z (or ~A.B variants) -------------------------
+        if ($constraint[0] === '~') {
+            [$cmaj, $cmin, $cpatch] = self::tokenVersion(substr($constraint, 1));
+            [$kmaj, $kmin, $kpatch] = self::tokenVersion($kernel);
+            // Major and minor must match exactly; patch of kernel >= constraint patch.
+            return ($cmaj !== null && $cmaj === $kmaj && $cmin === $kmin)
+                ? ($cpatch === null || $kpatch >= $cpatch)
+                : false;
+        }
+
+        // -- exact numeric (e.g. "1.0.0") ------------------------------
+        if (\preg_match('/^\d+\.\d+\.\d+$/', $constraint)) {
+            return version_compare($kernel, $constraint, '==');
+        }
+
+        // -- unrecognized → permissive ---------------------------------
+        return true;
+    }
+
+    /**
+     * Tokenize a version string into [major, minor, patch].
+     * Returns [null|null|null] when the string does not start with digits.
+     */
+    private static function tokenVersion(string $v): array
+    {
+        // Trim whitespace, then strip only leading non-digit characters (^, ~, =, etc.)
+        // without removing the leading digits themselves.
+        $v   = \trim($v);
+        $stripped = \preg_replace('/^[\D]+/', '', $v) ?? $v;
+
+        $parts = \explode('.', $stripped);
+        if (\count($parts) < 1 || !\is_numeric($parts[0])) {
+            return [null, null, null];
+        }
+
+        $major = (int) $parts[0];
+        $minor = isset($parts[1]) && \is_numeric($parts[1]) ? (int) $parts[1] : 0;
+        $patch = isset($parts[2]) && \is_numeric($parts[2]) ? (int) $parts[2] : 0;
+
+        return [$major, $minor, $patch];
     }
 
     // ---- helpers ----------------------------------------------------

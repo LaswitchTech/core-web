@@ -154,7 +154,7 @@
     - [x] Document extension discovery roots and override rules <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
       - Document the discovery order, extension identity rules, app-over-core override behavior, and expected Composer package layout.
       - Tags: documentation, extensions, v.1.0
-  - [~] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 priority: high -->
+  - [x] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 completed_at: 2026-07-01T15:19:32-04:00 priority: high -->
     - Receives discovered extension paths from the Directory Walker.
     - Manifest Parser parses and validates extension manifests (`manifest.json` and `extension.json`).
     - Manifest Parser extracts metadata (type, name, version, hooks, layouts, dependencies).
@@ -170,7 +170,8 @@
     - [x] Add kernel compatibility metadata to extension manifests <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T15:19:32-04:00 priority: high -->
       - Extension manifests should declare compatible Core-Web/kernel versions so discovery, installation, updates, and future marketplace tooling can determine whether an extension is compatible with the running framework version. V1.0 should validate and expose the metadata; install/update enforcement can build on it later.
       - Tags: framework, extensions, manifest, compatibility, v.1.0
-    - [ ] Validate kernel compatibility during extension discovery <!-- created_at: 2026-07-01T11:52:25-04:00 priority: normal -->
+    - [x] Validate kernel compatibility during extension discovery <!-- created_at: 2026-07-01T11:52:25-04:00 completed_at: 2026-07-01T15:19:32-04:00 priority: normal -->
+      - Implemented tolerant kernel compatibility validation during extension discovery. Extensions may declare `kernel-compat`; compatible status is exposed through `extension_index` as `compatStatus` (`unconstrained`, `compatible`, or `incompatible`). Incompatible extensions emit a warning to `STDERR` but do not block discovery.
     - [x] Document tolerant discovery behavior <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Implement directory walker manifest discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Add app-root extension base detection <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->

@@ -33,6 +33,7 @@ use Laswitchtech\CoreWeb\Helper\Asset;
 use Laswitchtech\CoreWeb\Helper\Config as ConfigHelper;
 use Laswitchtech\CoreWeb\Helper\Registry as HelperRegistry;
 use Laswitchtech\CoreWeb\Helper\Bag;
+use Laswitchtech\CoreWeb\Manifest\Parser as ManifestParser;
 
 /**
 
@@ -588,14 +589,29 @@ class Bootstrap
                 }
             }
 
+            // -- Compute compatibility --------------------------------------------------
+            $rawCompat   = $manifest->kernelCompat ?? '';
+            $isCompatible = ManifestParser::checkCompat($rawCompat, ManifestParser::KERNEL_VERSION);
+
+            if ($rawCompat === '') {
+                $compatStatus = 'unconstrained';
+            } elseif ($isCompatible) {
+                $compatStatus = 'compatible';
+            } else {
+                // Tolerant: warn but do not block.
+                fwrite(STDERR, (string)"Extension '{$manifest->name}': kernel-compat '$rawCompat' incompatible with running kernel " . ManifestParser::KERNEL_VERSION . "\n");
+                $compatStatus = 'incompatible';
+            }
+
             // -- Index extension metadata into Container ---------------------------
             $extIndex[$manifest->name] = [
-                'type'         => $manifest->type,
-                'version'      => $manifest->version,
-                'directory'    => $manifest->directory,
-                'depends'      => $manifest->depends,
-                'origin'       => $manifest->origin,
-                'kernelCompat' => $manifest->kernelCompat,
+                'type'          => $manifest->type,
+                'version'       => $manifest->version,
+                'directory'     => $manifest->directory,
+                'depends'       => $manifest->depends,
+                'origin'        => $manifest->origin,
+                'kernelCompat'  => $manifest->kernelCompat,
+                'compatStatus'  => $compatStatus,
             ];
         }
 

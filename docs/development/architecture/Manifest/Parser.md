@@ -10,8 +10,10 @@
 namespace Laswitchtech\CoreWeb\Manifest;
 
 final class Parser {
+    public const string KERNEL_VERSION = '1.0.0';
     public const array VALID_MANIFEST_NAMES = ['manifest.json', 'extension.json'];
 
+    public static function checkCompat(string $constraint, string $kernel): bool { ... }
     public static function discover(string $baseDir, string $origin = 'framework'): list<Extension> { ... }
     public static function parse(string $filePath, string $origin = 'framework'): Extension { ... }
     public static function validate(array $data, string $filePath = '', string $origin = 'framework'): Extension { ... }
@@ -38,7 +40,7 @@ final class Parser {
 | `hooks`        | list<string> | `[]`     | Each entry: dotted namespace or `Class::method`. |
 | `layouts`      | list<string> | `[]`     | Layout identifiers (themes only).            |
 | `depends`      | list<string> | `[]`     | Extension name-slug dependencies; must be non-empty strings. |
-| `kernel-compat`| string       | `null`   | Kernel compatibility constraint stored as-is; not enforced in V1.0. |
+| `kernel-compat`| string       | `null`   | Kernel compatibility constraint; validated during discovery, stored as-is. Enforce­ment is tolerant — incompatible extensions warn but are not rejected. |
 
 ## Public API
 
@@ -115,7 +117,7 @@ Validates a decoded manifest array and produces an `Extension` value object. Cal
 4. **Version normalization**: Strips leading `v/V=/ ` (via `ltrim(trim($version), 'vV= ')`) then validates `/^\d+\.\d+\.\d+$/` — the entire trimmed string must match exactly with no trailing content (e.g., `"1.2.3-extra"` is invalid).
 5. **Optional fields**: Default to `[]` if not present in JSON. Hooks entries are validated individually; layouts and depends are value-normalized via `array_values()`.
 6. **Dependencies validation**: Each entry must be a non-empty string. Throws `\InvalidArgumentException` otherwise.
-7. **kernel-compat** (optional): If `"kernel-compat"` is present and is a non-empty string, it is stored verbatim on the `Extension` value object (`$kernelCompat`). No parsing or version resolution is performed — later tasks may add enforcement.
+7. **kernel-compat** (optional): If `"kernel-compat"` is present and is a non-empty string, it is stored verbatim on the `Extension` value object (`$kernelCompat`). Validation of this constraint happens during discovery in `Bootstrap::registerExtensions()` via `checkCompat()`.
 
 **Version normalization:**
 
@@ -125,11 +127,46 @@ Validates a decoded manifest array and produces an `Extension` value object. Cal
 // 'V1.0.0-beta' → error (trailing '-beta' fails /^\d+\.\d+\.\d+$/)
 ```
 
-## Private Helpers
+## CONSTANTS
 
-### `normalizeVersion(string $version): string`
+### `KERNEL_VERSION`
 
-Strips common SemVer prefixes (`v`, `V`, `=`, whitespace) and validates the **entire** remaining string matches `/^\d+\.\d+\.\d+$/`. Returns the trimmed string or throws `\InvalidArgumentException` on any mismatch.
+```php
+public const string = '1.0.0';
+```
+
+The framework kernel version string used as the reference for **compatibility resolution**. Extension constraints are validated against this value by `checkCompat()`.
+
+## PUBLIC API
+
+### `checkCompat(string $constraint, string $kernel): bool`
+
+Determines whether an extension's declared `kernel-compat` constraint is compatible with a given `$kernel` version. This method powers the tolerant compatibility checks performed during discovery.
+
+**Supported V1 formats** (three-operator approach):
+
+| Format | Meaning | Example matching `KERNEL_VERSION = '1.0.0'` |
+|--------|---------|---------------------------------------------|
+| `^X.Y.Z` | Major must match; minor must be ≥ constraint minor; patch must be ≥ constraint patch | `"^0.9"` → compatible (major 1 matches, minor 0 ≥ 9? No — only if constraint is `"^1.0"`) |
+| `~X.Y.Z` | Major and minor must both match; patch must be ≥ constraint patch | `"~1.0"` → compatible |
+| *(none)* | Exact match: every segment must be identical | `"1.0.0"` → compatible |
+
+**Return**: `true` if the constraint is unconstrained, recognized and matching, or unrecognized (permissive default). `false` only when a recognized constraint explicitly fails.
+
+**Behavior in V1**:
+
+- Unrecognized constraint patterns (e.g., `"!= 1.0"`, `"*"`) are treated as **compatible** (`true`). This is intentional tolerance — V1 errs on the side of letting extensions load.
+- The method does not parse, validate, or store — it returns a boolean only. Status persistence (`unconstrained` / `compatible` / `incompatible`) is handled by Bootstrap during discovery.
+
+#### Examples
+
+```php
+Parser::checkCompat('^1.0', '1.0.0');   // true  (equal major, minor 0 ≥ 0)
+Parser::checkCompat('~1.0', '1.0.5');    // true  (major and minor match; patch 5 ≥ 0)
+Parser::checkCompat('1.0.0', '1.0.0');   // true  (exact match)
+Parser::checkCompat('^2.0', '1.0.0');    // false (major mismatch)
+Parser::checkCompat('*', '1.0.0');        // true  (unrecognized — permissive)
+```
 
 ### `validateHooks(array $hooks): array`
 
