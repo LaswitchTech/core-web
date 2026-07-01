@@ -32,7 +32,7 @@
       - Make the helper bag available to layouts, templates, and views without requiring controllers to pass it explicitly.
     - [ ] Add `helper.register` hook for extension helper registration <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
       - Allow plugins and applications to register helper objects during bootstrap.
-  - [ ] Implement core helper set <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - [ ] Implement core helper set <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
       - Initial helpers should include URL, HTML, String, Date, Config, and Asset helpers.
     - [ ] Document helper conventions and extension guidelines <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
       - Document registration, naming conventions, dependency injection, renderer availability, and best practices.
@@ -81,7 +81,7 @@
       - Validation: `php cli core.db connect` returns `Database OK: <driver>` and `php cli core.db smoke` returns `Core DB Smoke OK`.
     - [ ] `core.config show --key=<path.to.key>` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 priority: normal -->
     - [ ] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 priority: normal -->
-    - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility)
+    - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
       - Generates Apache, Nginx, and IIS router configuration files during installation so users can deploy on any supported web server without manual routing setup.
     - [x] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
 - [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
@@ -148,7 +148,7 @@
       - Document the discovery order, extension identity rules, app-over-core override behavior, and expected Composer package layout.
       - Tags: documentation, extensions, v.1.0
   - [x] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
-    - Directory Walker discovers extensions from `ext/themes/*` and `ext/plugins/*` subdirectories.
+    - Receives discovered extension paths from the Directory Walker.
     - Manifest Parser parses and validates extension manifests (`manifest.json` and `extension.json`).
     - Manifest Parser extracts metadata (type, name, version, hooks, layouts, dependencies).
     - Manifest Parser registers autoloaders for each discovered extension.
@@ -163,6 +163,7 @@
     - [ ] Add kernel compatibility metadata to extension manifests <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
       - Extension manifests should declare compatible Core-Web/kernel versions so discovery, installation, updates, and future marketplace tooling can determine whether an extension is compatible with the running framework version. V1.0 should validate and expose the metadata; install/update enforcement can build on it later.
       - Tags: framework, extensions, manifest, compatibility, v.1.0
+      - [ ] Validate kernel compatibility during extension discovery
     - [x] Document tolerant discovery behavior <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Implement directory walker manifest discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Add app-root extension base detection <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
