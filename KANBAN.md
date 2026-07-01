@@ -219,7 +219,7 @@
       - Added `Connection::inTransaction()` and `Database::inTransaction()` pass-throughs backed by `PDO::inTransaction()`.
     - [x] Document nested transaction behavior and driver limitations <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
       - Documented that nested transactions are rejected with `RuntimeException`, savepoints are not implemented in V1.0, and rollback occurs on callback failure. Documentation updated in `docs/development/architecture/Database/Connection.md` and `docs/development/architecture/Database/Database.md`.
-  - [x] Config Manager <!-- created_at: 2026-06-18T11:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
+  - [ ] Config Manager <!-- created_at: 2026-06-18T11:00:00-04:00 priority: high -->
     - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
     - Tags: feature, config, v.1.0
     - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->

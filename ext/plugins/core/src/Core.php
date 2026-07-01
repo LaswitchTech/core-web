@@ -59,6 +59,9 @@ final class Core
                     case 'smoke':
                         return self::handleSmoke($c);
 
+                    case 'seed-smoke':
+                        return self::handleSeedSmoke($c);
+
                     default:
                         return Response::text("core.db: unknown subcommand '{$subcmd}' (connect|read|create|update|delete|smoke)\n", 400);
                 }
@@ -169,6 +172,58 @@ final class Core
 
         } catch (\Throwable $_e) {
             return Response::text("Core DB Smoke FAILED: {$_e->getMessage()}\n", 500);
+        }
+    }
+
+    /** core.db subcmd=seed-smoke — validate seeding via temporary group.      */
+    private static function handleSeedSmoke(\Laswitchtech\CoreWeb\Container $c): Response
+    {
+        try {
+            /** @var \Laswitchtech\CoreWeb\Database\Connection */
+            $conn = $c->resolve('db_connection');
+
+            // Create a temporary seed group with a single harmless INSERT.
+            $tmpDir  = sys_get_temp_dir() . '/core-web-seed-smoke-' . uniqid('', true);
+            $groupDir = $tmpDir . '/seeds/smoke_test';
+            mkdir($groupDir, 0755, true);
+
+            // Seed filename uses YYYYMMDDHHmmss_<name>.sql format (must be valid date).
+            $timestamp = date('YmdHis');
+            $fileName   = "{$timestamp}_smoke.sql";
+            $sqlFile    = "{$groupDir}/{$fileName}";
+            if (file_put_contents($sqlFile, "SELECT 1 AS smoke_ok") === false) {
+                throw new \RuntimeException("Could not write temporary seed file");
+            }
+
+            // Wire a fresh Seeder pointing at the temp root.
+            /** @var \Laswitchtech\CoreWeb\Database\Seeding\SeedLoader */
+            $loader = new \Laswitchtech\CoreWeb\Database\Seeding\SeedLoader($tmpDir, $tmpDir);
+            /** @var \Laswitchtech\CoreWeb\Database\Seeding\RegistryTable */
+            $reg    = new \Laswitchtech\CoreWeb\Database\Seeding\RegistryTable($conn);
+            $seeder = new \Laswitchtech\CoreWeb\Database\Seeding\Seeder($conn, $loader, $reg);
+
+            // First run — expect one applied seed.
+            $result1 = $seeder->run('smoke_test');
+            if ($result1 === [] || $result1[0]['status'] !== 'applied') {
+                throw new \RuntimeException("First seed run expected 1 applied result: " . json_encode($result1));
+            }
+
+            // Second run — idempotency check: same group, expect one skipped seed.
+            $result2 = $seeder->run('smoke_test');
+            if ($result2 === [] || $result2[0]['status'] !== 'skipped') {
+                throw new \RuntimeException("Second seed run expected 1 skipped (idempotent): " . json_encode($result2));
+            }
+
+            /* Clean up */
+            unlink($sqlFile);
+            rmdir($groupDir);
+            rmdir("{$tmpDir}/seeds");
+            rmdir($tmpDir);
+
+            return Response::text("Core DB Seed Smoke OK\n");
+
+        } catch (\Throwable $_e) {
+            return Response::text("Core DB Seed Smoke FAILED: {$_e->getMessage()}\n", 500);
         }
     }
 

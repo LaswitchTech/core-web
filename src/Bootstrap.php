@@ -19,6 +19,9 @@ use Laswitchtech\CoreWeb\Database\Query\Compiler\SqliteCompiler;
 use Laswitchtech\CoreWeb\Database\Connection;
 use Laswitchtech\CoreWeb\Database\Database;
 use Laswitchtech\CoreWeb\Database\Error\DatabaseException;
+use Laswitchtech\CoreWeb\Database\Seeding\SeedLoader;
+use Laswitchtech\CoreWeb\Database\Seeding\Seeder;
+use Laswitchtech\CoreWeb\Database\Seeding\RegistryTable as SeedRegistryTable;
 use Laswitchtech\CoreWeb\Logger\Logger;
 use Laswitchtech\CoreWeb\Logger\Level;
 
@@ -83,6 +86,7 @@ class Bootstrap
             $this->registerCoreServices($c);
             $this->registerLoggerServices($c);
             $this->registerDbServices($c);
+            $this->registerSeedingServices($c);
             $this->initExtensions();
 
             switch ($this->mode) {
@@ -330,7 +334,32 @@ class Bootstrap
     }
 
     /* ------------------------------------------------------------------ --/
-     /  Extensions                                                          */
+      /  Seeding Services                                         */
+    /* ------------------------------------------------------------------ */
+
+    /** Register seeding services (lazy singleton SeedLoader). */
+    private function registerSeedingServices(Container $c): void
+    {
+        $appRoot  = $this->resolveAppRoot();
+        $coreRoot = dirname(__DIR__);
+
+        // Lazy singleton — directory scanning happens on first resolution, not boot.
+        $c->registerSingleton('seed_loader', static function ($container) use ($coreRoot, $appRoot): SeedLoader {
+            return new SeedLoader($coreRoot, $appRoot);
+        });
+
+        // Seeder — lazy singleton; wiring is deferred to first resolution (connection must exist).
+        $c->registerSingleton('seeder', static function ($container): Seeder {
+            return new Seeder(
+                $container->resolve('db_connection'),
+                $container->resolve('seed_loader'),
+                new SeedRegistryTable($container->resolve('db_connection')),
+            );
+        });
+    }
+
+    /* ------------------------------------------------------------------ --/
+      /  Extensions                                                          */
     /* ------------------------------------------------------------------ */
 
     /** Entry point for extension discovery — delegates to ``registerExtensions()``. */
@@ -673,4 +702,5 @@ class Bootstrap
 
         return static::$instance;
     }
+
 }
