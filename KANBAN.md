@@ -86,10 +86,9 @@
     - [x] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
 - [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
   - Future enhancement: before/after hooks per route and global middleware support.
-  - [ ] Authentication middleware
+  - [ ] Authentication middleware <!-- created_at: 2026-07-01T11:52:25-04:00 priority: normal -->
     - Verify user credentials on each request, establish and maintain session state, and enforce login requirements for protected routes.
-      Default implementation uses local database credentials; the authentication provider model must be plugin-extensible so future extensions can add LDAP, SMTP-backed authentication, and OAuth providers.
-  - [ ] Authorization middleware
+  - [ ] Authorization middleware <!-- created_at: 2026-07-01T11:52:25-04:00 priority: normal -->
     - Enforce route- and controller-level access rules based on user roles and groups after authentication has succeeded.
     - Supports what each type of user (Administrators, Users, Guests) can access and do, with roles assignable to users, groups, and organizations, and groups assignable to organizations.
 - [ ] Auth Middleware / Authorization System <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
@@ -130,11 +129,10 @@
     - Evaluate whether other related classes should also be grouped by domain or subsystem in Version 2.0 without disrupting the V1.0 public API.
 
 ## In Progress
-- [~] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 started_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+- [~] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, extensions, v.1.0
   - [~] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
     - Phase 2E — Extension Discovery Improvements
-      - Scope: multi-base discovery, vendor + application extension loading, deterministic app-over-core override precedence, and documentation.
     - [x] Support multi-base extension discovery <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
       - Discover both framework-shipped extensions from the package core `ext/` directory and application extensions from the application `ext/` directory during the same bootstrap pass.
       - Tags: framework, extensions, discovery, v.1.0
@@ -147,7 +145,7 @@
     - [x] Document extension discovery roots and override rules <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
       - Document the discovery order, extension identity rules, app-over-core override behavior, and expected Composer package layout.
       - Tags: documentation, extensions, v.1.0
-  - [x] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
+  - [ ] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 priority: high -->
     - Receives discovered extension paths from the Directory Walker.
     - Manifest Parser parses and validates extension manifests (`manifest.json` and `extension.json`).
     - Manifest Parser extracts metadata (type, name, version, hooks, layouts, dependencies).
@@ -160,10 +158,10 @@
     - Tags: feature
     - [x] Implement manifest schema validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Support `manifest.json` and `extension.json` discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Add kernel compatibility metadata to extension manifests <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - [ ] Add kernel compatibility metadata to extension manifests <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
       - Extension manifests should declare compatible Core-Web/kernel versions so discovery, installation, updates, and future marketplace tooling can determine whether an extension is compatible with the running framework version. V1.0 should validate and expose the metadata; install/update enforcement can build on it later.
       - Tags: framework, extensions, manifest, compatibility, v.1.0
-      - [ ] Validate kernel compatibility during extension discovery
+      - [ ] Validate kernel compatibility during extension discovery <!-- created_at: 2026-07-01T11:52:25-04:00 priority: normal -->
     - [x] Document tolerant discovery behavior <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Implement directory walker manifest discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Add app-root extension base detection <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
