@@ -170,6 +170,18 @@
     - Evaluate whether other related classes should also be grouped by domain or subsystem in Version 2.0 without disrupting the V1.0 public API.
 
 ## In Progress
+
+## Validation
+- [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+  - Tags: testing
+  - [ ] Full cross-platform routing validation <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
+    - Future enhancement: test routing across Apache, Nginx, and IIS in CI with the skeleton application on localhost.
+    - Tags: testing
+  - [ ] Add Bootstrap smoke tests <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
+    - Validate `php cli` boots successfully and triggers the Hello World plugin.
+    - Validate browser load triggers the Hello World plugin in WEB mode.
+
+## Done
 - [x] Helper System <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T14:46:06-04:00 priority: normal -->
   - Centralized helper registry providing injectable helper objects to controllers, the renderer, layouts, templates, views, and extensions. Helpers are registered services rather than global functions and may be provided by the framework, the application, or plugins.
   - Tags: framework, helpers, renderer, extensions, v.1.0
@@ -191,15 +203,3 @@
     - Initial helpers should include URL, HTML, String, Date, Config, and Asset helpers.
   - [x] Document helper conventions and extension guidelines <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T14:46:04-04:00 priority: normal -->
     - Document registration, naming conventions, dependency injection, renderer availability, and best practices.
-
-## Validation
-- [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Tags: testing
-  - [ ] Full cross-platform routing validation <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
-    - Future enhancement: test routing across Apache, Nginx, and IIS in CI with the skeleton application on localhost.
-    - Tags: testing
-  - [ ] Add Bootstrap smoke tests <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
-    - Validate `php cli` boots successfully and triggers the Hello World plugin.
-    - Validate browser load triggers the Hello World plugin in WEB mode.
-
-## Done
