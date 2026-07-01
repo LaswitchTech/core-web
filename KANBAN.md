@@ -131,9 +131,30 @@
   - [ ] Document PostgreSQL configuration and SQL dialect differences <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
 
 ## In Progress
-- [~] Database <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+- [ ] Configuration Manager <!-- created_at: 2026-06-18T11:00:00-04:00 priority: high -->
+  - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
+  - Tags: feature, config, v.1.0
+  - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 priority: normal -->
+    - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
+
+## Validation
+- [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+  - Tags: testing
+  - [ ] Full cross-platform routing validation <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
+    - Future enhancement: test routing across Apache, Nginx, and IIS in CI with the skeleton application on localhost.
+    - Tags: testing
+  - [ ] Add Bootstrap smoke tests <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
+    - Validate `php cli` boots successfully and triggers the Hello World plugin.
+    - Validate browser load triggers the Hello World plugin in WEB mode.
+
+## Done
+
+## Archive
+- [x] Database <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-01T08:14:59-04:00 archived_at: 2026-07-01T08:17:23-04:00 archived_from: "Done" priority: normal -->
   - Tags: framework, database, config, v.1.0
-  - [~] Configuration Manager <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - [x] SQLite Driver <!-- created_at: 2026-06-18T10:52:22-04:00 completed_at: 2026-06-23 priority: high -->
     - Zero-config database backend, file-based storage. PDO-based SQLite driver with lazy connection via container binding. Implementation: src/Database/Connection.php (thin wrapper), src/Database/Driver/Sqlite.php (driver with path resolution + auto-mkdir), src/Database/Driver/DriverInterface.php (contract). Container bindings: `db_driver` (singleton → Sqlite or Mysql depending on `database.driver`), `db_connection` (lazy singleton → Connection, resolved on first access). SQLite3 native class is not used — PDO only. Migrations and ORM remain deferred to later tasks; query builder work is tracked separately under Query Builder Foundation.
     - Validation: `php cli hello.db` smoke test passes (PDO connects, PRAGMA journal_mode=WAL + foreign_keys=ON applied). All .cfg keys documented (`database.driver` supports `sqlite`, `mysql`, and `mariadb`, `database.path` default `data/app.db`). Architecture docs at `docs/development/architecture/Database/`.
@@ -197,18 +218,21 @@
       - SqlMigrationDriver::execute() trims incoming SQL, allows zero or one trailing semicolon, and rejects when any additional semicolon appears before the final optional semicolon. Throws RuntimeException with message "Migration SQL contains multiple statements; split them into separate migrations." No statement-splitting logic — just validation.
     - [x] Document migration naming, ordering, and failure behavior <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-25 priority: normal -->
       - Architecture, Runner, RegistryTable, Migration, MigrationPromoterInterface, CorePromoter, AppPromoter, SqlMigrationDriver docs written under docs/development/architecture/Migration/ and subdirectories.
-  - [ ] Database Seeding <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
+  - [x] Database Seeding <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
     - Provide repeatable seed data for installing applications, initializing core records, and preparing development/test environments.
+    - Implementation: SQL seed foundation with Seed, SeedLoader, Seeder, and RegistryTable. Bootstrap registers lazy `seed_loader` and `seeder` services. Seed discovery supports `CORE_WEB_ROOT/seeds` and application `seeds/` directories with environment-specific groups (for example: `default`, `install`, `demo`, `development`, and `testing`). Applied seeds are tracked in `__schema_seeds` using group-aware version/checksum metadata. No automatic execution; applications explicitly call `$container->resolve('seeder')->run(...)`. Plugin seed discovery, PHP seed classes, CLI management commands, and automatic execution remain deferred.
     - V1.0 scope should provide the framework seeding foundation; Auth V2.0 will use it to seed default groups (`Administrators`, `Users`, `Guests`).
     - Tags: feature, database, seeding, v.1.0
-    - [ ] Implement seed discovery from application/core/plugin directories <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
-    - [ ] Implement idempotent seed runner <!-- created_at: 2026-06-25T00:00:00-04:00 priority: high -->
-      - Seeds should be safe to re-run without duplicating records where possible.
-    - [ ] Track applied seed sets and seed version/checksum metadata <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
-      - Allow seed updates to be detected while avoiding accidental duplicate inserts.
-    - [ ] Support environment-specific seed groups <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
-      - Examples: install, demo, development, testing.
-    - [ ] Document seeding conventions and relationship with migrations <!-- created_at: 2026-06-25T00:00:00-04:00 priority: normal -->
+    - [x] Implement seed discovery from application/core/plugin directories <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Discovers SQL seed files from the framework core and application seed directories. Plugin seed discovery is intentionally deferred to a future version.
+    - [x] Implement idempotent seed runner <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Implemented by the Seeder service with group-aware registry checks, checksum validation, deterministic ordering, explicit execution, and repeatable/idempotent behavior.
+    - [x] Track applied seed sets and seed version/checksum metadata <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Registry table `__schema_seeds` records group, version, checksum, file path, and applied timestamp. Checksum conflicts are detected per group/version pair.
+    - [x] Support environment-specific seed groups <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Built-in discovery supports grouped directories including `default`, `install`, `demo`, `development`, and `testing`.
+    - [x] Document seeding conventions and relationship with migrations <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Architecture documentation covers discovery, execution, registry behavior, idempotency, checksum validation, and the relationship between migrations and seeding.
   - [x] Transaction API Enhancements <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
     - Build on the existing PDO transaction pass-throughs with safer application-level transaction helpers.
     - Implemented `Connection::inTransaction()`, `Connection::transaction(callable)`, and Database facade pass-throughs. `Connection::transaction()` passes the Connection wrapper to callbacks; `Database::transaction()` passes the Database facade. Nested transactions throw `RuntimeException`; savepoints are not implemented in V1.0. HelloWorld provides `hello.transaction` smoke validation for commit and rollback behavior.
@@ -219,27 +243,7 @@
       - Added `Connection::inTransaction()` and `Database::inTransaction()` pass-throughs backed by `PDO::inTransaction()`.
     - [x] Document nested transaction behavior and driver limitations <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-06-26 priority: normal -->
       - Documented that nested transactions are rejected with `RuntimeException`, savepoints are not implemented in V1.0, and rollback occurs on callback failure. Documentation updated in `docs/development/architecture/Database/Connection.md` and `docs/development/architecture/Database/Database.md`.
-  - [ ] Config Manager <!-- created_at: 2026-06-18T11:00:00-04:00 priority: high -->
-    - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
-    - Tags: feature, config, v.1.0
-    - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 priority: normal -->
-      - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
-
-## Validation
-- [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Tags: testing
-  - [ ] Full cross-platform routing validation <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
-    - Future enhancement: test routing across Apache, Nginx, and IIS in CI with the skeleton application on localhost.
-    - Tags: testing
-  - [ ] Add Bootstrap smoke tests <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
-    - Validate `php cli` boots successfully and triggers the Hello World plugin.
-    - Validate browser load triggers the Hello World plugin in WEB mode.
-
-## Done
-- [x] Audit / Logging System <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 priority: high -->
+- [x] Audit / Logging System <!-- created_at: 2026-06-25T00:00:00-04:00 completed_at: 2026-06-26 archived_at: 2026-07-01T08:17:31-04:00 archived_from: "Done" priority: high -->
   - Kernel-level text logger for audit events, debugging, testing, development diagnostics, and operational visibility.
   - Logs are stored as plain text files under configurable `logging.path` (default `log/`) with the `.log` extension.
   - Supports named log channels/files through `logger_factory` and common container services such as `logger`, `logger.app`, `logger.error`, `logger.database`, `logger.auth`, `logger.migration`, and `logger.debug`.
@@ -266,7 +270,7 @@
     - Documentation added under `docs/development/architecture/Logger/Level.md` and `docs/development/architecture/Logger/Logger.md`.
     - Full `php -l` syntax pass across `src/` and `ext/`.
     - `php cli hello.log` returns `Logger OK`.
-- [x] Renderer <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-23 priority: normal -->
+- [x] Renderer <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-23 archived_at: 2026-07-01T08:17:37-04:00 archived_from: "Done" priority: normal -->
   - Three-layer renderer pipeline: layout → template → view.
   - Layouts provide application chrome such as panel, sidebar, topbar, footer, and global structure.
   - Templates provide reusable page patterns such as CRUD index tables, forms, detail pages, and dashboard grids.
@@ -319,13 +323,13 @@
       - `renderer.register` and `renderer.engine.register` hooks are available for extension integration.
     - [x] Add simple smoke route using layout → template → view rendering <!-- created_at: 2026-06-22T00:00:00-04:00 completed_at: 2026-06-23 priority: normal -->
       - HelloWorld plugin validates both PHP and Latte rendering pipelines through WEB and CLI routes.
-- [x] Bootstrap Architecture <!-- created_at: 2026-06-18T14:10:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
+- [x] Bootstrap Architecture <!-- created_at: 2026-06-18T14:10:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 archived_at: 2026-07-01T08:17:41-04:00 archived_from: "Done" priority: high -->
   - Design document for the mode-driven bootstrap system and both entry-point patterns.
   - Tags: framework, bootstrap, documentation, v.1.0
   - [x] Document BOOTSTRAP_MODES table (WEB vs CLI responsibilities) <!-- created_at: 2026-06-18T14:10:30-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Document exact 2-line entry pattern for `/index.php` and `/cli` <!-- created_at: 2026-06-18T14:11:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Specify config resolution conventions for Config references <!-- created_at: 2026-06-18T14:11:30-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-- [x] DI Container <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+- [x] DI Container <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-19T12:41:25-04:00 archived_at: 2026-07-01T08:17:45-04:00 archived_from: "Done" priority: normal -->
   - Tags: framework, container, v.1.0
   - [x] Container Implementation <!-- created_at: 2026-06-18T11:15:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - Lightweight dependency injection container for core services.
@@ -335,7 +339,7 @@
     - [x] Support factory closures <!-- created_at: 2026-06-18T11:17:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Implement singleton cache behavior for `resolve()` <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - [x] Preserve `singleton($key)` compatibility by returning resolved instance <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
-- [x] Hook Registry <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+- [x] Hook Registry <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-19T12:41:25-04:00 archived_at: 2026-07-01T08:17:48-04:00 archived_from: "Done" priority: normal -->
   - Tags: framework, hooks, v.1.0
   - [x] Hook System <!-- created_at: 2026-06-18T12:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - Central hook registration and triggering system for layout slots, plugin events, and core lifecycle.
@@ -346,7 +350,7 @@
     - [x] Rename hook value object from `Hook\Plugin` to `Hook\Entry` <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
   - [ ] Wildcard Hook Dispatch <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
     - Future enhancement for `layout.*`, `page.*`, `lifecycle.*`, and `triggerPattern()`.
-- [x] Bootstrap Implementation <!-- created_at: 2026-06-18T14:15:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
+- [x] Bootstrap Implementation <!-- created_at: 2026-06-18T14:15:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 archived_at: 2026-07-01T08:17:52-04:00 archived_from: "Done" priority: high -->
   - Orchestration class (`Laswitchtech\CoreWeb\Bootstrap`) — mode-driven single-entry boot for WEB and CLI.
   - Completed bootstrap foundation; unified Router now handles both WEB and CLI dispatch.
   - Tags: framework, bootstrap, feature, v.1.0
@@ -359,7 +363,7 @@
   - [x] Implement `initExtensions()` discovery/autoload/hook registration foundation <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
   - [x] Create skeleton `/index.php` and `/cli` files matching the exact 2-line user pattern <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
   - [x] Validate bootstrap in WEB and CLI mode with Hello World plugin <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-- [x] Routing <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-22 priority: high -->
+- [x] Routing <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-06-22 archived_at: 2026-07-01T08:17:55-04:00 archived_from: "Done" priority: high -->
   - Unified routing subsystem for both WEB and CLI modes, with Request/Response objects, dynamic path parameters, HTTP method support, server-config generators, and Hello World end-to-end validation.
   - Tags: framework, routing, v.1.0
   - [x] Router Class <!-- created_at: 2026-06-18T10:59:23-04:00 completed_at: 2026-06-22 priority: high -->
