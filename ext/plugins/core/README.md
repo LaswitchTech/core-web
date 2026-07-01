@@ -52,4 +52,14 @@ DELETE rows with required where clause.
 - Example: `php cli core.db delete users "id = 1"`
 - Returns: `Deleted: <affected_rows>`
 
+#### seed-smoke
+Validates the database seeding subsystem.
+```sh
+php cli core.db seed-smoke
+```
+- Creates a temporary `core_seed_smoke` table (seed group).
+- Inserts a single row via the seed file.
+- Verifies the row was inserted correctly.
+- Reruns the seed to confirm idempotent skip behavior on the second execution.
+
 See `ext/plugins/core/src/Core.php` for the registration hook callback signature.
