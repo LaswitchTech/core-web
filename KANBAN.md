@@ -1,35 +1,6 @@
 # Kanban
 
 ## Todo <!-- hide: archive -->
-- [ ] Implement manifest schema validation <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [ ] Support `manifest.json` and `extension.json` discovery <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Add kernel compatibility metadata to extension manifests <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
-      - Extension manifests should declare compatible Core-Web/kernel versions so discovery, installation, updates, and future marketplace tooling can determine whether an extension is compatible with the running framework version. V1.0 should validate and expose the metadata; install/update enforcement can build on it later.
-      - Tags: framework, extensions, manifest, compatibility, v.1.0
-    - [x] Document tolerant discovery behavior <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Implement directory walker manifest discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Add app-root extension base detection <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Add package-root extension base fallback for Composer installs <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Register extension autoloader before hook callback validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Trigger `plugin.started` in WEB and CLI boot paths <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [x] Validate with Hello World plugin in WEB and CLI modes <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Implement actual plugin/theme lifecycle (activation/deactivation) <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Implement extension status persistence <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Implement extension loading order based on dependencies <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [ ] PSR-4 Extension Autoloading <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
-    - Support arbitrary extension namespaces instead of only `Laswitchtech\CoreWeb\Plugin\` and `Laswitchtech\CoreWeb\Theme\` prefixes.
-    - Tags: enhancement
-    - [ ] Add namespace mapping support in manifest <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Register Composer-style namespace mappings for extension `src/` directories <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Validate class hook callbacks using declared namespace mappings <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [~] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
-    - Docs: lifecycle documented in docs/development/extensions/Lifecycle.md (placeholder — no implementation yet)
-    - Tags: feature
-    - [ ] Enable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Disable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Persist enabled/disabled state <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Enforce dependencies before activation <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Add lifecycle hooks for activation/deactivation <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
 - [ ] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, messaging
   - [ ] Message Provider Interface <!-- created_at: 2026-06-18T11:30:00-04:00 priority: normal -->
@@ -158,10 +129,11 @@
     - Evaluate whether other related classes should also be grouped by domain or subsystem in Version 2.0 without disrupting the V1.0 public API.
 
 ## In Progress
-- [~] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+- [~] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 started_at: 2026-07-01T00:00:00-04:00 priority: normal -->
   - Tags: framework, extensions, v.1.0
   - [~] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
     - Phase 2E — Extension Discovery Improvements
+      - Scope: multi-base discovery, vendor + application extension loading, deterministic app-over-core override precedence, and documentation.
     - [ ] Support multi-base extension discovery <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
       - Discover both framework-shipped extensions from the package core `ext/` directory and application extensions from the application `ext/` directory during the same bootstrap pass.
       - Tags: framework, extensions, discovery, v.1.0
@@ -184,6 +156,9 @@
     - Tags: feature
     - [x] Implement manifest schema validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Support `manifest.json` and `extension.json` discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [ ] Add kernel compatibility metadata to extension manifests <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Extension manifests should declare compatible Core-Web/kernel versions so discovery, installation, updates, and future marketplace tooling can determine whether an extension is compatible with the running framework version. V1.0 should validate and expose the metadata; install/update enforcement can build on it later.
+      - Tags: framework, extensions, manifest, compatibility, v.1.0
     - [x] Document tolerant discovery behavior <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Implement directory walker manifest discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
     - [x] Add app-root extension base detection <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
