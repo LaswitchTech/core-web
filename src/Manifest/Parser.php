@@ -33,7 +33,7 @@ final class Parser
      * @param  string $baseDir  Root directory (usually __DIR__ . '/../../ext').
      * @return list<Extension>
      */
-    public static function discover(string $baseDir): array
+    public static function discover(string $baseDir, string $origin = 'framework'): array
     {
         if (!is_dir($baseDir)) {
             return [];
@@ -72,7 +72,7 @@ final class Parser
                 }
 
                 try {
-                    $manifests[] = self::parse($manifestFile);
+                    $manifests[] = self::parse($manifestFile, $origin);
                 } catch (\Throwable $e) {
                     // Log but continue — one bad manifest does not block others.
                     fwrite(STDERR, "Manifest parse error for {$extDir}: {$e->getMessage()}\n");
@@ -91,7 +91,7 @@ final class Parser
      * @throws JsonException          When JSON is invalid or required keys missing.
      * @throws \InvalidArgumentException When values fail schema validation.
      */
-    public static function parse(string $filePath): Extension
+    public static function parse(string $filePath, string $origin = 'framework'): Extension
     {
         if (!is_file($filePath)) {
             throw new \InvalidArgumentException("Manifest file not found: {$filePath}");
@@ -104,13 +104,13 @@ final class Parser
             JSON_THROW_ON_ERROR
         );
 
-        return self::validate($json, $filePath);
+        return self::validate($json, $filePath, $origin);
     }
 
     /**
      * Validate and normalize a decoded manifest array into an Extension.
      */
-    public static function validate(array $data, string $filePath = ''): Extension
+    public static function validate(array $data, string $filePath = '', string $origin = 'framework'): Extension
     {
         // -- required fields -------------------------------------------
         foreach (['type', 'name', 'version'] as $field) {
@@ -160,6 +160,7 @@ final class Parser
             layouts:   $layouts,
             depends:   $depends,
             directory: dirname($filePath),
+            origin:    $origin,
         );
     }
 
