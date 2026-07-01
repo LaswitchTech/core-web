@@ -4,6 +4,18 @@
 - [ ] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Tags: framework, extensions, v.1.0
   - [~] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 priority: high -->
+    - [ ] Support multi-base extension discovery <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Discover both framework-shipped extensions from the package core `ext/` directory and application extensions from the application `ext/` directory during the same bootstrap pass.
+      - Tags: framework, extensions, discovery, v.1.0
+    - [ ] Add app-over-core extension override precedence <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - If an application extension in `ext/plugins` or `ext/themes` has the same extension identity as a framework-shipped extension in `vendor/laswitchtech/core-web/ext`, the application extension should override the framework copy deterministically.
+      - Tags: framework, extensions, precedence, overrides, v.1.0
+    - [ ] Preserve package-shipped plugins when application extensions exist <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Current discovery uses the first existing `ext/` base only. Replace this fallback behavior with additive discovery so core/vendor plugins remain available when an application also defines its own `ext/` directory.
+      - Tags: framework, extensions, plugins, v.1.0
+    - [ ] Document extension discovery roots and override rules <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Document the discovery order, extension identity rules, app-over-core override behavior, and expected Composer package layout.
+      - Tags: documentation, extensions, v.1.0
   - [x] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: high -->
     - Discover, parse, and validate extension manifests (`manifest.json` and `extension.json`).
     - Supports required `type`, `name`, `version` fields, version normalization (`X.Y.Z`), hook format validation, layouts, and dependency declarations.
@@ -51,7 +63,27 @@
     - Renderable UI components with plugin extensibility.
     - Tags: feature
     - [ ] Implement base UIComponent interface and HTML sanitizer <!-- created_at: 2026-06-18T11:41:00-04:00 priority: normal -->
-- [ ] Renderer Configuration <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+-- [ ] Renderer Configuration <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+  - [ ] Helper System <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Centralized helper registry providing injectable helper objects to controllers, the renderer, layouts, templates, views, and extensions. Helpers are registered services rather than global functions and may be provided by the framework, the application, or plugins.
+    - Tags: framework, helpers, renderer, extensions, v.1.0
+    - [ ] Implement `Helper\Registry` for registering named helper objects <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Support deterministic registration by name with provider metadata for core, application, and plugin helpers.
+    - [ ] Implement helper container/bag for runtime access <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Expose helpers through a single object (for example `$helpers`) using property and/or method access.
+    - [ ] Register core helper services during Bootstrap <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Bind the helper registry and helper bag into the container as lazy services.
+    - [ ] Inject helper bag into renderer context <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Make the helper bag available to layouts, templates, and views without requiring controllers to pass it explicitly.
+    - [ ] Add `helper.register` hook for extension helper registration <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Allow plugins and applications to register helper objects during bootstrap.
+    - [ ] Support helper override precedence <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Allow applications to override core helpers while preventing accidental replacement of existing helper names. Plugin helpers should extend the helper ecosystem by default, with explicit override behavior designed and documented for Version 2.0.
+      - Tags: framework, helpers, precedence, v.2.0
+    - [ ] Implement core helper set <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Initial helpers should include URL, HTML, String, Date, Config, and Asset helpers.
+    - [ ] Document helper conventions and extension guidelines <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Document registration, naming conventions, dependency injection, renderer availability, and best practices.
   - Centralize renderer runtime settings so applications can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
   - Tags: framework, renderer, config
   - [ ] Configure default rendering engine through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
