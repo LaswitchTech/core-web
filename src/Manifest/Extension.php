@@ -32,7 +32,17 @@ final readonly class Extension
 
     /** @var list<string> Extension name-slug dependencies that must be loaded first. */
     public array $depends = [],
+
+    /** @var string Discovery origin: 'app' or 'framework'. Defaults to 'framework'. */
+    public string $origin = 'framework',
     ) {
+        if ($origin !== 'app' && $origin !== 'framework') {
+            throw new \InvalidArgumentException(sprintf(
+                'Extension origin must be "app" or "framework"; got "%s".',
+                $origin,
+            ));
+        }
+
         // type is enforced by the parser; kept as a runtime contract reminder.
     }
 }
