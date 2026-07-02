@@ -10,24 +10,24 @@
     - [ ] Define plugin interface for additional providers <!-- created_at: 2026-06-18T11:32:00-04:00 priority: normal -->
 - [ ] CLI System <!-- created_at: 2026-06-18T13:00:00-04:00 priority: normal -->
   - Tags: framework, cli, v.1.0
-  - [ ] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
+  - [ ] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
     - Command infrastructure built on top of the unified Router. Responsible for command discovery, argument parsing, command metadata, help output, and extension command registration.
     - Tags: feature
-    - [ ] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 priority: normal -->
-    - [ ] Implement plugin discovery for CLI commands alongside core kernel commands <!-- created_at: 2026-06-18T13:03:00-04:00 priority: high -->
-  - [ ] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 priority: normal -->
+    - [ ] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [ ] Implement plugin discovery for CLI commands alongside core kernel commands <!-- created_at: 2026-06-18T13:03:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+  - [ ] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
     - Bootstrap commands for testing, configuring, and managing the framework.
     - Tags: feature
-    - [ ] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 priority: normal -->
-    - [ ] `core.auth create-user <username> <password>` — create admin users from CLI <!-- created_at: 2026-06-18T13:07:00-04:00 priority: normal -->
+    - [ ] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [ ] `core.auth create-user <username> <password>` — create admin users from CLI <!-- created_at: 2026-06-18T13:07:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
     - [x] `core.db connect` — test configured database connectivity <!-- created_at: 2026-06-30T14:52:13-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
       - Implemented in temporary Core plugin as `php cli core.db connect`. It validates the active configured driver using the Database facade and `SELECT 1 AS ok`. Driver reconfiguration flags (`--path`, `--dsn`) remain deferred to the permanent CLI command framework. <!-- created_at: 2026-06-18T13:08:00-04:00 completed_at: 2026-06-30T14:41:55-04:00 priority: normal -->
     - [x] `core.db read/create/update/delete` — temporary database CRUD CLI commands <!-- created_at: 2026-06-30T00:00:00-04:00 completed_at: 2026-06-30T14:42:00-04:00 priority: normal -->
       - Implemented in temporary Core plugin as a single `core.db` dispatcher with subcommands: `read`, `create`, `update`, `delete`, and `smoke`. CRUD commands use the Database facade and query builders, validate table/column names, support a single quoted WHERE expression for read/update/delete, require WHERE for update/delete safety, and output JSON for reads.
       - Validation: `php cli core.db connect` returns `Database OK: <driver>` and `php cli core.db smoke` returns `Core DB Smoke OK`.
-    - [ ] `core.config show --key=<path.to.key>` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 priority: normal -->
-    - [ ] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 priority: normal -->
-    - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 priority: normal -->
+    - [ ] `core.config show --key=<path.to.key>` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [ ] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Generates Apache, Nginx, and IIS router configuration files during installation so users can deploy on any supported web server without manual routing setup.
     - [x] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
 - [ ] Presentation Layer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
@@ -54,22 +54,22 @@
     - [ ] Recompile LESS on every request when debug mode is enabled <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
       - Debug mode should bypass the cached compiled CSS so developers immediately see style changes.
     - [ ] Document asset discovery and cache invalidation behavior <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
-  - [ ] Dedicated Frontend Asset Plugins <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+  - [ ] Dedicated Frontend Asset Plugins <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
     - Move common frontend vendor assets out of the kernel and into dedicated first-party plugins so Bootstrap, Bootstrap Icons, DataTables, jQuery, and Chart.js can be installed, enabled, disabled, versioned, and overridden through the extension system.
     - Tags: framework, extensions, assets, frontend, bootstrap, datatables, jquery, chartjs, v.1.0
-    - [ ] Create Bootstrap plugin for Bootstrap CSS/JS asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - [ ] Create Bootstrap plugin for Bootstrap CSS/JS asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
       - Plugin should provide Bootstrap assets through the framework asset pipeline instead of hardcoded kernel/layout references.
-    - [ ] Include Bootstrap Icons support in the Bootstrap plugin <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - [ ] Include Bootstrap Icons support in the Bootstrap plugin <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
       - Bootstrap Icons should be bundled or registered by the Bootstrap plugin so icon availability follows the plugin lifecycle.
-    - [ ] Create DataTables plugin for DataTables asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - [ ] Create DataTables plugin for DataTables asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Plugin should register DataTables CSS/JS assets and document its dependency on jQuery and any Bootstrap integration assets.
-    - [ ] Create jQuery plugin for jQuery asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - [ ] Create jQuery plugin for jQuery asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Plugin should expose jQuery as an optional dependency for plugins that still require it without forcing it into the kernel baseline.
-    - [ ] Create Chart.js plugin for Chart.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - [ ] Create Chart.js plugin for Chart.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Plugin should register Chart.js assets for dashboards, reporting, and visualization features without hardcoding Chart.js into core layouts.
-    - [ ] Define frontend asset dependency rules between plugins <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - [ ] Define frontend asset dependency rules between plugins <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
       - Support deterministic load order and dependency declarations such as DataTables depending on jQuery and optional Bootstrap integration depending on the Bootstrap plugin.
-    - [ ] Document frontend asset plugin conventions <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - [ ] Document frontend asset plugin conventions <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Document plugin manifest asset declarations, dependency examples, load order, override behavior, and how application layouts request assets from enabled plugins.
 - [ ] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
   - `/admin` panel with all required sub-systems.
@@ -80,13 +80,13 @@
   - [ ] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 priority: normal -->
   - [ ] Developer Console (variable introspection) <!-- created_at: 2026-06-18T12:14:00-04:00 priority: normal -->
   - [ ] Theme Preview (test against all UI components) <!-- created_at: 2026-06-18T12:15:00-04:00 priority: normal -->
-- [ ] Configuration Manager <!-- created_at: 2026-06-18T11:00:00-04:00 priority: high -->
+- [ ] Configuration Manager <!-- created_at: 2026-06-18T11:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
   - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
   - Tags: feature, config, v.1.0
   - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
   - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
   - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 priority: normal -->
+  - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
     - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
 - [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
   - Future enhancement: before/after hooks per route and global middleware support.
@@ -118,7 +118,6 @@
   - [ ] Implement PostgreSQL query compiler <!-- created_at: 2026-06-30T00:00:00-04:00 priority: high -->
   - [ ] Add CLI smoke validation for PostgreSQL connection testing <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
   - [ ] Document PostgreSQL configuration and SQL dialect differences <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
-
 - [ ] Locale / Translation System <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
   - Locale and translation subsystem for Version 2.0. Supports locale-aware language strings loaded from the kernel, application, themes, and plugins.
   - Tags: framework, locale, translation, i18n, extensions, v.2.0
@@ -155,7 +154,7 @@
     - Evaluate whether other related classes should also be grouped by domain or subsystem in Version 2.0 without disrupting the V1.0 public API.
 
 ## In Progress
-- [~] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+- [~] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
   - Tags: framework, extensions, v.1.0
   - [x] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 completed_at: 2026-07-01T15:19:16-04:00 priority: high -->
     - Phase 2E — Extension Discovery Improvements
@@ -205,23 +204,23 @@
       - Bootstrap now registers declared PSR-4 mappings before the legacy `Laswitchtech\CoreWeb\Plugin\` and `Laswitchtech\CoreWeb\Theme\` fallback autoloader.
     - [x] Validate class hook callbacks using declared namespace mappings <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
       - Class-based hooks may now reference extension-declared PSR-4 namespaces before `Hook\Registry::addClassCall()` validates the callback.
-  - [~] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
+  - [~] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
     - Docs: lifecycle documented in docs/development/extensions/Lifecycle.md (placeholder — no implementation yet)
     - Tags: feature
-    - [ ] Enable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Disable extension <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Persist enabled/disabled state <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Enforce dependencies before activation <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Add lifecycle hooks for activation/deactivation <!-- created_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-    - [ ] Add `core.extension status` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - [ ] Enable extension <!-- created_at: 2026-06-19T12:41:25-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [ ] Disable extension <!-- created_at: 2026-06-19T12:41:25-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [ ] Persist enabled/disabled state <!-- created_at: 2026-06-19T12:41:25-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [ ] Enforce dependencies before activation <!-- created_at: 2026-06-19T12:41:25-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [ ] Add lifecycle hooks for activation/deactivation <!-- created_at: 2026-06-19T12:41:25-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [ ] Add `core.extension status` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
       - Display discovered extensions, enabled/disabled state, origin, type, version, compatibility status, and dependency readiness.
-    - [ ] Add `core.extension list` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - [ ] Add `core.extension list` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
       - List installed plugins and themes using selectors such as `plugins`, `themes`, or a specific `{plugins,themes}.{slug}` target.
-    - [ ] Add `core.extension enable {plugins,themes}.{slug}` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - [ ] Add `core.extension enable {plugins,themes}.{slug}` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
       - Enable an installed extension by persisted lifecycle state after validating dependencies and compatibility warnings.
-    - [ ] Add `core.extension disable {plugins,themes}.{slug}` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - [ ] Add `core.extension disable {plugins,themes}.{slug}` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
       - Disable an installed extension by persisted lifecycle state without deleting its files.
-    - [ ] Document extension lifecycle CLI usage <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - [ ] Document extension lifecycle CLI usage <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Document `php cli core.extension {status,list,enable,disable} {plugins,themes}.{slug}` usage, selector rules, examples, and lifecycle persistence behavior.
 
 ## Validation
