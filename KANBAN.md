@@ -148,12 +148,37 @@
 
 ## In Progress
 - [ ] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Tags: framework, messaging
+  - Extensible outbound messaging subsystem for email and SMS providers. Email configuration should be loaded from `config/smtp.cfg`; SMS configuration should be loaded from `config/sms.cfg`.
+  - Tags: framework, messaging, email, sms, providers, v.1.0
   - [ ] Message Provider Interface <!-- created_at: 2026-06-18T11:30:00-04:00 priority: normal -->
-    - Contract for extensible email and SMS messaging.
-    - Tags: feature
-    - [ ] Implement SMTP mailer driver <!-- created_at: 2026-06-18T11:31:00-04:00 priority: normal -->
-    - [ ] Define plugin interface for additional providers <!-- created_at: 2026-06-18T11:32:00-04:00 priority: normal -->
+    - Contract for extensible email and SMS messaging providers.
+    - Tags: feature, messaging, providers
+    - [ ] Define shared message provider contract <!-- created_at: 2026-07-02T19:15:00-04:00 priority: high -->
+      - Contract should be generic enough for both SMTP email providers and SMS providers while keeping provider-specific options extensible.
+      - Tags: messaging, providers, interface
+    - [ ] Define plugin interface for additional providers <!-- created_at: 2026-06-18T11:32:00-04:00 priority: high -->
+      - Plugins should be able to register additional message providers such as SMTP alternatives, Twilio, Telico, or future services.
+      - Tags: messaging, plugins, providers, extensions
+  - [ ] SMTP Email Provider <!-- created_at: 2026-06-18T11:31:00-04:00 priority: high -->
+    - SMTP provider should reuse the existing SMTP implementation patterns from `/Users/louis/Projects/LaswitchTech/core/src/SMTP.php` where appropriate.
+    - Tags: email, smtp, providers, config
+    - [ ] Load SMTP configuration from `config/smtp.cfg` <!-- created_at: 2026-07-02T19:16:00-04:00 priority: high -->
+    - [ ] Implement SMTP mailer driver <!-- created_at: 2026-06-18T11:31:00-04:00 priority: high -->
+    - [ ] Support plain text and HTML email bodies <!-- created_at: 2026-07-02T19:17:00-04:00 priority: high -->
+    - [ ] Support email attachments <!-- created_at: 2026-07-02T19:18:00-04:00 priority: normal -->
+    - [ ] Support CC, BCC, Reply-To, From address, and From name options <!-- created_at: 2026-07-02T19:19:00-04:00 priority: normal -->
+    - [ ] Document SMTP configuration and message options <!-- created_at: 2026-07-02T19:20:00-04:00 priority: normal -->
+  - [ ] SMS Provider System <!-- created_at: 2026-07-02T19:21:00-04:00 priority: high -->
+    - SMS provider system should mirror the SMTP provider pattern while loading SMS-specific settings from `config/sms.cfg`.
+    - Tags: sms, providers, config, plugins
+    - [ ] Load SMS configuration from `config/sms.cfg` <!-- created_at: 2026-07-02T19:22:00-04:00 priority: high -->
+    - [ ] Implement SMS provider registry and resolver <!-- created_at: 2026-07-02T19:23:00-04:00 priority: high -->
+    - [ ] Document SMS provider configuration and plugin conventions <!-- created_at: 2026-07-02T19:24:00-04:00 priority: normal -->
+    - [ ] Implement Twilio SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:03:54-04:00 priority: normal -->
+      - Tags: sms, twilio, plugins, providers
+    - [ ] Implement Telico SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:04:27-04:00 priority: normal -->
+      - Review `/Users/louis/Projects/LaswitchTech/core/lib/plugins/Helper.php` to find out about the Telico API.
+      - Tags: sms, telico, plugins, providers
 
 ## Validation
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
