@@ -161,19 +161,27 @@
       - Tags: messaging, plugins, providers, extensions
   - [ ] SMTP Email Provider <!-- created_at: 2026-06-18T11:31:00-04:00 priority: high -->
     - SMTP provider should reuse the existing SMTP implementation patterns from `/Users/louis/Projects/LaswitchTech/core/src/SMTP.php` where appropriate.
-    - Tags: email, smtp, providers, config
+    - SMTP should support reusable templates for consistent email communications.
+    - Tags: email, smtp, providers, config, templates
     - [ ] Load SMTP configuration from `config/smtp.cfg` <!-- created_at: 2026-07-02T19:16:00-04:00 priority: high -->
     - [ ] Implement SMTP mailer driver <!-- created_at: 2026-06-18T11:31:00-04:00 priority: high -->
     - [ ] Support plain text and HTML email bodies <!-- created_at: 2026-07-02T19:17:00-04:00 priority: high -->
+    - [ ] Support reusable SMTP/email templates <!-- created_at: 2026-07-02T19:35:00-04:00 priority: high -->
+      - Templates should support consistent email communications with variable substitution for subject, plain text body, and HTML body.
+      - Tags: email, smtp, templates
     - [ ] Support email attachments <!-- created_at: 2026-07-02T19:18:00-04:00 priority: normal -->
     - [ ] Support CC, BCC, Reply-To, From address, and From name options <!-- created_at: 2026-07-02T19:19:00-04:00 priority: normal -->
-    - [ ] Document SMTP configuration and message options <!-- created_at: 2026-07-02T19:20:00-04:00 priority: normal -->
+    - [ ] Document SMTP configuration, templates, and message options <!-- created_at: 2026-07-02T19:20:00-04:00 priority: normal -->
   - [ ] SMS Provider System <!-- created_at: 2026-07-02T19:21:00-04:00 priority: high -->
     - SMS provider system should mirror the SMTP provider pattern while loading SMS-specific settings from `config/sms.cfg`.
-    - Tags: sms, providers, config, plugins
+    - SMS should support reusable templates for consistent text-message communications.
+    - Tags: sms, providers, config, plugins, templates
     - [ ] Load SMS configuration from `config/sms.cfg` <!-- created_at: 2026-07-02T19:22:00-04:00 priority: high -->
     - [ ] Implement SMS provider registry and resolver <!-- created_at: 2026-07-02T19:23:00-04:00 priority: high -->
-    - [ ] Document SMS provider configuration and plugin conventions <!-- created_at: 2026-07-02T19:24:00-04:00 priority: normal -->
+    - [ ] Support reusable SMS templates <!-- created_at: 2026-07-02T19:36:00-04:00 priority: normal -->
+      - Templates should support consistent SMS communications with variable substitution for message bodies.
+      - Tags: sms, templates
+    - [ ] Document SMS provider configuration, templates, and plugin conventions <!-- created_at: 2026-07-02T19:24:00-04:00 priority: normal -->
     - [ ] Implement Twilio SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:03:54-04:00 priority: normal -->
       - Tags: sms, twilio, plugins, providers
     - [ ] Implement Telico SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:04:27-04:00 priority: normal -->
