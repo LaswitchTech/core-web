@@ -1,13 +1,6 @@
 # Kanban
 
 ## Todo <!-- hide: archive -->
-- [ ] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Tags: framework, messaging
-  - [ ] Message Provider Interface <!-- created_at: 2026-06-18T11:30:00-04:00 priority: normal -->
-    - Contract for extensible email and SMS messaging.
-    - Tags: feature
-    - [ ] Implement SMTP mailer driver <!-- created_at: 2026-06-18T11:31:00-04:00 priority: normal -->
-    - [ ] Define plugin interface for additional providers <!-- created_at: 2026-06-18T11:32:00-04:00 priority: normal -->
 - [ ] CLI System <!-- created_at: 2026-06-18T13:00:00-04:00 priority: normal -->
   - Tags: framework, cli, v.1.0
   - [ ] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
@@ -154,6 +147,13 @@
     - Evaluate whether other related classes should also be grouped by domain or subsystem in Version 2.0 without disrupting the V1.0 public API.
 
 ## In Progress
+- [ ] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+  - Tags: framework, messaging
+  - [ ] Message Provider Interface <!-- created_at: 2026-06-18T11:30:00-04:00 priority: normal -->
+    - Contract for extensible email and SMS messaging.
+    - Tags: feature
+    - [ ] Implement SMTP mailer driver <!-- created_at: 2026-06-18T11:31:00-04:00 priority: normal -->
+    - [ ] Define plugin interface for additional providers <!-- created_at: 2026-06-18T11:32:00-04:00 priority: normal -->
 
 ## Validation
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
