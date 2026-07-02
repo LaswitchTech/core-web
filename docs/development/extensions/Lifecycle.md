@@ -9,13 +9,14 @@ Extensions participate in three phases of the Core-Web bootstrap lifecycle: **Di
 The sequence is fixed — no hooks fire during discovery itself:
 
 ```
-1. Multi-Root Discovery        Parser::discover(root, origin) → list<Extension>
-2. Name Deduplication          associative-array overwrites   → app wins framework collisions
-3. Dependency Validation       $knownNames + in_array()      → fail-fast on unresolved deps
-4. Autoloader Installation     spl_autoload_register()       → Laswitchtech\CoreWeb\Plugin\* / Theme\*
-5. Hook Registration           Registry::addCallback()       → dotted-only hooks → empty placeholders
-6. Layout Registration         Registry::addClassCall()      → class::method registrations
-7. Metadata Indexing           Container::set()              → extension_index keyed by name
+1. Multi-Root Discovery                        Parser::discover(root, origin) → list<Extension>
+ 2. Name Deduplication                          associative-array overwrites           → app wins kernel collisions
+ 3. All-extension metadata indexing             stored in `extension_index_all`       → full manifest snapshot
+ 4. Lifecycle filtering                         reads `config/extensions.cfg`         → enabled/locked/disabled pruning
+ 5. Dependency validation (enabled-only)        against filtered enabled manifests     → fail-fast on unresolved deps
+ 6. Autoloader Installation                     spl_autoload_register()               → Laswitchtech\CoreWeb\Plugin\* / Theme\*
+ 7. Hook + Layout Registration                  Registry::addCallback / addClassCall  → dotted hooks → placeholders
+ 8. Final enabled-only `extension_index`        Container::set()                      → keyed by name; lifecycle-ready
 ```
 
 ### Phase Details
@@ -26,10 +27,10 @@ Bootstrap walks **two extension bases** in a fixed order:
 
 | Order | Root | Description |
 |-------|------|-------------|
-| 1 | Framework | `$vendor/laswitchtech/core-web/ext` — shipped framework extensions |
+| 1 | Kernel     | `$vendor/laswitchtech/core-web/ext` — shipped kernel extensions |
 | 2 | Application | `<app-root>/ext` — user-provided extensions |
 
-For each base, `Parser::discover($baseDir, $origin)` walks `themes/` and `plugins/` subdirectories, parses each `manifest.json` or `extension.json`, normalizes fields via `Parser::validate()`, and returns a list of `Manifest\Extension` value objects. Each parsed extension carries an `$origin` property (`'framework'` or `'app'`) indicating where it was discovered.
+For each base, `Parser::discover($baseDir, $origin)` walks `themes/` and `plugins/` subdirectories, parses each `manifest.json` or `extension.json`, normalizes fields via `Parser::validate()`, and returns a list of `Manifest\\Extension` value objects. Each parsed extension carries an `$origin` property (`'kernel'` or `'app'`) indicating where it was discovered.
 
 Malformed manifests are logged to STDERR and removed from the list per-base (tolerant — no bootstrap failure).
 
@@ -42,12 +43,12 @@ After both bases are parsed, their results are merged into a single flat list. A
 ```php
 $deduplicated = [];
 foreach ($mergedManifests as $ext) {
-    $deduplicated[$ext->name] = $ext;   // app overwrites framework on collision
+    $deduplicated[$ext->name] = $ext;   // app overwrites kernel on collision
 }
 $deduplicated = array_values($deduplicated);   // re-index to [0..n-1]
 ```
 
-Because the framework base is always processed first, any identically-named extension in the application base naturally wins. **All downstream phases operate only on this deduplicated set.**
+Because the kernel base is always processed first, any identically-named extension in the application base naturally wins. **All downstream phases operate only on this deduplicated set.**
 
 #### 2. Dependency Validation
 
@@ -157,13 +158,153 @@ After extensions are registered, the active subsystem (WEB or CLI) boots:
 | Dotted-only hook name parsing | No error — registered as empty placeholder callback | Informational only |
 | Missing ext/ directory | Silent early return with empty registry | Non-error (normal for Composer installs) |
 
+## Extension Enable/Disable Lifecycle State
+
+Starting with Phase 2I Prompt 10, extensions can be selectively enabled or disabled via CLI commands. This state is **persisted across bootstrap runs** and does not require file removal to deactivate an extension.
+
+### Persistence File — `config/extensions.cfg`
+
+| Aspect | Detail |
+|--------|--------|
+| **Path** | `<app-root>/config/extensions.cfg` (relative to application root) |
+| **Writer** | `Bootstrap::saveLifecycleState()` — called after pending events are processed; also `Core::handleDisableSubcmd()` and `Core::handleEnableSubcmd()` for CLI mutation |
+| **Reader** | `Bootstrap::loadLifecycleState()` — called during the pre-boot phase before subsystem boot |
+| **Permission model** | Created with `0755`-safe permissions; parent directory auto-created if missing |
+| **Backward compatibility** | If `config/extensions.cfg` does not exist, Bootstrap reads (read-only) `config/extensions.json` as a fallback. New/updated writes always target `.cfg`. |
+
+### Schema
+
+```json
+{
+  "enabled": {
+    "plugins": [
+      "Core",
+      "SomePlugin"
+    ],
+    "themes": [
+      "default-theme"
+    ]
+  },
+  "pending": [
+    {
+      "action": "disable",
+      "type": "plugins",
+      "name": "SomePlugin",
+      "source": "CLI"
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `enabled.plugins` | `list<string>` | Plugin names currently enabled. Each string is the extension's `name` field from its manifest. |
+| `enabled.themes` | `list<string>` | Theme names currently enabled, keyed identically to plugins. |
+| `pending` | `list<object>` | Lifecycle events awaiting processing on the next bootstrap/CLI run. Cleared after successful hook firing and persistence. |
+
+#### Pending Event Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `action` | `"enable"` or `"disable"` | The lifecycle action to fire. |
+| `type` | `"plugins"` or `"themes"` | Which extension family the action targets. |
+| `name` | `string` | The extension name from its manifest. |
+| `source` | `string` | Origin of the request (e.g. `"CLI"`). |
+
+### Default Behavior
+
+When `config/extensions.cfg` **does not exist** on bootstrap:
+
+- All discovered extensions are treated as **enabled** in memory. Bootstrap does not seed a fresh state file.
+- CLI enable/disable commands will create `config/extensions.cfg` if it is absent.
+
+When `config/extensions.cfg` **exists**:
+
+- Only the names listed in `enabled.plugins` / `enabled.themes` are considered active (hooks fire for them; others are discovered but not activated).
+- The existing enabled list takes precedence over discovery defaults.
+- Pending events are processed if present, then cleared.
+
+*Note: If `.cfg` is absent, Bootstrap reads `config/extensions.json` as a **read-only fallback** and persists all future writes solely to `.cfg`.
+
+### Disabled Extensions Behavior
+
+An extension that is **not** listed in the enabled arrays:
+
+- Is still **discovered** during Bootstrap's manifest walk (its metadata appears in `extension_index_all` and `extension_index_disabled`).
+- Is still **indexed** in `extension_index_all` alongside enabled extensions.
+- Is **not autoloaded** — its `src/` directory is never registered with the autoloader.
+- Has its hooks **NOT registered** in the `Hook\Registry`.
+- Has its layouts **NOT registered** as layout placeholders.
+- Is **not dependency validated during active bootstrap; dependency validation runs only against enabled manifests**.
+
+### CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `php cli core.extension status` | Display extended information about all discovered extensions (enabled/disabled state pending). |
+| `php cli core.extension list [plugins\|themes]` | List all discovered extensions within the specified type (or both if no argument given). |
+| `php cli core.extension enable plugin.<slug>\|theme.<slug>` | Enable a discovered extension by selector type (plugin or theme) and slug. Adds to enabled array and fires pre/post hooks on next bootstrap. |
+| `php cli core.extension disable plugin.<slug>\|theme.<slug>` | Disable a discovered extension by selector type (plugin or theme) and slug. Removes from enabled array and adds pending fire-discovery hooks via CLI. |
+
+### Locked Extensions
+
+Locked extensions cannot be enabled or disabled. Locking is resolved from manifest `"locked"`; if omitted, kernel-origin extensions default locked and app-origin extensions default unlocked.
+
+### Dependency Check on Enable
+
+Before an extension is enrolled in the enabled list, Bootstrap validates each entry's declared `depends` against the names currently listed in `enabled.plugins` + `enabled.themes`: any dependency not satisfied by another **currently-enabled** extension will cause the enable to fail with a descriptive error:
+
+```
+Error: dependencies for 'SomePlugin' unresolved: depOne, depTwo
+```
+
+This check ensures that enabling an extension does not introduce a bootstrap-time fatal due to missing runtime dependencies.
+
+### Compatibility — Warning-Only
+
+Extension manifests may declare `kernel-compat` constraints. During discovery, these are validated and stored in the `compatStatus` field of `extension_index`:
+
+| compatStatus | Meaning |
+|--------------|---------|
+| `unconstrained` | No `kernel-compat` field or empty/whitespace-only. |
+| `compatible`  | Constraint parsed and matched running kernel version. |
+| `incompatible`| Constraint parsed but mismatched; warning emitted to STDERR. |
+
+Compliance is **warning-only**: incompatible extensions may still be enabled/disable, their hooks fire normally, and Bootstrap does not block on incompatibility at runtime. Only a STDERR message is produced:
+
+```
+Extension 'example': kernel-compat '^2.0' incompatible with running kernel 1.95.0
+```
+
+### Lifecycle Hooks Fired on Pending Events
+
+Pending events are processed during `Bootstrap::fireLifecycleHooks()`, which reads state via `Bootstrap::loadLifecycleState()` and runs after discovery and hook registration but before the Router/CLI subsystem boots. For each pending entry, hooks are fired in sequence:
+
+| Action | Hook fired (in order) | Context passed |
+|--------|----------------------|----------------|
+| `enable`  | `extension.pre_enable` → `extension.post_enable` | `['action'=> 'enable', 'name' => '<name>', 'type' => '<type>', 'source' => '<source>']` |
+| `disable` | `extension.pre_disable` → `extension.post_disable` | `['action'=> 'disable', 'name' => '<name>', 'type' => '<type>', 'source' => '<source>']` |
+
+The pending list is **cleared** after all hooks have fired successfully and the state file is re-persisted with an empty pending list. If hook firing fails, the pending entries remain intact for processing on the next bootstrap/CLI run.
+
+### Interaction with Pre-existing Discovery Lifecycle
+
+Extension enable/disable state does **not** modify manifest format or discovery mechanics:
+
+1. **Discovery** (Step 1–6 in existing document): Unaffected — all manifests are parsed from disk regardless of enabled state.
+2. **Deduplication** (Step 1b): Unaffected — same name-overwrites-app semantics unchanged.
+3. **Dependency Validation on Discovery**: Dependency validation runs after lifecycle filtering and checks only enabled manifests.
+4. **Lifecycle Engine** (new): After discovery indexing but before subsystem boot, `fireLifecycleHooks()` checks pending events, fires pre/post hooks, updates enabled lists via CLI commands if needed, and then the enabled arrays determine which extensions are subsequently activated at runtime.
+
+### State Mutation Safety
+
+- State changes from CLI commands only modify `config/extensions.cfg` (`extensions.json` is deprecated and supported as a read-only fallback for existing data).
+- Enabled names are verified for existing in `extension_index` before mutation.
+- Already-disabled extensions produce a confirmation message but no state change or pending event.
+
 ## Future Lifecycle Features (Not Implemented)
 
 The following lifecycle capabilities are planned but not present in the current codebase:
 
-- **Enable/disable state** — `extension.enable` / `extension.disable` hooks or CLI commands to toggle activation.
-- **State persistence** — Persisting enable/disable status across boots (e.g., via database or config).
-- **Dependency ordering** — Topological sort of dependencies instead of flat existence check.
-- **Activation/deactivation hooks** — Dedicated lifecycle callbacks (`install`, `uninstall`, `activate`, `deactivate`) not yet supported.
-- **Transitive resolution** — Following dependency chains to ensure all transitive deps are satisfied.
+- **Transitive dependency resolution** — Following dependency chains to ensure all transitive deps are satisfied.
 - **Cycle detection** — Detecting and reporting circular dependencies during discovery.

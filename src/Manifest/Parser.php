@@ -38,7 +38,7 @@ final class Parser
      * @param  string $baseDir  Root directory (usually __DIR__ . '/../../ext').
      * @return list<Extension>
      */
-    public static function discover(string $baseDir, string $origin = 'framework'): array
+    public static function discover(string $baseDir, string $origin = 'kernel'): array
     {
         if (!is_dir($baseDir)) {
             return [];
@@ -96,7 +96,7 @@ final class Parser
      * @throws JsonException          When JSON is invalid or required keys missing.
      * @throws \InvalidArgumentException When values fail schema validation.
      */
-    public static function parse(string $filePath, string $origin = 'framework'): Extension
+    public static function parse(string $filePath, string $origin = 'kernel'): Extension
     {
         if (!is_file($filePath)) {
             throw new \InvalidArgumentException("Manifest file not found: {$filePath}");
@@ -115,7 +115,7 @@ final class Parser
     /**
      * Validate and normalize a decoded manifest array into an Extension.
      */
-    public static function validate(array $data, string $filePath = '', string $origin = 'framework'): Extension
+    public static function validate(array $data, string $filePath = '', string $origin = 'kernel'): Extension
     {
         // -- required fields -------------------------------------------
         foreach (['type', 'name', 'version'] as $field) {
@@ -154,6 +154,12 @@ final class Parser
                     "Manifest 'depends' entries must be non-empty strings. Got: " . var_export($dep, true)
                 );
             }
+        }
+
+        // -- lock (optional, not required; defaults resolved at runtime via Extension::isLocked()) --
+        $setLock = null;  // `null` means "not declared in manifest → use origin-aware default"
+        if (isset($data['locked'])) {
+            $setLock = filter_var($data['locked'], FILTER_VALIDATE_BOOLEAN);
         }
 
         // -- kernel-compat (optional, stored as-is) --------------------
@@ -210,6 +216,7 @@ final class Parser
             kernelCompat: $kernelCompat,
             origin:    $origin,
             psr4Mappings: $psr4Mappings,
+            lock:       isset($setLock) ? $setLock : null,
         );
     }
 

@@ -99,6 +99,7 @@ class Bootstrap
             $this->registerSeedingServices($c);
             $this->initExtensions();
             $this->registerHelperServices($c);
+            $this->fireLifecycleHooks();
 
             switch ($this->mode) {
                 case self::MODE_WEB:
@@ -205,7 +206,7 @@ class Bootstrap
         static::$instance = new Container();
     }
 
-    /** Register core framework services into the container. */
+     /** Register core kernel services into the container. */
     private function registerCoreServices(Container $c): void
     {
         // Configuration class reference -- Config::load() is static, but storing
@@ -441,13 +442,13 @@ class Bootstrap
             throw new \RuntimeException('Container not yet initialised when initExtensions() runs.');
         }
 
-        // Resolve existing extension roots (order matters: framework first, then app).
+        // Resolve existing extension roots (order matters: kernel first, then app).
         $roots = [];
 
-        // 1. Framework root — package/vendor install with shipped extensions.
-        $frameworkExt = dirname(__DIR__) . '/ext';
-        if (is_dir($frameworkExt)) {
-            $roots[] = [$frameworkExt, 'framework'];
+        // 1. Kernel root — package/vendor install with shipped extensions.
+        $kernelExt = dirname(__DIR__) . '/ext';
+        if (is_dir($kernelExt)) {
+            $roots[] = [$kernelExt, 'kernel'];
         }
 
         // 2. Application root — user's application directory.
@@ -468,7 +469,7 @@ class Bootstrap
 
         // Diagnostic bindings.
         $c->set('app_root',      $this->appRoot);
-        $c->set('extension_base', $frameworkExt ?? ($appExt));
+        $c->set('extension_base', $kernelExt ?? ($appExt));
 
         // ── Discover & parse every manifest across all existing roots (tolerant). -
         $manifests = [];
@@ -483,14 +484,90 @@ class Bootstrap
         }
         $manifests = $manifests === [] ? [] : \array_merge(...$manifests);
 
-        // ── 2½. Deduplicate by extension name: last-write wins → app over framework (app is processed second). -
+        // ── 2½. Deduplicate by extension name: last-write wins → app over kernel (app is processed second). -
         $deduplicated = [];
         foreach ($manifests as $ext) {
-            // Associative-array key collision naturally replaces a framework extension
+            // Associative-array key collision naturally replaces a kernel extension
             // with an identically named app extension without any origin comparison.
             $deduplicated[$ext->name] = $ext;
         }
         $manifests = array_values($deduplicated);   // re-index to [0..n-1].
+
+        // ── 2½a. Build metadata index for ALL deduplicated extensions (before any filtering). -
+        $lifecycle = $this->loadLifecycleState();
+
+        $allIndex = [];
+        foreach ($manifests as $m) {
+            $rawCompat   = $m->kernelCompat ?? '';
+            $isCompatible = ManifestParser::checkCompat($rawCompat, ManifestParser::KERNEL_VERSION);
+
+            if ($rawCompat === '') {
+                $compatStatus = 'unconstrained';
+            } elseif ($isCompatible) {
+                $compatStatus = 'compatible';
+            } else {
+                fwrite(STDERR, (string)"Extension '{$m->name}': kernel-compat '$rawCompat' incompatible with running kernel " . ManifestParser::KERNEL_VERSION . "\n");
+                $compatStatus = 'incompatible';
+            }
+
+            // Determine lifecycle state.
+            // When the config file is absent *and* no enabled lists exist → all are effectively "enabled".
+            if ($lifecycle['exists']) {
+                $typeKey = $m->type === 'theme' ? 'themes' : 'plugins';
+                $inEnabledList = in_array($m->name, $lifecycle['enabled'][$typeKey], true);
+
+                // Persisted but empty enabled list => all are still "enabled" (zero-state = unfiltered).
+                if ($lifecycle['enabled'] === ['plugins' => [], 'themes' => []]) {
+                    $lifecycleState = 'enabled';
+                } elseif ($inEnabledList) {
+                    $lifecycleState = 'enabled';
+                } else {
+                    $lifecycleState = 'disabled';
+                }
+            } else {
+                $lifecycleState = 'enabled';
+            }
+
+            // Derive slug from directory basename: lowercased, spaces → -, underscores → -, remove invalid chars.
+            $slug = (string) preg_replace('/[^a-z0-9\-]/', '', str_replace('_', '-', str_replace(' ', '-', strtolower(basename($m->directory)))));
+
+            $allIndex[$m->name] = [
+                'type'          => $m->type,
+                'version'       => $m->version,
+                'directory'     => $m->directory,
+                'slug'          => $slug,
+                'depends'       => $m->depends,
+                'origin'        => $m->origin,
+                'kernelCompat'  => $rawCompat,
+                'compatStatus'  => $compatStatus,
+                'lifecycleState'=> $lifecycleState,
+                'locked'        => $m->isLocked(),
+            ];
+        }
+
+        $c->set('extension_index_all', (object) $allIndex);
+
+        // ── 2½b. Filter manifests by lifecycle state — only enabled entries proceed. -
+        $enabledManifests = [];  // name ⇒ Extension, in insertion order
+        $disabledIndex    = [];
+
+        foreach ($manifests as $m) {
+            $entry   = $allIndex[$m->name];
+            $lState  = $entry['lifecycleState'];
+
+            if ($lState === 'enabled') {
+                $enabledManifests[$m->name] = $m;
+            } else {
+                $disabledIndex[$m->name] = $entry;
+            }
+        }
+
+        // Persist disabled list.
+        $c->set('extension_index_disabled', (object) $disabledIndex);
+
+        // Replace `$manifests` with the filtered set so dependency check, autoloader,
+        // hook registration, and index population only see enabled extensions.
+        $manifests = array_values($enabledManifests);
 
         if ($manifests === []) {
             // Register empty registry so `bootWeb()` / `bootCli()` can still resolve 'hook_registry'.
@@ -642,21 +719,314 @@ class Bootstrap
                 $compatStatus = 'incompatible';
             }
 
+            // Derive slug from directory basename: lowercased, spaces → -, underscores → -, remove invalid chars.
+            $slug = (string) preg_replace('/[^a-z0-9\-]/', '', str_replace('_', '-', str_replace(' ', '-', strtolower(basename($manifest->directory)))));
+
             // -- Index extension metadata into Container ---------------------------
             $extIndex[$manifest->name] = [
                 'type'          => $manifest->type,
                 'version'       => $manifest->version,
                 'directory'     => $manifest->directory,
+                'slug'          => $slug,
                 'depends'       => $manifest->depends,
                 'origin'        => $manifest->origin,
                 'kernelCompat'  => $manifest->kernelCompat,
                 'compatStatus'  => $compatStatus,
+                'locked'        => $manifest->isLocked(),
             ];
         }
 
         // -- Bind resolved Hook\Registry and extension index into container -----
         $c->set('hook_registry', $hookRegistry);
         $c->set('extension_index', (object) $extIndex);
+    }
+
+    /* ------------------------------------------------------------------ --/
+      /  Extension Lifecycle State Helpers                                   */
+    /* ------------------------------------------------------------------ */
+
+    /** Return the path where lifecycle state is persisted (``extensions.cfg``).
+
+     *  On read, falls back to ``extensions.json`` if the ``.cfg`` file is absent;
+     *  writes always target ``extensions.cfg``. */
+    private function extensionStatePath(): string
+    {
+        return "{$this->appRoot}/config/extensions.cfg";
+    }
+
+    /** Check whether the lifecycle-state file exists for this application. */
+    private function lifecycleStateExists(): bool
+    {
+        return is_file($this->extensionStatePath())
+            || $this->legacyStateFileExists();
+    }
+
+    /** Return true when the legacy ``extensions.json`` state file is present. */
+    private function legacyStateFileExists(): bool
+    {
+        return is_file("{$this->appRoot}/config/extensions.json");
+    }
+
+    /** Load and normalise the lifecycle-state file.
+
+     *  @return array{exists:bool, enabled:array{plugins:list<string>, themes:list<string>}, pending:list<array{action:string,type:string,name:string,source:string}>}
+     */
+    private function loadLifecycleState(): array
+    {
+        $path = $this->extensionStatePath();
+
+        // File absent — check legacy .json as read-only fallback.
+        if (!is_file($path)) {
+            $legacyPath = "{$this->appRoot}/config/extensions.json";
+            if (is_file($legacyPath)) {
+                /** @var array<string, mixed> */
+                $legacyJson = json_decode(file_get_contents($legacyPath), true);
+                if (!is_array($legacyJson) || !isset($legacyJson['enabled']) || !isset($legacyJson['pending'])) {
+                    return [
+                        'exists'  => false,
+                        'enabled' => ['plugins' => [], 'themes' => []],
+                        'pending' => [],
+                    ];
+                }
+                $readPath = $legacyPath; // use legacy file above
+            } else {
+                return [
+                    'exists'  => false,
+                    'enabled' => ['plugins' => [], 'themes' => []],
+                    'pending' => [],
+                ];
+            }
+        } elseif (is_file($path)) {
+            $readPath = $path; // use primary state file
+        }
+
+        if (!isset($readPath) || !is_file($readPath)) {
+            return [
+                'exists'  => false,
+                'enabled' => ['plugins' => [], 'themes' => []],
+                'pending' => [],
+            ];
+        }
+
+        $jsonContent = file_get_contents($readPath);
+        if ($jsonContent === false) {
+            // Unreadable (permissions / race): degrade to default.
+            return [
+                'exists'  => false,
+                'enabled' => ['plugins' => [], 'themes' => []],
+                'pending' => [],
+            ];
+        }
+
+        $json = json_decode($jsonContent, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            // Malformed JSON: degrade to default.
+            return [
+                'exists'  => false,
+                'enabled' => ['plugins' => [], 'themes' => []],
+                'pending' => [],
+            ];
+        }
+
+        if (!is_array($json)) {
+            // Top-level must be an object/array.
+            return [
+                'exists'  => false,
+                'enabled' => ['plugins' => [], 'themes' => []],
+                'pending' => [],
+            ];
+        }
+
+        $enabledPlugins = [];
+        $enabledThemes  = [];
+
+        // Extract + normalise enabled plugins.
+        if (isset($json['enabled']['plugins']) && is_array($json['enabled']['plugins'])) {
+            foreach ($json['enabled']['plugins'] as $v) {
+                if (is_string($v) && $v !== '') {
+                    $enabledPlugins[] = $v;
+                }
+            }
+        }
+
+        // Extract + normalise enabled themes.
+        if (isset($json['enabled']['themes']) && is_array($json['enabled']['themes'])) {
+            foreach ($json['enabled']['themes'] as $v) {
+                if (is_string($v) && $v !== '') {
+                    $enabledThemes[] = $v;
+                }
+            }
+        }
+
+        // Extract + normalise pending entries.
+        $pending = [];
+        if (isset($json['pending']) && is_array($json['pending'])) {
+            foreach ($json['pending'] as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                // Each entry must have every expected key and correct type.
+                if (
+                    !isset($item['action'], $item['type'], $item['name'], $item['source'])
+                    || !is_string($item['action'])  || ($item['action'] !== 'enable' && $item['action'] !== 'disable')
+                    || !is_string($item['type'])     || ($item['type'] !== 'plugins' && $item['type'] !== 'themes')
+                    || !is_string($item['name'])     || $item['name'] === ''
+                    || !is_string($item['source'])   || $item['source'] === ''
+                ) {
+                    continue; // tolerate malformed pending items silently.
+                }
+
+                $pending[] = [
+                    'action' => $item['action'],
+                    'type'   => $item['type'],
+                    'name'   => $item['name'],
+                    'source' => $item['source'],
+                ];
+            }
+        }
+
+        return [
+            'exists'  => true,
+            'enabled' => ['plugins' => array_values($enabledPlugins), 'themes' => array_values($enabledThemes)],
+            'pending' => array_values($pending),
+        ];
+    }
+
+    /** Fire pending lifecycle hooks for every unresolved pending entry.
+
+     *  Reads the latest ``pending`` list via the Config loader from `config/extensions.cfg`, falling back to `config/extensions.json` for legacy state files.
+     *  For each entry, fires a pre-hook → post-hook pair in order:
+     *
+     *    enable  → extension.pre_enable  then  extension.post_enable
+     *    disable → extension.pre_disable then  extension.post_disable
+     *
+     *  On success the pending list is cleared and the state persisted.
+     *  If there are no pending entries (or the registry is not a ``Hook\Registry``),
+     *  this method returns without side-effects. */
+    private function fireLifecycleHooks(): void
+    {
+        $lifecycle = $this->loadLifecycleState();
+
+        // Nothing pending → no-op. Do NOT modify config when the list is empty.
+        if ($lifecycle['pending'] === []) {
+            return;
+        }
+
+        // Must have a hook registry to fire events.
+        $hookRegistry = static::$instance->resolve('hook_registry');
+        if (!($hookRegistry instanceof \Laswitchtech\CoreWeb\Hook\Registry)) {
+            fwrite(STDERR, 'Bootstrap: hook_registry not a Hook\Registry — skipping pending lifecycle hooks' . PHP_EOL);
+
+            return;
+        }
+
+        // Build context array for every pending entry.
+        $contexts = [];
+        foreach ($lifecycle['pending'] as $entry) {
+            $action = (string)($entry['action'] ?? '');
+            $name   = (string)($entry['name'] ?? '');
+            if ($action === '' || $name === '') {
+                continue; // tolerate malformed entries silently.
+            }
+
+            $contexts[] = [
+                'action' => $action,
+                'name'   => $name,
+                'type'   => (string)($entry['type'] ?? ($action === 'enable' ? 'plugins' : 'plugins')),
+                'source' => (string)($entry['source'] ?? 'CLI'),
+            ];
+        }
+
+        if ($contexts === []) {
+            // All entries malformed → save clears nothing.
+            return;
+        }
+
+        foreach ($contexts as $ctx) {
+            $action = $ctx['action'];
+
+            if ($action === 'enable') {
+                $hookRegistry->trigger('extension.pre_enable', $ctx);
+                $hookRegistry->trigger('extension.post_enable', $ctx);
+            } elseif ($action === 'disable') {
+                $hookRegistry->trigger('extension.pre_disable', $ctx);
+                $hookRegistry->trigger('extension.post_disable', $ctx);
+            }
+        }
+
+        // Success — clear pending and persist (enabled list is preserved unchanged).
+        $state = [
+            'enabled' => $lifecycle['enabled'],
+            'pending' => [],
+        ];
+
+        try {
+            $this->saveLifecycleState($state);
+        } catch (\Throwable $_) {
+            fwrite(STDERR, 'Bootstrap: failed to clear pending lifecycle hooks — state file not updated' . PHP_EOL);
+        }
+    }
+
+    /** Persist lifecycle state to the application's config directory.
+
+     *  Validates enabled arrays and pending entries before writing;
+     *  creates the parent directory if it does not exist; uses LOCK_EX.
+     *
+     *  @throws \RuntimeException on directory creation or write failure.
+     */
+    private function saveLifecycleState(array $state): void
+    {
+        $path = $this->extensionStatePath();
+        $dir  = dirname($path);
+
+        // Ensure the parent directory exists (idempotent mkdir).
+        if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {
+            throw new \RuntimeException("Cannot create directory for lifecycle state: {$dir}");
+        }
+
+        // Validate the incoming shape before encoding.
+        if (
+            !isset($state['enabled']['plugins']) || !is_array($state['enabled']['plugins'])
+            || !isset($state['enabled']['themes'])  || !is_array($state['enabled']['themes'])
+        ) {
+            throw new \InvalidArgumentException('saveLifecycleState: enabled.plugins / enabled.themes must both be arrays.');
+        }
+
+        if (isset($state['pending']) && is_array($state['pending'])) {
+            foreach ($state['pending'] as $idx => $item) {
+                if (!is_array($item)) {
+                    throw new \InvalidArgumentException("saveLifecycleState: pending item at index {$idx} must be an array.");
+                }
+                // Quick structural check — full normalisation happens inside json_encode.
+                if (!isset($item['action'], $item['type'], $item['name'], $item['source'])) {
+                    throw new \InvalidArgumentException("saveLifecycleState: pending item at index {$idx} is missing required keys.");
+                }
+            }
+        }
+
+        // Build output preserving only the canonical shape.
+        $output = [
+            'enabled' => [
+                'plugins' => array_values(array_unique($state['enabled']['plugins'])),
+                'themes'  => array_values(array_unique($state['enabled']['themes'])),
+            ],
+            'pending' => array_values(array_map(
+                fn (array $i): array => [
+                    'action' => $i['action'],
+                    'type'   => $i['type'],
+                    'name'   => $i['name'],
+                    'source' => $i['source'],
+                ],
+                is_array($state['pending']) ? $state['pending'] : [],
+            )),
+        ];
+
+        $json = json_encode($output, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+
+        if (file_put_contents($path, $json . "\n", LOCK_EX) === false) {
+            throw new \RuntimeException("Cannot write lifecycle state to {$path}");
+        }
     }
 
     /* ------------------------------------------------------------------ --/
@@ -806,7 +1176,7 @@ class Bootstrap
     /* ------------------------------------------------------------------ */
 
     /**
-     * Resolve the core framework migrations directory path.
+      * Resolve the core kernel migrations directory path.
      *
      * Search order (priority descending):
      *   1. Config 'migrations.core_path' key (user override)

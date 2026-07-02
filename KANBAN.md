@@ -154,7 +154,19 @@
     - Evaluate whether other related classes should also be grouped by domain or subsystem in Version 2.0 without disrupting the V1.0 public API.
 
 ## In Progress
-- [~] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+
+## Validation
+- [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+  - Tags: testing
+  - [ ] Full cross-platform routing validation <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
+    - Future enhancement: test routing across Apache, Nginx, and IIS in CI with the skeleton application on localhost.
+    - Tags: testing
+  - [ ] Add Bootstrap smoke tests <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
+    - Validate `php cli` boots successfully and triggers the Hello World plugin.
+    - Validate browser load triggers the Hello World plugin in WEB mode.
+
+## Done
+- [x] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-02T15:32:46-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
   - Tags: framework, extensions, v.1.0
   - [x] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 completed_at: 2026-07-01T15:19:16-04:00 priority: high -->
     - Phase 2E — Extension Discovery Improvements
@@ -204,36 +216,24 @@
       - Bootstrap now registers declared PSR-4 mappings before the legacy `Laswitchtech\CoreWeb\Plugin\` and `Laswitchtech\CoreWeb\Theme\` fallback autoloader.
     - [x] Validate class hook callbacks using declared namespace mappings <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
       - Class-based hooks may now reference extension-declared PSR-4 namespaces before `Hook\Registry::addClassCall()` validates the callback.
-  - [~] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+  - [x] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-07-02T15:32:40-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
     - Docs: lifecycle documented in docs/development/extensions/Lifecycle.md (placeholder — no implementation yet)
     - Tags: feature
-    - [ ] Enable extension <!-- created_at: 2026-06-19T12:41:25-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [ ] Disable extension <!-- created_at: 2026-06-19T12:41:25-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [ ] Persist enabled/disabled state <!-- created_at: 2026-06-19T12:41:25-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [ ] Enforce dependencies before activation <!-- created_at: 2026-06-19T12:41:25-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [ ] Add lifecycle hooks for activation/deactivation <!-- created_at: 2026-06-19T12:41:25-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [ ] Add `core.extension status` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+    - [x] Enable extension <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-02T15:31:07-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] Disable extension <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-02T15:31:09-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] Persist enabled/disabled state <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-02T15:31:11-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] Enforce dependencies before activation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-02T15:31:14-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] Add lifecycle hooks for activation/deactivation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-02T15:31:16-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] Add `core.extension status` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-02T15:31:20-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
       - Display discovered extensions, enabled/disabled state, origin, type, version, compatibility status, and dependency readiness.
-    - [ ] Add `core.extension list` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+    - [x] Add `core.extension list` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-02T15:31:24-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
       - List installed plugins and themes using selectors such as `plugins`, `themes`, or a specific `{plugins,themes}.{slug}` target.
-    - [ ] Add `core.extension enable {plugins,themes}.{slug}` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+    - [x] Add `core.extension enable {plugins,themes}.{slug}` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-02T15:31:30-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
       - Enable an installed extension by persisted lifecycle state after validating dependencies and compatibility warnings.
-    - [ ] Add `core.extension disable {plugins,themes}.{slug}` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+    - [x] Add `core.extension disable {plugins,themes}.{slug}` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-02T15:31:35-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
       - Disable an installed extension by persisted lifecycle state without deleting its files.
-    - [ ] Document extension lifecycle CLI usage <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] Document extension lifecycle CLI usage <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-02T15:31:40-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Document `php cli core.extension {status,list,enable,disable} {plugins,themes}.{slug}` usage, selector rules, examples, and lifecycle persistence behavior.
-
-## Validation
-- [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Tags: testing
-  - [ ] Full cross-platform routing validation <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
-    - Future enhancement: test routing across Apache, Nginx, and IIS in CI with the skeleton application on localhost.
-    - Tags: testing
-  - [ ] Add Bootstrap smoke tests <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
-    - Validate `php cli` boots successfully and triggers the Hello World plugin.
-    - Validate browser load triggers the Hello World plugin in WEB mode.
-
-## Done
 - [x] Helper System <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T14:46:06-04:00 priority: normal -->
   - Centralized helper registry providing injectable helper objects to controllers, the renderer, layouts, templates, views, and extensions. Helpers are registered services rather than global functions and may be provided by the framework, the application, or plugins.
   - Tags: framework, helpers, renderer, extensions, v.1.0

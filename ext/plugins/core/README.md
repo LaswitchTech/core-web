@@ -62,4 +62,52 @@ php cli core.db seed-smoke
 - Verifies the row was inserted correctly.
 - Reruns the seed to confirm idempotent skip behavior on the second execution.
 
+### core.extension subcommands
+
+#### list
+
+Lists all discovered extensions or filters by type.
+
+```sh
+php cli core.extension list [plugins|themes]
+```
+
+- Without arguments, lists both plugins and themes.
+- Pass `plugins` or `themes` to filter by type.
+
+#### status
+
+Display extended information about an extension.
+
+```sh
+php cli core.extension status [plugin.<slug>|theme.<slug>]
+```
+
+- Selectors are **singular**: use `plugin.<slug>` for a plugin or `theme.<slug>` for a theme.
+- Without arguments, displays the enabled/disabled overview.
+
+#### enable
+
+Enables an extension so it is loaded on the next bootstrap.
+
+```sh
+php cli core.extension enable plugin.<slug>|theme.<slug>
+```
+
+- Selectors are **singular**: use `plugin.<slug>` or `theme.<slug>`.
+- Locked extensions **cannot** be enabled via this command.
+- Changes take effect on **next bootstrap / CLI run**.
+
+#### disable
+
+Disables an extension so it is no longer loaded on the next bootstrap.
+
+```sh
+php cli core.extension disable plugin.<slug>|theme.<slug>
+```
+
+- Selectors are **singular**: use `plugin.<slug>` or `theme.<slug>`.
+- Locked extensions **cannot** be disabled via this command.
+- Changes take effect on **next bootstrap / CLI run**.
+
 See `ext/plugins/core/src/Core.php` for the registration hook callback signature.

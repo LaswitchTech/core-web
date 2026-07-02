@@ -4,6 +4,7 @@
     "version": "0.1.0",
     "description": "Testing harness — Core extension.",
     "kernel-compat": "^1.0",
+    "locked": true,
     "hooks": [
         "router.register::Laswitchtech\\CoreWeb\\Plugin\\Core::registerRoutes",
         "helper.register::Laswitchtech\\CoreWeb\\Plugin\\Core::registerSmokeHelper"
