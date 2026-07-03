@@ -98,6 +98,7 @@ class Bootstrap
             $this->registerDbServices($c);
             $this->registerSeedingServices($c);
             $this->initExtensions();
+            $this->registerMessagingServices($c);
             $this->registerHelperServices($c);
             $this->fireLifecycleHooks();
 
@@ -367,6 +368,225 @@ class Bootstrap
                 $container->resolve('seed_loader'),
                 new SeedRegistryTable($container->resolve('db_connection')),
             );
+        });
+    }
+
+    /* ------------------------------------------------------------------ --/
+      /  Messaging Services                                                   */
+
+    /** Register messaging services into the container.
+      *
+      *  Provides a scaffold for mail (SMTP) and SMS subsystem wiring.
+     */
+    private function registerMessagingServices(Container $c): void
+    {
+        // FileTemplateLoader — message template search paths (app → plugins → core)
+
+        $appRoot   = $this->resolveAppRoot();
+        $coreRoot  = dirname(__DIR__);
+
+        // Load smtp.cfg / sms.cfg as base defaults, then layer Config::get overrides on top.
+
+        $smtpDefaults  = [];
+        if (file_exists("{$appRoot}/config/smtp.cfg")) {
+            $decoded = json_decode(file_get_contents("{$appRoot}/config/smtp.cfg"), true);
+            if (is_array($decoded)) {
+                $smtpDefaults = $decoded;
+            }
+        }
+
+        $smsDefaults  = [];
+        if (file_exists("{$appRoot}/config/sms.cfg")) {
+            $decoded = json_decode(file_get_contents("{$appRoot}/config/sms.cfg"), true);
+            if (is_array($decoded)) {
+                $smsDefaults = $decoded;
+            }
+        }
+
+        $pluginRoots  = [];
+        // Build plugin roots from enabled plugin entries in extension_index.
+
+        $extIndex = static::$instance->resolve('extension_index');
+        foreach (($extIndex ?? []) as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+            if (($entry['type'] ?? null) !== 'plugin') {
+                continue;
+            }
+            if (empty($entry['directory']) || !is_dir((string) $entry['directory'])) {
+                continue;
+            }
+            $pluginRoots[] = (string) $entry['directory'];
+        }
+
+        $c->registerSingleton('message_template_loader', static fn ($container) => new \Laswitchtech\CoreWeb\Message\Template\FileTemplateLoader(
+            appRoot:     $appRoot,
+            coreRoot:    $coreRoot,
+            pluginRoots: $pluginRoots,
+        ));
+
+        // ── smtp_config ───────────────────────────────────────────────
+        // Reads from Config::get('smtp.*'). Returns a disabled config when enabled is falsy.
+
+        /** dot-notation resolver for flat smtp.cfg defaults.
+         *
+         * Tier 1 — Config::all() nested path (core.cfg + local.cfg).
+         * Tier 2 — $smtpDefaults[basename] (flat file key).
+         * Tier 3 — literal fallback. */
+        $res = static function ($key, $fallback = null) use ($smtpDefaults): mixed {
+            $keyPath = explode('.', $key);
+
+            // tier 1 — nested Config path (core.cfg / local.cfg)
+            if (($cfgRaw = \Laswitchtech\CoreWeb\Config::all()) !== null) {
+                $cur = $cfgRaw;
+                foreach ($keyPath as $tk) {
+                    if (is_array($cur) && array_key_exists($tk, $cur)) {
+                        $cur = $cur[$tk];
+                    } else {
+                        $cur = null;
+                        break;
+                    }
+                }
+                if ($cur !== null) {
+                    return $cur;   // user override wins
+                }
+            }
+
+            // tier 2 — smtp.cfg flat file (last path segment is the key)
+            $flatKey    = array_pop($keyPath);
+            if (isset($smtpDefaults[$flatKey])) {
+                return $smtpDefaults[$flatKey];
+            }
+
+            // tier 3 — Bootstrap literal fallback
+            return $fallback;
+        };
+
+        $c->registerSingleton('smtp_config', static function () use ($res): \Laswitchtech\CoreWeb\Mail\SmtpConfig {
+            $enabled = (bool) $res('smtp.enabled', false);
+            if (!$enabled) {
+                return \Laswitchtech\CoreWeb\Mail\SmtpConfig::disabled();
+            }
+
+            return new \Laswitchtech\CoreWeb\Mail\SmtpConfig(
+                enabled:             true,
+                host:                (string)        $res('smtp.host', 'localhost'),
+                port:                (int)           max(1, (int)    $res('smtp.port', 587)),
+                encryption:          (string)        $res('smtp.encryption', 'tls'),
+                username:            (string)        $res('smtp.username', ''),
+                password:            (string)        $res('smtp.password', ''),
+                fromAddress:         (string)        $res('smtp.from_address', ''),
+                fromName:            (string)        $res('smtp.from_name', 'Core-Web'),
+                debug:               (bool)        $res('smtp.debug', false),
+                timeout:             (int)           max(1, (int)    $res('smtp.timeout', 30)),
+                connectionAttempts:  (int)           max(1, (int)    $res('smtp.connection_attempts', 1)),
+                templateNamespace:   (string)        $res('smtp.template_namespace', 'mail'),
+            );
+        });
+        // ── smtp_provider ─────────────────────────────────────────────
+        // Conditional singleton: only when enabled by config.
+
+        $c->registerSingleton('smtp_provider', static function ($container): ?\Laswitchtech\CoreWeb\Mail\Provider\SmtpProvider {
+            /** @var \Laswitchtech\CoreWeb\Mail\SmtpConfig $cfg */
+            $cfg = $container->resolve('smtp_config');
+            return $cfg->enabled
+                ? new \Laswitchtech\CoreWeb\Mail\Provider\SmtpProvider($cfg)
+                : null;
+        });
+
+        // ── mailer ────────────────────────────────────────────────────
+        // Conditional singleton: only when smtp is enabled.
+
+        $c->registerSingleton('mailer', static function ($container): ?\Laswitchtech\CoreWeb\Mail\Mailer {
+            /** @var \Laswitchtech\CoreWeb\Mail\SmtpConfig $cfg */
+            $cfg = $container->resolve('smtp_config');
+            if (!$cfg->enabled) {
+                return null;
+            }
+
+            /** @var \Laswitchtech\CoreWeb\Message\Template\TemplateLoaderInterface $templateLoader */
+            $templateLoader = $container->resolve('message_template_loader');
+
+            /** @var \Laswitchtech\CoreWeb\Mail\Provider\SmtpProvider|null $provider */
+            $provider = $container->resolve('smtp_provider');
+            if ($provider === null) {
+                return null;
+            }
+
+            return new \Laswitchtech\CoreWeb\Mail\Mailer($provider, $templateLoader, $cfg);
+        });
+
+        // ── sms_registry ──────────────────────────────────────────────
+        // Registry for SMS providers; always available but gated consumers check `sms.enabled`.
+
+        $c->registerSingleton('sms_registry', static fn ($container) => new \Laswitchtech\CoreWeb\Sms\Registry());
+
+        // ── sms_resolver ──────────────────────────────────────────────
+
+        /** dot-notation resolver for flat sms.cfg defaults.
+         *
+         * Tier 1 — Config::all() nested path (core.cfg / local.cfg).
+         * Tier 2 — $smsDefaults[basename] (flat file key).
+         * Tier 3 — literal fallback. */
+        $smsRes = static function ($key, $fallback = null) use ($smsDefaults): mixed {
+            $keyPath = explode('.', $key);
+
+            // tier 1 — nested Config path (core.cfg / local.cfg)
+            if (($cfgRaw = \Laswitchtech\CoreWeb\Config::all()) !== null) {
+                $cur = $cfgRaw;
+                foreach ($keyPath as $tk) {
+                    if (is_array($cur) && array_key_exists($tk, $cur)) {
+                        $cur = $cur[$tk];
+                    } else {
+                        $cur = null;
+                        break;
+                    }
+                }
+                if ($cur !== null) {
+                    return $cur;   // user override wins
+                }
+            }
+
+            // tier 2 — sms.cfg flat file (last path segment is the key)
+            $flatKey    = array_pop($keyPath);
+            if (isset($smsDefaults[$flatKey])) {
+                return $smsDefaults[$flatKey];
+            }
+
+            // tier 3 — Bootstrap literal fallback
+            return $fallback;
+        };
+
+        $c->registerSingleton('sms_resolver', static function ($container) use ($smsRes): \Laswitchtech\CoreWeb\Sms\Resolver {
+            /** @var \Laswitchtech\CoreWeb\Sms\Registry $registry */
+            $registry  = $container->resolve('sms_registry');
+            $default   = $smsRes('sms.default', '');
+            return new \Laswitchtech\CoreWeb\Sms\Resolver($registry, (string) $default);
+        });
+
+        // ── sms.provider.register hook ────────────────────────────────
+        // Fire so extensions can register their SMS providers.
+
+        $hookRegistry = static::$instance->resolve('hook_registry');
+        if ($hookRegistry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
+            $hookRegistry->trigger('sms.provider.register', [
+                'registry'  => static::$instance->resolve('sms_registry'),
+                'container' => static::$instance,
+                'mode'      => strtolower($this->mode),
+            ]);
+        }
+
+        // ── sms_service ───────────────────────────────────────────────
+        // Convenience SMS service; always wired but callers should gate on `sms.enabled`.
+
+        $c->registerSingleton('sms_service', static function ($container) use ($smsRes): \Laswitchtech\CoreWeb\Sms\SmsService {
+            /** @var \Laswitchtech\CoreWeb\Sms\Resolver $resolver */
+            $resolver  = $container->resolve('sms_resolver');
+            /** @var \Laswitchtech\CoreWeb\Message\Template\TemplateLoaderInterface $templates */
+            $templates = $container->resolve('message_template_loader');
+            $namespace  = $smsRes('sms.template_namespace', 'sms');
+            return new \Laswitchtech\CoreWeb\Sms\SmsService($resolver, $templates, (string) $namespace);
         });
     }
 

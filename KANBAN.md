@@ -147,46 +147,70 @@
     - Evaluate whether other related classes should also be grouped by domain or subsystem in Version 2.0 without disrupting the V1.0 public API.
 
 ## In Progress
-- [ ] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+- [~] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Extensible outbound messaging subsystem for email and SMS providers. Email configuration should be loaded from `config/smtp.cfg`; SMS configuration should be loaded from `config/sms.cfg`.
   - Tags: framework, messaging, email, sms, providers, v.1.0
-  - [ ] Message Provider Interface <!-- created_at: 2026-06-18T11:30:00-04:00 priority: normal -->
+  - [x] Message Provider Interface <!-- created_at: 2026-06-18T11:30:00-04:00 completed_at: 2026-07-03T17:30:00-04:00 priority: normal -->
     - Contract for extensible email and SMS messaging providers.
     - Tags: feature, messaging, providers
-    - [ ] Define shared message provider contract <!-- created_at: 2026-07-02T19:15:00-04:00 priority: high -->
+    - [x] Define shared message provider contract <!-- created_at: 2026-07-02T19:15:00-04:00 completed_at: 2026-07-03T07:31:47-04:00 priority: high -->
       - Contract should be generic enough for both SMTP email providers and SMS providers while keeping provider-specific options extensible.
       - Tags: messaging, providers, interface
-    - [ ] Define plugin interface for additional providers <!-- created_at: 2026-06-18T11:32:00-04:00 priority: high -->
+    - [x] Define plugin interface for additional providers <!-- created_at: 2026-06-18T11:32:00-04:00 completed_at: 2026-07-03T17:30:00-04:00 priority: high -->
       - Plugins should be able to register additional message providers such as SMTP alternatives, Twilio, Telico, or future services.
       - Tags: messaging, plugins, providers, extensions
-  - [ ] SMTP Email Provider <!-- created_at: 2026-06-18T11:31:00-04:00 priority: high -->
+      - Implemented through the messaging bootstrap wiring and `sms.provider.register` hook, allowing enabled plugins to register SMS providers into the shared SMS registry before `sms_service` is resolved.
+  - [~] SMTP Email Provider <!-- created_at: 2026-06-18T11:31:00-04:00 priority: high -->
     - SMTP provider should reuse the existing SMTP implementation patterns from `/Users/louis/Projects/LaswitchTech/core/src/SMTP.php` where appropriate.
     - SMTP should support reusable templates for consistent email communications.
     - Tags: email, smtp, providers, config, templates
-    - [ ] Load SMTP configuration from `config/smtp.cfg` <!-- created_at: 2026-07-02T19:16:00-04:00 priority: high -->
-    - [ ] Implement SMTP mailer driver <!-- created_at: 2026-06-18T11:31:00-04:00 priority: high -->
-    - [ ] Support plain text and HTML email bodies <!-- created_at: 2026-07-02T19:17:00-04:00 priority: high -->
-    - [ ] Support reusable SMTP/email templates <!-- created_at: 2026-07-02T19:35:00-04:00 priority: high -->
+    - [x] Load SMTP configuration from `config/smtp.cfg` <!-- created_at: 2026-07-02T19:16:00-04:00 completed_at: 2026-07-03T07:32:07-04:00 priority: high -->
+    - [~] Implement SMTP mailer driver <!-- created_at: 2026-06-18T11:31:00-04:00 priority: high -->
+      - SMTP provider, config DTO, mailer service, message envelope, address value object, attachment value objects, and Bootstrap container wiring are implemented.
+      - Remaining work: default test template, CLI smoke command, final end-to-end validation, and any production hardening discovered during SMTP testing.
+    - [~] Support plain text and HTML email bodies <!-- created_at: 2026-07-02T19:17:00-04:00 priority: high -->
+      - Implemented in the SMTP body builder for plain text, HTML-only multipart alternative, and mixed messages with attachments; still pending live SMTP validation.
+    - [x] Support reusable SMTP/email templates <!-- created_at: 2026-07-02T19:35:00-04:00 completed_at: 2026-07-03T07:32:18-04:00 priority: high -->
       - Templates should support consistent email communications with variable substitution for subject, plain text body, and HTML body.
       - Tags: email, smtp, templates
-    - [ ] Support email attachments <!-- created_at: 2026-07-02T19:18:00-04:00 priority: normal -->
-    - [ ] Support CC, BCC, Reply-To, From address, and From name options <!-- created_at: 2026-07-02T19:19:00-04:00 priority: normal -->
-    - [ ] Document SMTP configuration, templates, and message options <!-- created_at: 2026-07-02T19:20:00-04:00 priority: normal -->
-  - [ ] SMS Provider System <!-- created_at: 2026-07-02T19:21:00-04:00 priority: high -->
+    - [ ] Add default SMTP/email test template <!-- created_at: 2026-07-03T17:00:00-04:00 priority: normal -->
+      - Provide a core-shipped default email template that can be used by smoke tests and `core.smtp send` validation. Template should include subject, plain text body, and HTML body with variable substitution.
+      - Tags: email, smtp, templates, testing
+    - [~] Support email attachments <!-- created_at: 2026-07-02T19:18:00-04:00 priority: normal -->
+      - File and byte-array attachment value objects plus multipart attachment serialization are implemented; still pending smoke coverage and live validation.
+    - [~] Support CC, BCC, Reply-To, From address, and From name options <!-- created_at: 2026-07-02T19:19:00-04:00 priority: normal -->
+      - Envelope model and SMTP serialization support From, To, Cc, Bcc, Reply-To, and subject handling; still pending end-to-end validation.
+    - [~] Document SMTP configuration, templates, and message options <!-- created_at: 2026-07-02T19:20:00-04:00 priority: normal -->
+    - [ ] Add `core.smtp send {EMAIL_ADDRESS} {SUBJECT}` CLI smoke command <!-- created_at: 2026-07-03T17:01:00-04:00 priority: high -->
+      - Add a temporary Core plugin CLI command for testing the SMTP service end-to-end using the configured SMTP provider and default email template. The command should accept a recipient email address and subject, then send a simple test email.
+      - Tags: email, smtp, cli, testing
+  - [~] SMS Provider System <!-- created_at: 2026-07-02T19:21:00-04:00 priority: high -->
     - SMS provider system should mirror the SMTP provider pattern while loading SMS-specific settings from `config/sms.cfg`.
     - SMS should support reusable templates for consistent text-message communications.
     - Tags: sms, providers, config, plugins, templates
-    - [ ] Load SMS configuration from `config/sms.cfg` <!-- created_at: 2026-07-02T19:22:00-04:00 priority: high -->
-    - [ ] Implement SMS provider registry and resolver <!-- created_at: 2026-07-02T19:23:00-04:00 priority: high -->
-    - [ ] Support reusable SMS templates <!-- created_at: 2026-07-02T19:36:00-04:00 priority: normal -->
+    - [x] Load SMS configuration from `config/sms.cfg` <!-- created_at: 2026-07-02T19:22:00-04:00 completed_at: 2026-07-03T07:32:30-04:00 priority: high -->
+    - [x] Implement SMS provider registry and resolver <!-- created_at: 2026-07-02T19:23:00-04:00 completed_at: 2026-07-03T07:55:52-04:00 priority: high -->
+    - [x] Support reusable SMS templates <!-- created_at: 2026-07-02T19:36:00-04:00 completed_at: 2026-07-03T07:32:40-04:00 priority: normal -->
       - Templates should support consistent SMS communications with variable substitution for message bodies.
       - Tags: sms, templates
-    - [ ] Document SMS provider configuration, templates, and plugin conventions <!-- created_at: 2026-07-02T19:24:00-04:00 priority: normal -->
-    - [ ] Implement Twilio SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:03:54-04:00 priority: normal -->
-      - Tags: sms, twilio, plugins, providers
-    - [ ] Implement Telico SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:04:27-04:00 priority: normal -->
+    - [ ] Add default SMS test template <!-- created_at: 2026-07-03T17:02:00-04:00 priority: normal -->
+      - Provide a core-shipped default SMS template that can be used by smoke tests and `core.sms send` validation. Template should include a body with variable substitution.
+      - Tags: sms, templates, testing
+    - [~] Document SMS provider configuration, templates, and plugin conventions <!-- created_at: 2026-07-02T19:24:00-04:00 priority: normal -->
+    - [x] Keep core `config/sms.cfg` provider-agnostic <!-- created_at: 2026-07-03T17:03:00-04:00 completed_at: 2026-07-03T17:30:00-04:00 priority: high -->
+      - Core `config/sms.cfg` should not include Twilio or Telico credential blocks by default. Provider-specific configuration should be supplied by dedicated provider plugins or documented plugin-local defaults.
+      - Current core SMS config only keeps the default provider selector and SMS template namespace; Twilio and Telico credentials are no longer stored in core defaults.
+      - Tags: sms, config, plugins, providers
+    - [ ] Add `core.sms send {PHONE} {SUBJECT}` CLI smoke command <!-- created_at: 2026-07-03T17:04:00-04:00 priority: high -->
+      - Add a temporary Core plugin CLI command for testing the SMS service end-to-end using the configured default SMS provider and default SMS template. The command should accept a destination phone number and subject/test label, then send a simple test SMS.
+      - Tags: sms, cli, testing
+    - [~] Implement Twilio SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:03:54-04:00 priority: normal -->
+      - Twilio-specific config defaults and credential keys should live with the Twilio plugin, not in core `config/sms.cfg`.
+      - Tags: sms, twilio, plugins, providers, config
+    - [~] Implement Telico SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:04:27-04:00 priority: normal -->
       - Review `/Users/louis/Projects/LaswitchTech/core/lib/plugins/Helper.php` to find out about the Telico API.
-      - Tags: sms, telico, plugins, providers
+      - Telico-specific config defaults and credential keys should live with the Telico plugin, not in core `config/sms.cfg`.
+      - Tags: sms, telico, plugins, providers, config
 
 ## Validation
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
