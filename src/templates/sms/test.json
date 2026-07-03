@@ -1,0 +1,5 @@
+{
+  "name": "test",
+  "body": "{app_name}::Core-Web — {subject}\nSent at: {sent_at}\n\nThis is a test SMS from Core-Web.",
+  "availableVariables": ["subject", "app_name", "sent_at"]
+}

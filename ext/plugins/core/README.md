@@ -62,6 +62,45 @@ php cli core.db seed-smoke
 - Verifies the row was inserted correctly.
 - Reruns the seed to confirm idempotent skip behavior on the second execution.
 
+### core.smtp subcommands
+
+#### send <EMAIL_ADDRESS> <SUBJECT>
+
+Sends a test email via the configured SMTP provider using the default `test` template (`src/templates/mail/test.json`).
+
+```sh
+php cli core.smtp send user@example.com "Test subject"
+```
+
+- **Requirements**: SMTP must be configured and enabled in the application config. When no SMTP settings are present, the command returns an error (status 500).
+- **Variables injected into the template**: `subject`, `app_name` (from config), `sent_at` (current timestamp).
+- **Success**: prints `Mail to <EMAIL>: OK`
+- **Failure**: prints `core.smtp send FAILED: <reason>` with status 500.
+
+### core.sms subcommands
+
+#### send <PHONE> <SUBJECT>
+
+Sends a test SMS via the registered default SMS provider using the default `test` template (`src/templates/sms/test.json`).
+
+```sh
+php cli core.sms send +1234567890 "Test subject"
+```
+
+- **Requirements**: A default SMS provider must be registered in the config. When no provider is configured, the command returns an error (status 500).
+- **Variables injected into the template**: `subject`, `app_name` (from config), `sent_at` (current timestamp).
+- **Success**: prints `SMS to <PHONE>: OK (<message_id>)`
+- **Failure**: prints `SMS to <PHONE> FAILED: <reason>` with status 500.
+
+### Test Templates
+
+Both CLI commands render a default `test` template and pass the same variables:
+
+| Template | Path | Variables |
+|----------|------|-----------|
+| Mail     | `src/templates/mail/test.json` | `subject`, `app_name`, `sent_at` |
+| SMS      | `src/templates/sms/test.json` | `subject`, `app_name`, `sent_at` |
+
 ### core.extension subcommands
 
 #### list

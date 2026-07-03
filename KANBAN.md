@@ -167,22 +167,24 @@
     - [x] Load SMTP configuration from `config/smtp.cfg` <!-- created_at: 2026-07-02T19:16:00-04:00 completed_at: 2026-07-03T07:32:07-04:00 priority: high -->
     - [~] Implement SMTP mailer driver <!-- created_at: 2026-06-18T11:31:00-04:00 priority: high -->
       - SMTP provider, config DTO, mailer service, message envelope, address value object, attachment value objects, and Bootstrap container wiring are implemented.
-      - Remaining work: default test template, CLI smoke command, final end-to-end validation, and any production hardening discovered during SMTP testing.
+      - Remaining work: final end-to-end SMTP validation, smoke coverage for attachments/options, documentation, and any production hardening discovered during SMTP testing.
     - [~] Support plain text and HTML email bodies <!-- created_at: 2026-07-02T19:17:00-04:00 priority: high -->
       - Implemented in the SMTP body builder for plain text, HTML-only multipart alternative, and mixed messages with attachments; still pending live SMTP validation.
     - [x] Support reusable SMTP/email templates <!-- created_at: 2026-07-02T19:35:00-04:00 completed_at: 2026-07-03T07:32:18-04:00 priority: high -->
       - Templates should support consistent email communications with variable substitution for subject, plain text body, and HTML body.
       - Tags: email, smtp, templates
-    - [ ] Add default SMTP/email test template <!-- created_at: 2026-07-03T17:00:00-04:00 priority: normal -->
+    - [x] Add default SMTP/email test template <!-- created_at: 2026-07-03T17:00:00-04:00 completed_at: 2026-07-03T18:00:00-04:00 priority: normal -->
       - Provide a core-shipped default email template that can be used by smoke tests and `core.smtp send` validation. Template should include subject, plain text body, and HTML body with variable substitution.
+      - Created `src/templates/mail/test.json` at namespace `mail` with `{subject}`, `{app_name}`, `{sent_at}` placeholders covering plainBody and htmlBody.
       - Tags: email, smtp, templates, testing
     - [~] Support email attachments <!-- created_at: 2026-07-02T19:18:00-04:00 priority: normal -->
       - File and byte-array attachment value objects plus multipart attachment serialization are implemented; still pending smoke coverage and live validation.
     - [~] Support CC, BCC, Reply-To, From address, and From name options <!-- created_at: 2026-07-02T19:19:00-04:00 priority: normal -->
       - Envelope model and SMTP serialization support From, To, Cc, Bcc, Reply-To, and subject handling; still pending end-to-end validation.
     - [~] Document SMTP configuration, templates, and message options <!-- created_at: 2026-07-02T19:20:00-04:00 priority: normal -->
-    - [ ] Add `core.smtp send {EMAIL_ADDRESS} {SUBJECT}` CLI smoke command <!-- created_at: 2026-07-03T17:01:00-04:00 priority: high -->
+    - [x] Add `core.smtp send {EMAIL_ADDRESS} {SUBJECT}` CLI smoke command <!-- created_at: 2026-07-03T17:01:00-04:00 completed_at: 2026-07-03T18:00:00-04:00 priority: high -->
       - Add a temporary Core plugin CLI command for testing the SMTP service end-to-end using the configured SMTP provider and default email template. The command should accept a recipient email address and subject, then send a simple test email.
+      - Implemented closure-based CLI handler registered via `$router->command('core.smtp', ...)` in `ext/plugins/core/src/Core.php`; validates recipient (`@`) and subject; resolves `'mailer'` from container; loads `test` template from `mail` namespace and sends; returns clear success/failure/error text.
       - Tags: email, smtp, cli, testing
   - [~] SMS Provider System <!-- created_at: 2026-07-02T19:21:00-04:00 priority: high -->
     - SMS provider system should mirror the SMTP provider pattern while loading SMS-specific settings from `config/sms.cfg`.
@@ -193,16 +195,18 @@
     - [x] Support reusable SMS templates <!-- created_at: 2026-07-02T19:36:00-04:00 completed_at: 2026-07-03T07:32:40-04:00 priority: normal -->
       - Templates should support consistent SMS communications with variable substitution for message bodies.
       - Tags: sms, templates
-    - [ ] Add default SMS test template <!-- created_at: 2026-07-03T17:02:00-04:00 priority: normal -->
+    - [x] Add default SMS test template <!-- created_at: 2026-07-03T17:02:00-04:00 completed_at: 2026-07-03T18:00:00-04:00 priority: normal -->
       - Provide a core-shipped default SMS template that can be used by smoke tests and `core.sms send` validation. Template should include a body with variable substitution.
+      - Created `src/templates/sms/test.json` at namespace `sms` with `{subject}`, `{app_name}`, `{sent_at}` placeholders covering body text.
       - Tags: sms, templates, testing
     - [~] Document SMS provider configuration, templates, and plugin conventions <!-- created_at: 2026-07-02T19:24:00-04:00 priority: normal -->
     - [x] Keep core `config/sms.cfg` provider-agnostic <!-- created_at: 2026-07-03T17:03:00-04:00 completed_at: 2026-07-03T17:30:00-04:00 priority: high -->
       - Core `config/sms.cfg` should not include Twilio or Telico credential blocks by default. Provider-specific configuration should be supplied by dedicated provider plugins or documented plugin-local defaults.
       - Current core SMS config only keeps the default provider selector and SMS template namespace; Twilio and Telico credentials are no longer stored in core defaults.
       - Tags: sms, config, plugins, providers
-    - [ ] Add `core.sms send {PHONE} {SUBJECT}` CLI smoke command <!-- created_at: 2026-07-03T17:04:00-04:00 priority: high -->
+    - [x] Add `core.sms send {PHONE} {SUBJECT}` CLI smoke command <!-- created_at: 2026-07-03T17:04:00-04:00 completed_at: 2026-07-03T18:00:00-04:00 priority: high -->
       - Add a temporary Core plugin CLI command for testing the SMS service end-to-end using the configured default SMS provider and default SMS template. The command should accept a destination phone number and subject/test label, then send a simple test SMS.
+      - Implemented closure-based CLI handler registered via `$router->command('core.sms', ...)` in `ext/plugins/core/src/Core.php`; validates phone and subject; resolves `'sms_service'` from container; loads `test` template from `sms` namespace and sends; returns clear success/failure/error text.
       - Tags: sms, cli, testing
     - [~] Implement Twilio SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:03:54-04:00 priority: normal -->
       - Twilio-specific config defaults and credential keys should live with the Twilio plugin, not in core `config/sms.cfg`.

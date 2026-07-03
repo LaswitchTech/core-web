@@ -93,6 +93,113 @@ final class Core
             }
         });
 
+        /* ------------------------------------------------------------------ --/
+          /  core.smtp — smoke-test send via mailer                           */
+        /* ------------------------------------------------------------------ */
+
+        $router->command('core.smtp', static function ($req) use ($c): Response {
+            $subcmd = $req->arg(0);
+            if ($subcmd === null || $subcmd === '') {
+                return Response::text("Usage: core.smtp send <to> <subject>\n", 400);
+            }
+
+            switch ($subcmd) {
+                case 'send': {
+                    /** @var \Laswitchtech\CoreWeb\Mail\Mailer|null */
+                    $mailer = $c->resolve('mailer');
+                    if ($mailer === null) {
+                        return Response::text("SMTP is not enabled — cannot send mail.\n", 500);
+                    }
+
+                    $to      = trim($req->arg(1) ?? '');
+                    $subject = trim($req->arg(2) ?? '');
+
+                    if ($to === '' || !str_contains($to, '@')) {
+                        return Response::text("core.smtp send FAILED: recipient address required (must contain @)\n", 400);
+                    }
+                    if ($subject === '') {
+                        return Response::text("core.smtp send FAILED: subject is required\n", 400);
+                    }
+
+                    /** @var \Laswitchtech\CoreWeb\Message\EmailAddress $emailAddress */
+                    $emailAddress = new \Laswitchtech\CoreWeb\Message\EmailAddress($to, '');
+
+                    try {
+                        $mailer->sendTemplate(
+                            'test',
+                            [
+                                'subject'  => $subject,
+                                'app_name' => (string)\Laswitchtech\CoreWeb\Config::get('app.name', 'Core-Web App'),
+                                'sent_at'    => date('Y-m-d H:i:s T'),
+                            ],
+                            ['to' => [$emailAddress]],
+                        );
+
+                        return Response::text("Mail to {$to}: OK\n");
+                    } catch (\Throwable $e) {
+                        return Response::text("core.smtp send FAILED: {$e->getMessage()}\n", 500);
+                    }
+                }
+
+                default:
+                    return Response::text("Usage: core.smtp send <to> <subject>\n", 400);
+            }
+        });
+
+        /* ------------------------------------------------------------------ --/
+          /  core.sms — smoke-test send via sms_service                       */
+        /* ------------------------------------------------------------------ */
+
+        $router->command('core.sms', static function ($req) use ($c): Response {
+            $subcmd = $req->arg(0);
+            if ($subcmd === null || $subcmd === '') {
+                return Response::text("Usage: core.sms send <phone> <subject>\n", 400);
+            }
+
+            switch ($subcmd) {
+                case 'send': {
+                    /** @var \Laswitchtech\CoreWeb\Sms\SmsService|null */
+                    $sms = $c->resolve('sms_service');
+                    if ($sms === null) {
+                        return Response::text("SMS service is not enabled — cannot send SMS.\n", 500);
+                    }
+
+                    $phone = trim($req->arg(1) ?? '');
+                    $subject = trim($req->arg(2) ?? '');
+
+                    if ($phone === '') {
+                        return Response::text("core.sms send FAILED: phone number required\n", 400);
+                    }
+                    if ($subject === '') {
+                        return Response::text("core.sms send FAILED: subject is required\n", 400);
+                    }
+
+                    try {
+                        $result = $sms->sendTemplate(
+                            $phone,
+                            'test',
+                            [
+                                'subject'  => $subject,
+                                'app_name' => (string)\Laswitchtech\CoreWeb\Config::get('app.name', 'Core-Web App'),
+                                'sent_at'    => date('Y-m-d H:i:s T'),
+                            ],
+                        );
+
+                        if ($result->success) {
+                            return Response::text("SMS to {$phone}: OK ({$result->messageId})\n");
+                        }
+
+                        return Response::text("SMS to {$phone} FAILED: {$result->error}\n", 500);
+                    } catch (\Throwable $e) {
+                        return Response::text("core.sms send FAILED: {$e->getMessage()}\n", 500);
+                    }
+                }
+
+                default:
+                    return Response::text("Usage: core.sms send <phone> <subject>\n", 400);
+            }
+        });
+
         /* ------------------------------------------------------------------ */
 
     } // registerRoutes()
