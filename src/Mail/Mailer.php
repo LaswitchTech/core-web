@@ -71,7 +71,7 @@ final readonly class Mailer
         $resolved = $loaded->resolve($vars);
 
         // 3. Build from address: option > config default
-        $fromAddress = $options['from'] instanceof EmailAddress
+        $fromAddress = (($options['from'] ?? null) instanceof EmailAddress)
             ? $options['from']
             : new EmailAddress(
                 $this->config->fromAddress,
@@ -84,7 +84,7 @@ final readonly class Mailer
             to:         $options['to'] ?? [],
             cc:         $options['cc'] ?? [],
             bcc:        $options['bcc'] ?? [],
-            replyTo:    $options['replyTo'] ?? null,
+            replyTo:    ($options['replyTo'] ?? null) instanceof EmailAddress ? $options['replyTo'] : null,
             subject:    $resolved->subject !== null ? (string) $resolved->subject : '',
             attachments:$options['attachments'] ?? [],
             plainBody:  $resolved->plainBody !== null ? (string) $resolved->plainBody : ($resolved->body !== null ? (string) $resolved->body : ''),

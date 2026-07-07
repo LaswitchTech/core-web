@@ -1,0 +1,17 @@
+{
+    "name": "telico",
+    "type": "plugin",
+    "version": "1.0.0",
+    "description": "Telico SMS provider for Core-Web framework",
+    "author": "Laswitch Technologies",
+    "license": "MIT",
+    "hooks": [
+        "sms.provider.register::Laswitchtech\\CoreWeb\\Plugin\\TelicoPlugin::registerProvider"
+    ],
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\": "src/"
+        }
+    },
+    "kernel-compat": "^1.0"
+}

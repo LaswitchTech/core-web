@@ -34,6 +34,8 @@ use Laswitchtech\CoreWeb\Helper\Config as ConfigHelper;
 use Laswitchtech\CoreWeb\Helper\Registry as HelperRegistry;
 use Laswitchtech\CoreWeb\Helper\Bag;
 use Laswitchtech\CoreWeb\Manifest\Parser as ManifestParser;
+use Laswitchtech\CoreWeb\Message\Template\TemplateRegistry;
+use Laswitchtech\CoreWeb\Message\Template\TemplateRegistryInterface;
 
 /**
 
@@ -98,6 +100,8 @@ class Bootstrap
             $this->registerDbServices($c);
             $this->registerSeedingServices($c);
             $this->initExtensions();
+            $this->initTemplateRegistry();
+            $c = static::$instance;
             $this->registerMessagingServices($c);
             $this->registerHelperServices($c);
             $this->fireLifecycleHooks();
@@ -380,14 +384,18 @@ class Bootstrap
      */
     private function registerMessagingServices(Container $c): void
     {
-        // FileTemplateLoader — message template search paths (app → plugins → core)
+        // registry-based template loader — delegates to TemplateRegistry
 
-        $appRoot   = $this->resolveAppRoot();
-        $coreRoot  = dirname(__DIR__);
+        $c->registerSingleton('message_template_loader', static fn ($container) => new \Laswitchtech\CoreWeb\Message\Template\RegistryTemplateLoader(
+            $container->resolve('template_registry'),
+        ));
 
-        // Load smtp.cfg / sms.cfg as base defaults, then layer Config::get overrides on top.
+        // ── smtp/sms defaults ────────────────────────────────────────
+        // Read after template loader so the bootstrap chain (config → container → extensions → registry → messaging) stays intact.
 
-        $smtpDefaults  = [];
+        $appRoot = $this->resolveAppRoot();
+
+        $smtpDefaults = [];
         if (file_exists("{$appRoot}/config/smtp.cfg")) {
             $decoded = json_decode(file_get_contents("{$appRoot}/config/smtp.cfg"), true);
             if (is_array($decoded)) {
@@ -395,36 +403,13 @@ class Bootstrap
             }
         }
 
-        $smsDefaults  = [];
+        $smsDefaults = [];
         if (file_exists("{$appRoot}/config/sms.cfg")) {
             $decoded = json_decode(file_get_contents("{$appRoot}/config/sms.cfg"), true);
             if (is_array($decoded)) {
                 $smsDefaults = $decoded;
             }
         }
-
-        $pluginRoots  = [];
-        // Build plugin roots from enabled plugin entries in extension_index.
-
-        $extIndex = static::$instance->resolve('extension_index');
-        foreach (($extIndex ?? []) as $entry) {
-            if (!is_array($entry)) {
-                continue;
-            }
-            if (($entry['type'] ?? null) !== 'plugin') {
-                continue;
-            }
-            if (empty($entry['directory']) || !is_dir((string) $entry['directory'])) {
-                continue;
-            }
-            $pluginRoots[] = (string) $entry['directory'];
-        }
-
-        $c->registerSingleton('message_template_loader', static fn ($container) => new \Laswitchtech\CoreWeb\Message\Template\FileTemplateLoader(
-            appRoot:     $appRoot,
-            coreRoot:    $coreRoot,
-            pluginRoots: $pluginRoots,
-        ));
 
         // ── smtp_config ───────────────────────────────────────────────
         // Reads from Config::get('smtp.*'). Returns a disabled config when enabled is falsy.
@@ -642,6 +627,110 @@ class Bootstrap
     private function initExtensions(): void
     {
         $this->registerExtensions();
+    }
+
+    /**
+     * Initialize the template registry with core (vendor) templates AND any
+     * enabled extension templates.
+     *
+     * Priority order (higher = wins):
+     *   400 — app theme        (app > kernel, theme > plugin)
+     *   300 — app plugin
+     *   200 — kernel theme
+     *   100 — kernel plugin
+     *     0 — core (vendor)
+     *
+     * Registration uses the ``extension_index`` binding produced by
+     * ``registerExtensions()``; only enabled extensions are visited.
+     */
+    private function initTemplateRegistry(): void
+    {
+        $c = static::$instance;
+        if ($c === null) {
+            throw new \RuntimeException('Container not yet initialized when initTemplateRegistry() runs.');
+        }
+
+        // Create registry and store in container.
+        $registry = new TemplateRegistry();
+        $c->set('template_registry', $registry);
+
+        // ── 1. Register core (vendor) templates -----------------------------
+        $coreRoot = defined('CORE_WEB_ROOT') ? (string) CORE_WEB_ROOT : dirname(__DIR__);
+
+        foreach (['mail', 'sms'] as $namespace) {
+            $templateDir = "{$coreRoot}/templates/{$namespace}";
+
+            if (!is_dir($templateDir)) {
+                continue;
+            }
+
+            foreach (scandir($templateDir) as $file) {
+                if (!str_ends_with($file, '.json')) {
+                    continue;
+                }
+
+                $templateName = basename($file, '.json');
+
+                $registry->register(
+                    namespace:  'mail',
+                    template:   $templateName,
+                    path:       realpath("{$templateDir}/{$file}"),
+                    priority:   0,
+                    origin:     'core',
+                    extension:  null,
+                );
+            }
+        }
+
+        // ── 2. Register enabled extension templates -------------------------
+        $extIndex = static::$instance->resolve('extension_index');
+        if ($extIndex !== null && isset($extIndex) && is_object($extIndex)) {
+            foreach ($extIndex as $name => $meta) {
+                // Extract fields from the associative-array storage.
+                $type      = $meta['type'];
+                $origin    = $meta['origin'];
+                $directory = $meta['directory'];
+
+                // Build origin string and priority based on type → origin × type cross-product.
+                if ($type === 'plugin') {
+                    $originStr = "{$origin}-plugin";
+                    $priority  = $origin === 'kernel' ? 100 : 300;
+                } else {
+                    // theme
+                    $originStr = "{$origin}-theme";
+                    $priority  = $origin === 'kernel' ? 200 : 400;
+                }
+
+                foreach (['mail', 'sms'] as $namespace) {
+                    $templateDir = "{$directory}/templates/{$namespace}";
+
+                    if (!is_dir($templateDir)) {
+                        continue;
+                    }
+
+                    foreach (scandir($templateDir) as $file) {
+                        if (!str_ends_with($file, '.json')) {
+                            continue;
+                        }
+
+                        $templateName = basename($file, '.json');
+
+                        $registry->register(
+                            namespace:  $namespace,
+                            template:   $templateName,
+                            path:       realpath("{$templateDir}/{$file}"),
+                            priority:   $priority,
+                            origin:     $originStr,
+                            extension:  $name === '' ? null : $name,
+                        );
+                    }
+                }
+            }
+        }
+
+        // ── 3. Bind the registry for later consumption ----------------------
+        // (already bound at line 670 above; here we keep it idempotent-safe by
+        // simply leaving the instance in place.)
     }
 
     /**

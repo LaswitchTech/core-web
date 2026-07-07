@@ -169,6 +169,7 @@ The Bootstrap class binds exactly these keys into the container (in registration
 | `extension_base` | first existing `ext/` directory, or `null` | `registerExtensions()` |
 | `hook_registry` | `\Laswitchtech\CoreWeb\Hook\Registry()` (empty or populated) | `registerExtensions()` |
 | `extension_index` | `<object>` of `{name => [type, version, directory, depends]}` | `registerExtensions()` |
+| `template_registry` | `\Laswitchtech\CoreWeb\Message\Template\Registry` instance | `initTemplateRegistry()` |
 | `renderer_registry` | `Renderer\Registry` instance | `initRenderer()` |
 | `renderer_engine_registry` | `Renderer\Engine\Registry` instance | `initRenderer()` |
 | `renderer` | `Renderer` instance wired with both registries | `initRenderer()` |
@@ -208,8 +209,8 @@ For every manifest with non-empty hooks:
 
 1. If the extension has a `src/` directory, register an autoloader for it.
 2. For each hook entry in manifest:
-   - Simple name (e.g., `"my.hook"`) → registers as a named stub on `Hook\Registry`.
-   - Dotted namespace (e.g., `"layout.header::app.MyView"`) → calls `$registry->addClassCall('layout.header', 'MyView', 0)`.
+    - Simple name (e.g., `"my.hook"`) → registers as a named stub on `Hook\Registry`.
+    - Dotted namespace (e.g., `"layout.header::app.MyView"`) → calls `$registry->addClassCall('layout.header', 'MyView', 0)`.
 
 For every manifest with non-empty layouts:
 
@@ -218,6 +219,10 @@ For every manifest with non-empty layouts:
 #### Extension Index
 
 After all manifests are processed, an index is built and bound into the container as a stdClass object containing `{name => [type, version, directory]}` for each successfully parsed extension.
+
+#### Template Registry Initialization
+
+During bootstrap initialization, the `initTemplateRegistry()` method scans all discovered extensions in the extension index for template files. Templates are loaded according to their priority within the registry (kernel-plugin=100, kernel-theme=200, app-plugin=300, app-theme=400, core=0) and are registered under the appropriate namespace (`mail` or `sms`). This ensures that extensions can override core templates while maintaining a single point of template discovery.
 
 ---
 

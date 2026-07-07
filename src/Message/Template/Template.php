@@ -51,10 +51,10 @@ final readonly class Template
 
         return new self(
             name:           $this->name,  // template identifiers are not substituted
-            subject:        is_string($this->subject) ? (preg_replace($pattern, $resolver, $this->subject) ?? $this->subject) : $this->subject,
-            plainBody:      is_string($this->plainBody) ? (preg_replace($pattern, $resolver, $this->plainBody) ?? $this->plainBody) : $this->plainBody,
-            htmlBody:       is_string($this->htmlBody)  ? (preg_replace($pattern, $resolver, $this->htmlBody)  ?? $this->htmlBody)  : $this->htmlBody,
-            body:           is_string($this->body)      ? (preg_replace($pattern, $resolver, $this->body)      ?? $this->body)      : $this->body,
+            subject:        is_string($this->subject) ? preg_replace_callback($pattern, $resolver, $this->subject) : $this->subject,
+            plainBody:      is_string($this->plainBody) ? preg_replace_callback($pattern, $resolver, $this->plainBody) : $this->plainBody,
+            htmlBody:       is_string($this->htmlBody)  ? preg_replace_callback($pattern, $resolver, $this->htmlBody)  : $this->htmlBody,
+            body:           is_string($this->body)      ? preg_replace_callback($pattern, $resolver, $this->body)      : $this->body,
             availableVariables: $this->availableVariables,
         );
     }

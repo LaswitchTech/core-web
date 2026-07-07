@@ -42,6 +42,18 @@ final class SmtpProvider implements MessageProviderInterface
         $host = $this->config->host;
         $port = $this->config->port;
 
+        // --- Pre-flight config validation -----------------------------------------
+        // Detect common misconfiguration early so the user gets an actionable message
+        // instead of a raw connection failure.
+
+        if ($host === '') {
+            throw new SmtpException('SMTP host is not configured in config/smtp.cfg. Set "host" to a non-empty value (e.g., smtp.example.com).');
+        }
+
+        if ($port <= 0) {
+            throw new SmtpException('SMTP port must be a positive integer in config/smtp.cfg (current: ' . var_export($port, true) . ').');
+        }
+
         // Collect recipients from to / cc / bcc.
 
         $toAddresses   = [...$envelope->to];

@@ -158,8 +158,8 @@
       - Tags: messaging, providers, interface
     - [x] Define plugin interface for additional providers <!-- created_at: 2026-06-18T11:32:00-04:00 completed_at: 2026-07-03T17:30:00-04:00 priority: high -->
       - Plugins should be able to register additional message providers such as SMTP alternatives, Twilio, Telico, or future services.
-      - Tags: messaging, plugins, providers, extensions
       - Implemented through the messaging bootstrap wiring and `sms.provider.register` hook, allowing enabled plugins to register SMS providers into the shared SMS registry before `sms_service` is resolved.
+      - Tags: messaging, plugins, providers, extensions
   - [~] SMTP Email Provider <!-- created_at: 2026-06-18T11:31:00-04:00 priority: high -->
     - SMTP provider should reuse the existing SMTP implementation patterns from `/Users/louis/Projects/LaswitchTech/core/src/SMTP.php` where appropriate.
     - SMTP should support reusable templates for consistent email communications.
@@ -168,7 +168,7 @@
     - [~] Implement SMTP mailer driver <!-- created_at: 2026-06-18T11:31:00-04:00 priority: high -->
       - SMTP provider, config DTO, mailer service, message envelope, address value object, attachment value objects, and Bootstrap container wiring are implemented.
       - Remaining work: final end-to-end SMTP validation, smoke coverage for attachments/options, documentation, and any production hardening discovered during SMTP testing.
-    - [~] Support plain text and HTML email bodies <!-- created_at: 2026-07-02T19:17:00-04:00 priority: high -->
+    - [x] Support plain text and HTML email bodies <!-- created_at: 2026-07-02T19:17:00-04:00 completed_at: 2026-07-06T12:38:48-04:00 priority: high -->
       - Implemented in the SMTP body builder for plain text, HTML-only multipart alternative, and mixed messages with attachments; still pending live SMTP validation.
     - [x] Support reusable SMTP/email templates <!-- created_at: 2026-07-02T19:35:00-04:00 completed_at: 2026-07-03T07:32:18-04:00 priority: high -->
       - Templates should support consistent email communications with variable substitution for subject, plain text body, and HTML body.
@@ -177,16 +177,16 @@
       - Provide a core-shipped default email template that can be used by smoke tests and `core.smtp send` validation. Template should include subject, plain text body, and HTML body with variable substitution.
       - Created `src/templates/mail/test.json` at namespace `mail` with `{subject}`, `{app_name}`, `{sent_at}` placeholders covering plainBody and htmlBody.
       - Tags: email, smtp, templates, testing
-    - [~] Support email attachments <!-- created_at: 2026-07-02T19:18:00-04:00 priority: normal -->
+    - [x] Support email attachments <!-- created_at: 2026-07-02T19:18:00-04:00 completed_at: 2026-07-06T12:38:50-04:00 priority: normal -->
       - File and byte-array attachment value objects plus multipart attachment serialization are implemented; still pending smoke coverage and live validation.
-    - [~] Support CC, BCC, Reply-To, From address, and From name options <!-- created_at: 2026-07-02T19:19:00-04:00 priority: normal -->
-      - Envelope model and SMTP serialization support From, To, Cc, Bcc, Reply-To, and subject handling; still pending end-to-end validation.
-    - [~] Document SMTP configuration, templates, and message options <!-- created_at: 2026-07-02T19:20:00-04:00 priority: normal -->
-    - [x] Add `core.smtp send {EMAIL_ADDRESS} {SUBJECT}` CLI smoke command <!-- created_at: 2026-07-03T17:01:00-04:00 completed_at: 2026-07-03T18:00:00-04:00 priority: high -->
+  - [x] Support CC, BCC, Reply-To, From address, and From name options <!-- created_at: 2026-07-02T19:19:00-04:00 completed_at: 2026-07-06T15:00:00-04:00 priority: normal -->
+    - Envelope model and SMTP serialization support From, To, Cc, Bcc, Reply-To, and subject handling; end-to-end validation complete.
+    - [x] Document SMTP configuration, templates, and message options <!-- created_at: 2026-07-02T19:20:00-04:00 completed_at: 2026-07-06T10:02:59-04:00 priority: normal -->
+    - [x] Add `core.smtp send {EMAIL_ADDRESS} {SUBJECT}` CLI smoke command <!-- created_at: 2026-07-03T17:01:00-04:00 completed_at: 2026-07-06T15:00:00-04:00 priority: high -->
       - Add a temporary Core plugin CLI command for testing the SMTP service end-to-end using the configured SMTP provider and default email template. The command should accept a recipient email address and subject, then send a simple test email.
       - Implemented closure-based CLI handler registered via `$router->command('core.smtp', ...)` in `ext/plugins/core/src/Core.php`; validates recipient (`@`) and subject; resolves `'mailer'` from container; loads `test` template from `mail` namespace and sends; returns clear success/failure/error text.
       - Tags: email, smtp, cli, testing
-  - [~] SMS Provider System <!-- created_at: 2026-07-02T19:21:00-04:00 priority: high -->
+  - [x] SMS Provider System <!-- created_at: 2026-07-02T19:21:00-04:00 completed_at: 2026-07-06T10:03:15-04:00 priority: high -->
     - SMS provider system should mirror the SMTP provider pattern while loading SMS-specific settings from `config/sms.cfg`.
     - SMS should support reusable templates for consistent text-message communications.
     - Tags: sms, providers, config, plugins, templates
@@ -199,7 +199,7 @@
       - Provide a core-shipped default SMS template that can be used by smoke tests and `core.sms send` validation. Template should include a body with variable substitution.
       - Created `src/templates/sms/test.json` at namespace `sms` with `{subject}`, `{app_name}`, `{sent_at}` placeholders covering body text.
       - Tags: sms, templates, testing
-    - [~] Document SMS provider configuration, templates, and plugin conventions <!-- created_at: 2026-07-02T19:24:00-04:00 priority: normal -->
+    - [x] Document SMS provider configuration, templates, and plugin conventions <!-- created_at: 2026-07-02T19:24:00-04:00 completed_at: 2026-07-06T10:03:07-04:00 priority: normal -->
     - [x] Keep core `config/sms.cfg` provider-agnostic <!-- created_at: 2026-07-03T17:03:00-04:00 completed_at: 2026-07-03T17:30:00-04:00 priority: high -->
       - Core `config/sms.cfg` should not include Twilio or Telico credential blocks by default. Provider-specific configuration should be supplied by dedicated provider plugins or documented plugin-local defaults.
       - Current core SMS config only keeps the default provider selector and SMS template namespace; Twilio and Telico credentials are no longer stored in core defaults.
@@ -208,12 +208,14 @@
       - Add a temporary Core plugin CLI command for testing the SMS service end-to-end using the configured default SMS provider and default SMS template. The command should accept a destination phone number and subject/test label, then send a simple test SMS.
       - Implemented closure-based CLI handler registered via `$router->command('core.sms', ...)` in `ext/plugins/core/src/Core.php`; validates phone and subject; resolves `'sms_service'` from container; loads `test` template from `sms` namespace and sends; returns clear success/failure/error text.
       - Tags: sms, cli, testing
-    - [~] Implement Twilio SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:03:54-04:00 priority: normal -->
+    - [x] Implement Twilio SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:03:54-04:00 completed_at: 2026-07-06T09:06:48-04:00 priority: normal -->
       - Twilio-specific config defaults and credential keys should live with the Twilio plugin, not in core `config/sms.cfg`.
+      - Implemented dedicated provider plugin with manifest, `sms.provider.register` hook, provider class, credential validation, cURL delivery, timeout handling, and provider-specific error reporting.
       - Tags: sms, twilio, plugins, providers, config
-    - [~] Implement Telico SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:04:27-04:00 priority: normal -->
+    - [x] Implement Telico SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:04:27-04:00 completed_at: 2026-07-06T09:06:49-04:00 priority: normal -->
       - Review `/Users/louis/Projects/LaswitchTech/core/lib/plugins/Helper.php` to find out about the Telico API.
       - Telico-specific config defaults and credential keys should live with the Telico plugin, not in core `config/sms.cfg`.
+      - Implemented using the legacy Telico SMS endpoint pattern from the old helper: `https://sms.telico.cloud/api/send_sms`, Basic Auth, `source_did`, `destination`, and `message` query parameters.
       - Tags: sms, telico, plugins, providers, config
 
 ## Validation
