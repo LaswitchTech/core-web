@@ -19,13 +19,13 @@ final class RegistryTemplateLoader implements TemplateLoaderInterface
     /** @throws RuntimeException when the template is not found */
     public function has(string $name, string $namespace = 'mail'): bool
     {
-        return $this->registry->find($name, $namespace) !== null;
+        return $this->registry->find($namespace, $name) !== null;
     }
 
     /** @throws RuntimeException when the file is missing or JSON is invalid */
     public function load(string $name, string $namespace = 'mail'): Template
     {
-        $entry = $this->registry->find($name, $namespace);
+        $entry = $this->registry->find($namespace, $name);
 
         if ($entry === null) {
             throw new RuntimeException(
@@ -33,7 +33,7 @@ final class RegistryTemplateLoader implements TemplateLoaderInterface
             );
         }
 
-        $path = $entry->getPath();
+        $path = $entry->path;
 
         if (!is_file($path)) {
             throw new RuntimeException(
