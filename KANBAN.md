@@ -1,28 +1,6 @@
 # Kanban
 
 ## Todo <!-- hide: archive -->
-- [ ] CLI System <!-- created_at: 2026-06-18T13:00:00-04:00 priority: normal -->
-  - Tags: framework, cli, v.1.0
-  - [ ] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
-    - Command infrastructure built on top of the unified Router. Responsible for command discovery, argument parsing, command metadata, help output, and extension command registration.
-    - Tags: feature
-    - [ ] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [ ] Implement plugin discovery for CLI commands alongside core kernel commands <!-- created_at: 2026-06-18T13:03:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
-  - [ ] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - Bootstrap commands for testing, configuring, and managing the framework.
-    - Tags: feature
-    - [ ] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [ ] `core.auth create-user <username> <password>` — create admin users from CLI <!-- created_at: 2026-06-18T13:07:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [x] `core.db connect` — test configured database connectivity <!-- created_at: 2026-06-30T14:52:13-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
-      - Implemented in temporary Core plugin as `php cli core.db connect`. It validates the active configured driver using the Database facade and `SELECT 1 AS ok`. Driver reconfiguration flags (`--path`, `--dsn`) remain deferred to the permanent CLI command framework. <!-- created_at: 2026-06-18T13:08:00-04:00 completed_at: 2026-06-30T14:41:55-04:00 priority: normal -->
-    - [x] `core.db read/create/update/delete` — temporary database CRUD CLI commands <!-- created_at: 2026-06-30T00:00:00-04:00 completed_at: 2026-06-30T14:42:00-04:00 priority: normal -->
-      - Implemented in temporary Core plugin as a single `core.db` dispatcher with subcommands: `read`, `create`, `update`, `delete`, and `smoke`. CRUD commands use the Database facade and query builders, validate table/column names, support a single quoted WHERE expression for read/update/delete, require WHERE for update/delete safety, and output JSON for reads.
-      - Validation: `php cli core.db connect` returns `Database OK: <driver>` and `php cli core.db smoke` returns `Core DB Smoke OK`.
-    - [ ] `core.config show --key=<path.to.key>` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [ ] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Generates Apache, Nginx, and IIS router configuration files during installation so users can deploy on any supported web server without manual routing setup.
-    - [x] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
 - [ ] Presentation Layer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Centralize renderer runtime settings so applications can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
   - Tags: framework, ui, renderer, config
@@ -145,22 +123,56 @@
     - Document and align precedence rules across registries, including provider precedence, priority ordering, insertion order, and explicit override behavior.
   - [ ] Review broader namespace grouping opportunities <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
     - Evaluate whether other related classes should also be grouped by domain or subsystem in Version 2.0 without disrupting the V1.0 public API.
-- [ ] MCP Integration
+- [ ] MCP Integration <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
   - Description: Add Model Context Protocol support for exposing Core-Web tools, resources, prompts, and application actions to AI agents.
-  - Tags: framework, mcp, ai-agents, integrations, v.2.0
   - priority: normal
   - Subtasks:
-    - [ ] Research MCP server architecture for PHP/Core-Web
-    - [ ] Define MCP transport strategy
-    - [ ] Design MCP tool registry
-    - [ ] Expose selected CLI commands as MCP tools
-    - [ ] Expose safe application resources through MCP
-    - [ ] Add permission and authentication model for MCP access
-    - [ ] Add MCP configuration keys
-    - [ ] Add MCP smoke tests and documentation
+  - Tags: framework, mcp, ai-agents, integrations, v.2.0
+  - [ ] Research MCP server architecture for PHP/Core-Web <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+    - [ ] Define MCP transport strategy <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+    - [ ] Design MCP tool registry <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+    - [ ] Expose selected CLI commands as MCP tools <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+    - [ ] Expose safe application resources through MCP <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+    - [ ] Add permission and authentication model for MCP access <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+    - [ ] Add MCP configuration keys <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+    - [ ] Add MCP smoke tests and documentation <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
 
 ## In Progress
-- [~] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+- [ ] CLI System <!-- created_at: 2026-06-18T13:00:00-04:00 priority: normal -->
+  - Tags: framework, cli, v.1.0
+  - [ ] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+    - Command infrastructure built on top of the unified Router. Responsible for command discovery, argument parsing, command metadata, help output, and extension command registration.
+    - Tags: feature
+    - [ ] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [ ] Implement plugin discovery for CLI commands alongside core kernel commands <!-- created_at: 2026-06-18T13:03:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+  - [ ] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - Bootstrap commands for testing, configuring, and managing the framework.
+    - Tags: feature
+    - [ ] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [ ] `core.auth create-user <username> <password>` — create admin users from CLI <!-- created_at: 2026-06-18T13:07:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] `core.db connect` — test configured database connectivity <!-- created_at: 2026-06-30T14:52:13-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
+      - Implemented in temporary Core plugin as `php cli core.db connect`. It validates the active configured driver using the Database facade and `SELECT 1 AS ok`. Driver reconfiguration flags (`--path`, `--dsn`) remain deferred to the permanent CLI command framework. <!-- created_at: 2026-06-18T13:08:00-04:00 completed_at: 2026-06-30T14:41:55-04:00 priority: normal -->
+    - [x] `core.db read/create/update/delete` — temporary database CRUD CLI commands <!-- created_at: 2026-06-30T00:00:00-04:00 completed_at: 2026-06-30T14:42:00-04:00 priority: normal -->
+      - Implemented in temporary Core plugin as a single `core.db` dispatcher with subcommands: `read`, `create`, `update`, `delete`, and `smoke`. CRUD commands use the Database facade and query builders, validate table/column names, support a single quoted WHERE expression for read/update/delete, require WHERE for update/delete safety, and output JSON for reads.
+      - Validation: `php cli core.db connect` returns `Database OK: <driver>` and `php cli core.db smoke` returns `Core DB Smoke OK`.
+    - [ ] `core.config show --key=<path.to.key>` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [ ] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Generates Apache, Nginx, and IIS router configuration files during installation so users can deploy on any supported web server without manual routing setup.
+    - [x] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
+
+## Validation
+- [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+  - Tags: testing
+  - [ ] Full cross-platform routing validation <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
+    - Future enhancement: test routing across Apache, Nginx, and IIS in CI with the skeleton application on localhost.
+    - Tags: testing
+  - [ ] Add Bootstrap smoke tests <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
+    - Validate `php cli` boots successfully and triggers the Hello World plugin.
+    - Validate browser load triggers the Hello World plugin in WEB mode.
+
+## Done
+- [x] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-08T17:00:14-04:00 priority: normal -->
   - Extensible outbound messaging subsystem for email and SMS providers. Email configuration should be loaded from `config/smtp.cfg`; SMS configuration should be loaded from `config/sms.cfg`.
   - Tags: framework, messaging, email, sms, providers, v.1.0
   - [x] Message Provider Interface <!-- created_at: 2026-06-18T11:30:00-04:00 completed_at: 2026-07-03T17:30:00-04:00 priority: normal -->
@@ -210,7 +222,7 @@
       - Tags: sms, templates
     - [x] Add default SMS test template <!-- created_at: 2026-07-03T17:02:00-04:00 completed_at: 2026-07-03T18:00:00-04:00 priority: normal -->
       - Provide a core-shipped default SMS template that can be used by smoke tests and `core.sms send` validation. Template should include a body with variable substitution.
-       - Created `Templates/sms/Default.json` at namespace `sms` with `{subject}`, `{app_name}`, `{sent_at}` placeholders covering body text.
+      - Created `Templates/sms/Default.json` at namespace `sms` with `{subject}`, `{app_name}`, `{sent_at}` placeholders covering body text.
       - Tags: sms, templates, testing
     - [x] Document SMS provider configuration, templates, and plugin conventions <!-- created_at: 2026-07-02T19:24:00-04:00 completed_at: 2026-07-06T10:03:07-04:00 priority: normal -->
     - [x] Keep core `config/sms.cfg` provider-agnostic <!-- created_at: 2026-07-03T17:03:00-04:00 completed_at: 2026-07-03T17:30:00-04:00 priority: high -->
@@ -230,18 +242,6 @@
       - Telico-specific config defaults and credential keys should live with the Telico plugin, not in core `config/sms.cfg`.
       - Implemented using the legacy Telico SMS endpoint pattern from the old helper: `https://sms.telico.cloud/api/send_sms`, Basic Auth, `source_did`, `destination`, and `message` query parameters.
       - Tags: sms, telico, plugins, providers, config
-
-## Validation
-- [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Tags: testing
-  - [ ] Full cross-platform routing validation <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
-    - Future enhancement: test routing across Apache, Nginx, and IIS in CI with the skeleton application on localhost.
-    - Tags: testing
-  - [ ] Add Bootstrap smoke tests <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
-    - Validate `php cli` boots successfully and triggers the Hello World plugin.
-    - Validate browser load triggers the Hello World plugin in WEB mode.
-
-## Done
 - [x] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-02T15:32:46-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
   - Tags: framework, extensions, v.1.0
   - [x] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 completed_at: 2026-07-01T15:19:16-04:00 priority: high -->
