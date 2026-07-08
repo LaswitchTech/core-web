@@ -66,14 +66,14 @@ php cli core.db seed-smoke
 
 #### send <EMAIL_ADDRESS> <SUBJECT>
 
-Sends a test email via the configured SMTP provider using the default `test` template (`src/templates/mail/test.json`).
+Sends a test email via the configured SMTP provider using the default `Default` template (`Templates/mail/Default.json`).
 
 ```sh
 php cli core.smtp send user@example.com "Test subject"
 ```
 
 - **Requirements**: SMTP must be configured and enabled in the application config. When no SMTP settings are present, the command returns an error (status 500).
-- **Variables injected into the template**: `subject`, `app_name` (from config), `sent_at` (current timestamp).
+- **Variables injected into the template**: `AppName`, `Subject`, `RecipientName`, `Body`, `Greetings`, `AppUrl`, `CurrentYear`, `Preheader`, `ActionUrl`, `ActionLabel`, `TermsUrl`, `PrivacyUrl`, `SupportUrl`, `Copyright`, `AppLogo`.
 - **Success**: prints `Mail to <EMAIL>: OK`
 - **Failure**: prints `core.smtp send FAILED: <reason>` with status 500.
 
@@ -81,7 +81,7 @@ php cli core.smtp send user@example.com "Test subject"
 
 #### send <PHONE> <SUBJECT>
 
-Sends a test SMS via the registered default SMS provider using the default `test` template (`src/templates/sms/test.json`).
+Sends a test SMS via the registered default SMS provider using the default `Default` template (`Templates/sms/Default.json`).
 
 ```sh
 php cli core.sms send +1234567890 "Test subject"
@@ -94,12 +94,12 @@ php cli core.sms send +1234567890 "Test subject"
 
 ### Test Templates
 
-Both CLI commands render a default `test` template and pass the same variables:
+The CLI commands use different default templates:
 
 | Template | Path | Variables |
 |----------|------|-----------|
-| Mail     | `src/templates/mail/test.json` | `subject`, `app_name`, `sent_at` |
-| SMS      | `src/templates/sms/test.json` | `subject`, `app_name`, `sent_at` |
+| Mail     | `Templates/mail/Default.json` | `AppName`, `Subject`, `RecipientName`, `Body`, `Greetings`, `AppUrl`, `CurrentYear`, `Preheader`, `ActionUrl`, `ActionLabel`, `TermsUrl`, `PrivacyUrl`, `SupportUrl`, `Copyright`, `AppLogo` |
+| SMS      | `Templates/sms/Default.json` | `subject`, `app_name`, `sent_at` |
 
 ### core.extension subcommands
 

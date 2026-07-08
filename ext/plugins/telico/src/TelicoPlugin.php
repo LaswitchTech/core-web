@@ -22,7 +22,7 @@ final class TelicoPlugin
 
         try {
             // Load config directly from Config class as required
-            $telicoConfig = Config::get('sms.providers.telico', []);
+            $telicoConfig = Config::get('sms.providers.telico', Config::get('telico', []));
             
             // Ensure config is an array
             if (!\is_array($telicoConfig)) {
@@ -33,7 +33,8 @@ final class TelicoPlugin
             $provider = new TelicoProvider($telicoConfig);
             $registry->register($provider, 'plugin', 0);
         } catch (\Throwable $e) {
-            // Silently fail to register - don't break the system
+            // Log the exception before returning - no silent failures
+            error_log("TelicoPlugin::registerProvider failed: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
             return;
         }
     }

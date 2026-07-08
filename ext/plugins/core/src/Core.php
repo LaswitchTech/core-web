@@ -126,11 +126,23 @@ final class Core
 
                     try {
                         $mailer->sendTemplate(
-                            'test',
+                            'Default',
                             [
-                                'subject'  => $subject,
-                                'app_name' => (string)\Laswitchtech\CoreWeb\Config::get('app.name', 'Core-Web App'),
-                                'sent_at'    => date('Y-m-d H:i:s T'),
+                                'AppName' => (string)\Laswitchtech\CoreWeb\Config::get('app.name', 'Core-Web App'),
+                                'Subject' => $subject,
+                                'RecipientName' => 'Test Recipient',
+                                'Body' => 'This is a test email from Core-Web.',
+                                'Greetings' => 'Best regards, Test Team',
+                                'AppUrl' => (string)\Laswitchtech\CoreWeb\Config::get('app.url', ''),
+                                'CurrentYear' => date('Y'),
+                                'Preheader' => 'Test email preview text',
+                                'ActionUrl' => '',
+                                'ActionLabel' => '',
+                                'TermsUrl' => (string)\Laswitchtech\CoreWeb\Config::get('app.url', '') . '/terms-and-conditions',
+                                'PrivacyUrl' => (string)\Laswitchtech\CoreWeb\Config::get('app.url', '') . '/privacy-statement',
+                                'SupportUrl' => (string)\Laswitchtech\CoreWeb\Config::get('app.url', '') . '/support',
+                                'Copyright' => 'Core-Web App Copyright',
+                                'AppLogo' => '',
                             ],
                             ['to' => [$emailAddress]],
                         );
@@ -177,7 +189,7 @@ final class Core
                     try {
                         $result = $sms->sendTemplate(
                             $phone,
-                            'test',
+                            'Default',
                             [
                                 'subject'  => $subject,
                                 'app_name' => (string)\Laswitchtech\CoreWeb\Config::get('app.name', 'Core-Web App'),
@@ -194,6 +206,8 @@ final class Core
                         return Response::text("core.sms send FAILED: {$e->getMessage()}\n", 500);
                     }
                 }
+
+
 
                 default:
                     return Response::text("Usage: core.sms send <phone> <subject>\n", 400);

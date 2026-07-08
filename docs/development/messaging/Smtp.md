@@ -56,11 +56,11 @@ Email templates are resolved through a centralized template registry populated d
 
 ```json
 {
-  "name": "test",
-  "subject": "{app_name}::Core-Web — {subject}",
-  "plainBody": "Subject: {subject}\nApplication: {app_name}::Core-Web\nSent at: {sent_at}\n\nThis is a test email from Core-Web.",
-  "htmlBody": "<h1>{app_name}::Core-Web</h1><p>Subject: {subject}</p><p>Sent at: {sent_at}</p><p>This is a test email from Core-Web.</p>",
-  "availableVariables": ["subject", "app_name", "sent_at"]
+  "name": "Default",
+  "subject": "{AppName} — {Subject}",
+  "plainBody": "Subject: {Subject}\nApplication: {AppName}\nSent at: {CurrentYear}\n\n{Body}",
+  "htmlBody": "<h1>{AppName}</h1><p>Subject: {Subject}</p><p>Sent at: {CurrentYear}</p><p>{Body}</p>",
+  "availableVariables": ["AppName", "Subject", "RecipientName", "Body", "Greetings", "AppUrl", "CurrentYear", "Preheader", "ActionUrl", "ActionLabel", "TermsUrl", "PrivacyUrl", "SupportUrl", "Copyright", "AppLogo"]
 }
 ```
 
@@ -141,7 +141,7 @@ php cli core.smtp send "user@example.com" "Test Subject"
 - Validates that recipient email address contains `@` symbol
 - Validates that subject is not empty  
 - Resolves `'mailer'` service from DI container
-- Loads template named `test` from configured `template_namespace` through the template registry
+- Loads template named `Default` from configured `template_namespace` through the template registry
 - Sends the email using the SMTP provider
 - Returns clear success/failure text
 

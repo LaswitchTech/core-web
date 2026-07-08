@@ -33,7 +33,7 @@ The `template_namespace` setting in `config/sms.cfg` determines where SMS templa
 
 1. **Core templates** (from vendor packages)
 2. **Extension templates** (enabled plugins)
-3. **Application templates** (app/templates/sms/)
+3. **Application templates** (Templates/sms/)
 
 Templates from extensions can override core templates based on priority order.
 
@@ -47,7 +47,7 @@ SMS templates are located within plugin or application template directories foll
 
 ```json
 {
-  "name": "test",
+  "name": "Default",
   "body": "{app_name}::Core-Web — {subject}\nSent at: {sent_at}\n\nThis is a test SMS from Core-Web.",
   "availableVariables": ["subject", "app_name", "sent_at"]
 }
@@ -133,7 +133,7 @@ php cli core.sms send "+1234567890" "Test Subject"
 - Validates that phone is not empty
 - Validates that subject is not empty
 - Resolves `sms_service` from DI container
-- Loads template named `test` from configured `template_namespace` through the template registry
+    - Loads template named `Default` from configured `template_namespace` through the template registry
 - Sends the SMS using the configured provider service
 - Returns clear success/failure text
 

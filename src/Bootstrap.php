@@ -411,6 +411,15 @@ class Bootstrap
             }
         }
 
+        // ── load local.cfg override for sms configuration
+        if (file_exists("./config/local.cfg")) {
+            $localCfg = json_decode(file_get_contents("./config/local.cfg"), true);
+            if ($localCfg !== null && is_array($localCfg) && isset($localCfg['sms'])) {
+                // Merge local config with existing defaults - not overwrite!
+                $smsDefaults = array_merge($smsDefaults, $localCfg['sms']);
+            }
+        }
+
         // ── smtp_config ───────────────────────────────────────────────
         // Reads from Config::get('smtp.*'). Returns a disabled config when enabled is falsy.
 
@@ -658,7 +667,7 @@ class Bootstrap
         $coreRoot = defined('CORE_WEB_ROOT') ? (string) CORE_WEB_ROOT : dirname(__DIR__);
 
         foreach (['mail', 'sms'] as $namespace) {
-            $templateDir = "{$coreRoot}/templates/{$namespace}";
+            $templateDir = "{$coreRoot}/Templates/{$namespace}";
 
             if (!is_dir($templateDir)) {
                 continue;
@@ -672,7 +681,7 @@ class Bootstrap
                 $templateName = basename($file, '.json');
 
                 $registry->register(
-                    namespace:  'mail',
+                    namespace:  $namespace,
                     template:   $templateName,
                     path:       realpath("{$templateDir}/{$file}"),
                     priority:   0,
@@ -682,7 +691,33 @@ class Bootstrap
             }
         }
 
-        // ── 2. Register enabled extension templates -------------------------
+        // ── 2. Register app templates ---------------------------------------
+        foreach (['mail', 'sms'] as $namespace) {
+            $templateDir = "{$this->appRoot}/Templates/{$namespace}";
+
+            if (!is_dir($templateDir)) {
+                continue;
+            }
+
+            foreach (scandir($templateDir) as $file) {
+                if (!str_ends_with($file, '.json')) {
+                    continue;
+                }
+
+                $templateName = basename($file, '.json');
+
+                $registry->register(
+                    namespace:  $namespace,
+                    template:   $templateName,
+                    path:       realpath("{$templateDir}/{$file}"),
+                    priority:   250,
+                    origin:     'app',
+                    extension:  null,
+                );
+            }
+        }
+
+        // ── 3. Register enabled extension templates -------------------------
         $extIndex = static::$instance->resolve('extension_index');
         if ($extIndex !== null && isset($extIndex) && is_object($extIndex)) {
             foreach ($extIndex as $name => $meta) {

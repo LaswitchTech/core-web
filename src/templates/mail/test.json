@@ -1,7 +1,0 @@
-{
-  "name": "test",
-  "subject": "{app_name}::Core-Web — {subject}",
-  "plainBody": "Subject: {subject}\nApplication: {app_name}::Core-Web\nSent at: {sent_at}\n\nThis is a test email from Core-Web.",
-  "htmlBody": "<h1>{app_name}::Core-Web</h1><p>Subject: {subject}</p><p>Sent at: {sent_at}</p><p>This is a test email from Core-Web.</p>",
-  "availableVariables": ["subject", "app_name", "sent_at"]
-}

@@ -1,0 +1,5 @@
+{
+  "name": "Default",
+  "body": "{app_name}::Core-Web — {subject}",
+  "availableVariables": ["subject", "app_name"]
+}

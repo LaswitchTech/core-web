@@ -145,6 +145,19 @@
     - Document and align precedence rules across registries, including provider precedence, priority ordering, insertion order, and explicit override behavior.
   - [ ] Review broader namespace grouping opportunities <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
     - Evaluate whether other related classes should also be grouped by domain or subsystem in Version 2.0 without disrupting the V1.0 public API.
+- [ ] MCP Integration
+  - Description: Add Model Context Protocol support for exposing Core-Web tools, resources, prompts, and application actions to AI agents.
+  - Tags: framework, mcp, ai-agents, integrations, v.2.0
+  - priority: normal
+  - Subtasks:
+    - [ ] Research MCP server architecture for PHP/Core-Web
+    - [ ] Define MCP transport strategy
+    - [ ] Design MCP tool registry
+    - [ ] Expose selected CLI commands as MCP tools
+    - [ ] Expose safe application resources through MCP
+    - [ ] Add permission and authentication model for MCP access
+    - [ ] Add MCP configuration keys
+    - [ ] Add MCP smoke tests and documentation
 
 ## In Progress
 - [~] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
@@ -160,12 +173,12 @@
       - Plugins should be able to register additional message providers such as SMTP alternatives, Twilio, Telico, or future services.
       - Implemented through the messaging bootstrap wiring and `sms.provider.register` hook, allowing enabled plugins to register SMS providers into the shared SMS registry before `sms_service` is resolved.
       - Tags: messaging, plugins, providers, extensions
-  - [~] SMTP Email Provider <!-- created_at: 2026-06-18T11:31:00-04:00 priority: high -->
+  - [x] SMTP Email Provider <!-- created_at: 2026-06-18T11:31:00-04:00 completed_at: 2026-07-08T08:44:00-04:00 priority: high -->
     - SMTP provider should reuse the existing SMTP implementation patterns from `/Users/louis/Projects/LaswitchTech/core/src/SMTP.php` where appropriate.
     - SMTP should support reusable templates for consistent email communications.
     - Tags: email, smtp, providers, config, templates
     - [x] Load SMTP configuration from `config/smtp.cfg` <!-- created_at: 2026-07-02T19:16:00-04:00 completed_at: 2026-07-03T07:32:07-04:00 priority: high -->
-    - [~] Implement SMTP mailer driver <!-- created_at: 2026-06-18T11:31:00-04:00 priority: high -->
+    - [x] Implement SMTP mailer driver <!-- created_at: 2026-06-18T11:31:00-04:00 completed_at: 2026-07-08T08:43:58-04:00 priority: high -->
       - SMTP provider, config DTO, mailer service, message envelope, address value object, attachment value objects, and Bootstrap container wiring are implemented.
       - Remaining work: final end-to-end SMTP validation, smoke coverage for attachments/options, documentation, and any production hardening discovered during SMTP testing.
     - [x] Support plain text and HTML email bodies <!-- created_at: 2026-07-02T19:17:00-04:00 completed_at: 2026-07-06T12:38:48-04:00 priority: high -->
@@ -175,7 +188,7 @@
       - Tags: email, smtp, templates
     - [x] Add default SMTP/email test template <!-- created_at: 2026-07-03T17:00:00-04:00 completed_at: 2026-07-03T18:00:00-04:00 priority: normal -->
       - Provide a core-shipped default email template that can be used by smoke tests and `core.smtp send` validation. Template should include subject, plain text body, and HTML body with variable substitution.
-      - Created `src/templates/mail/test.json` at namespace `mail` with `{subject}`, `{app_name}`, `{sent_at}` placeholders covering plainBody and htmlBody.
+      - Created `Templates/mail/Default.json` at namespace `mail` with `{AppName}`, `{Subject}`, `{RecipientName}`, `{Body}`, `{Greetings}`, `{AppUrl}`, `{CurrentYear}` placeholders covering plainBody and htmlBody.
       - Tags: email, smtp, templates, testing
     - [x] Support email attachments <!-- created_at: 2026-07-02T19:18:00-04:00 completed_at: 2026-07-06T12:38:50-04:00 priority: normal -->
       - File and byte-array attachment value objects plus multipart attachment serialization are implemented; still pending smoke coverage and live validation.
@@ -197,7 +210,7 @@
       - Tags: sms, templates
     - [x] Add default SMS test template <!-- created_at: 2026-07-03T17:02:00-04:00 completed_at: 2026-07-03T18:00:00-04:00 priority: normal -->
       - Provide a core-shipped default SMS template that can be used by smoke tests and `core.sms send` validation. Template should include a body with variable substitution.
-      - Created `src/templates/sms/test.json` at namespace `sms` with `{subject}`, `{app_name}`, `{sent_at}` placeholders covering body text.
+       - Created `Templates/sms/Default.json` at namespace `sms` with `{subject}`, `{app_name}`, `{sent_at}` placeholders covering body text.
       - Tags: sms, templates, testing
     - [x] Document SMS provider configuration, templates, and plugin conventions <!-- created_at: 2026-07-02T19:24:00-04:00 completed_at: 2026-07-06T10:03:07-04:00 priority: normal -->
     - [x] Keep core `config/sms.cfg` provider-agnostic <!-- created_at: 2026-07-03T17:03:00-04:00 completed_at: 2026-07-03T17:30:00-04:00 priority: high -->
