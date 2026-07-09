@@ -66,6 +66,28 @@ final class Core
                         return Response::text("core.db: unknown subcommand '{$subcmd}' (connect|read|create|update|delete|smoke)\n", 400);
                 }
             });
+
+            /* ------------------------------------------------------------------ --/
+              /  core.config — show / set / unset configuration values            */
+            /* ------------------------------------------------------------------ */
+
+            $router->command('core.config', static function ($req) use ($c): Response {
+                $subcmd = $req->arg(0);
+
+                switch ($subcmd) {
+                    case 'show':
+                        return self::handleConfigShow($req, $c);
+
+                    case 'set':
+                        return self::handleConfigSet($req, $c);
+
+                    case 'unset':
+                        return self::handleConfigUnset($req, $c);
+
+                    default:
+                        return Response::text("Usage: core.config show [key] | set <key> <value> | unset <key>\n", 400);
+                }
+            });
         }
 
         /* ------------------------------------------------------------------ --/
@@ -1212,6 +1234,290 @@ SQL;
             if (\is_array($raw) && isset($raw['description'])) { return trim($raw['description']); }
         }
         return '-';
+    }
+
+    /* ================================================================== */
+    /*  core.config subcommand handlers                                      */
+    /* ================================================================== */
+
+    /** Handle `core.config show [key]`                                    */
+    private static function handleConfigShow(mixed $req, \Laswitchtech\CoreWeb\Container $c): Response
+    {
+        // Validate key early.
+        $key = trim($req->arg(1) ?? '');
+
+        if ($key !== '') {
+            $validation = self::validateDotKey($key);
+            if ($validation !== null) {
+                return Response::text("Validation error: {$validation}\n", 400);
+            }
+        }
+
+        // Use already-resolved config from Config::all() — do NOT reload.
+        $all = \Laswitchtech\CoreWeb\Config::all();
+        if ($all === null) {
+            return Response::text("Error: configuration is empty\n", 500);
+        }
+
+        if ($key === '') {
+            // No key provided — output the full merged config.
+            return Response::text(json_encode($all, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+        }
+
+        // Key provided — resolve via dot notation using Config::get.
+        $value = \Laswitchtech\CoreWeb\Config::get($key);
+
+        if (!self::hasKey($all, $key)) {
+            return Response::text("Error: key '{$key}' does not exist in configuration\n", 400);
+        }
+
+        return Response::text(json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+    }
+
+    /** Handle `core.config set <key> <value>`                             */
+    private static function handleConfigSet(mixed $req, \Laswitchtech\CoreWeb\Container $c): Response
+    {
+        $appRoot = $c->resolve('app_root');
+        if ($appRoot === null || !is_string($appRoot)) {
+            return Response::text("Error: app_root is not available\n", 500);
+        }
+
+        $key = trim($req->arg(1) ?? '');
+        if ($key === '') {
+            return Response::text("Usage: core.config set <key> <value>\n", 400);
+        }
+
+        // Validate dot notation key.
+        $validation = self::validateDotKey($key);
+        if ($validation !== null) {
+            return Response::text("Validation error: {$validation}\n", 400);
+        }
+
+        $rawValue = $req->arg(2);
+        if ($rawValue === null || $rawValue === false) {
+            return Response::text("Usage: core.config set <key> <value>\n", 400);
+        }
+
+        // Parse the value using the specified conversion rules.
+        $value = self::castValue($rawValue);
+
+        // Load existing local.cfg if it exists (preserve all existing values).
+        $localPath = "{$appRoot}/config/local.cfg";
+        $localData = [];
+        if (is_file($localPath)) {
+            $decoded = json_decode(file_get_contents($localPath), true);
+            if (\is_array($decoded)) {
+                $localData = $decoded;
+            }
+        }
+
+        // Set the key using dot-notation path (create intermediate objects).
+        self::setDotValue($localData, $key, $value);
+
+        // Ensure config directory exists.
+        $configDir = dirname($localPath);
+        if (!is_dir($configDir)) {
+            mkdir($configDir, 0755, true);
+        }
+
+        // Write updated local.cfg.
+        file_put_contents($localPath, json_encode($localData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+
+        return Response::text("Updated:
+{$key} = " . json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+    }
+
+    /** Handle `core.config unset <key>`                                   */
+    private static function handleConfigUnset(mixed $req, \Laswitchtech\CoreWeb\Container $c): Response
+    {
+        $appRoot = $c->resolve('app_root');
+        if ($appRoot === null || !is_string($appRoot)) {
+            return Response::text("Error: app_root is not available\n", 500);
+        }
+
+        $key = trim($req->arg(1) ?? '');
+        if ($key === '') {
+            return Response::text("Usage: core.config unset <key>\n", 400);
+        }
+
+        // Validate dot notation key.
+        $validation = self::validateDotKey($key);
+        if ($validation !== null) {
+            return Response::text("Validation error: {$validation}\n", 400);
+        }
+
+        // Only modify local.cfg — load it for mutation.
+        $localPath = "{$appRoot}/config/local.cfg";
+
+        if (!is_file($localPath)) {
+            return Response::text("Key '{$key}' not found in any configuration file\n");
+        }
+
+        $localData = json_decode(file_get_contents($localPath), true);
+        if (!\is_array($localData)) {
+            $localData = [];
+        }
+
+        // Remove the key — handle nested dot notation.
+        $removed = self::removeDotKey($localData, $key);
+
+        if (!$removed) {
+            return Response::text("Key '{$key}' not found in local configuration\n");
+        }
+
+        // Clean up empty parent objects, then persist.
+        self::cleanupEmptyParents($localData);
+
+        $configDir = dirname($localPath);
+        if (!is_dir($configDir)) {
+            mkdir($configDir, 0755, true);
+        }
+
+        file_put_contents($localPath, json_encode($localData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+
+        return Response::text("Removed:
+{$key}\n");
+    }
+
+    /* ================================================================== */
+    /*  Internal helpers                                                       */
+    /* ================================================================== */
+
+    /** Validate a dot-notation configuration key.                             */
+    private static function validateDotKey(string $key): string|null
+    {
+        // No empty key.
+        if ($key === '') {
+            return 'key must not be empty';
+        }
+
+        // No leading dot.
+        if (str_starts_with($key, '.')) {
+            return 'key must not start with a dot';
+        }
+
+        // No trailing dot.
+        if (str_ends_with($key, '.')) {
+            return 'key must not end with a dot';
+        }
+
+        // No empty segments (e.g., "foo..bar").
+        $segments = explode('.', $key);
+        foreach ($segments as $segment) {
+            if ($segment === '') {
+                return 'key must not contain empty segments';
+            }
+        }
+
+        return null;
+    }
+
+    /** Check whether a dot-notation key exists in an array.                   */
+    private static function hasKey(array $data, string $key): bool
+    {
+        if (\array_key_exists($key, $data)) {
+            return true;
+        }
+
+        $tokens = explode('.', $key);
+        $current = $data;
+
+        foreach ($tokens as $token) {
+            if (!\is_array($current) || !\array_key_exists($token, $current)) {
+                return false;
+            }
+            $current = $current[$token];
+        }
+
+        return true;
+    }
+
+    /** Cast a raw string value using the specified rules.                      */
+    private static function castValue(string $value): bool|int|float|string|array|\JsonSerializable|null
+    {
+        // Boolean literals.
+        if ($value === 'true') return true;
+        if ($value === 'false') return false;
+
+        // Null literal.
+        if ($value === 'null') return null;
+
+        // Integer: optional leading '-', then digits only.
+        if (preg_match('/^-?[0-9]+$/', $value)) {
+            return (int)$value;
+        }
+
+        // Float: must have exactly one '.', with digits before and after.
+        if (preg_match('/^[0-9]+\.[0-9]+$/', $value) || preg_match('/^-[0-9]+\.[0-9]+$/', $value)) {
+            return (float)$value;
+        }
+
+        // Everything else remains a string.
+        return $value;
+    }
+
+    /** Set a value in an array using dot-notation, creating intermediate keys. */
+    private static function setDotValue(array &$data, string $key, mixed $value): void
+    {
+        $tokens = explode('.', $key);
+        $target = &$data;
+
+        for ($i = 0; $i < \count($tokens); $i++) {
+            $token = $tokens[$i];
+            if ($i === \count($tokens) - 1) {
+                // Last token — write the value.
+                $target[$token] = $value;
+                unset($target);
+            } elseif (!isset($target[$token]) || !\is_array($target[$token])) {
+                // Intermediate token — ensure it is an array.
+                $target[$token] = [];
+            }
+            $target = &$target[$token];
+        }
+    }
+
+    /** Remove a dot-notation key from an array; returns true if found/removed. */
+    private static function removeDotKey(array &$data, string $key): bool
+    {
+        $tokens = explode('.', $key);
+
+        // Special: top-level key (no dots).
+        if (\count($tokens) === 1 && \array_key_exists($tokens[0], $data)) {
+            unset($data[$tokens[0]]);
+            return true;
+        }
+
+        $target = &$data;
+
+        for ($i = 0; $i < \count($tokens) - 1; $i++) {
+            $token = $tokens[$i];
+            if (!\is_array($target) || !\array_key_exists($token, $target)) {
+                return false;
+            }
+            $target = &$target[$token];
+        }
+
+        // Now $target is the parent array of the key to remove.
+        $lastToken = $tokens[\count($tokens) - 1];
+        if (\is_array($target) && \array_key_exists($lastToken, $target)) {
+            unset($target[$lastToken]);
+            return true;
+        }
+
+        return false;
+    }
+
+    /** Recursively remove empty arrays from an array structure.                */
+    private static function cleanupEmptyParents(array &$data): void
+    {
+        foreach ($data as $key => $value) {
+            if (\is_array($value)) {
+                self::cleanupEmptyParents($value);
+                if (empty($value)) {
+                    unset($data[$key]);
+                }
+            }
+        }
     }
 
 }
