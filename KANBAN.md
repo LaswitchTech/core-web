@@ -1,47 +1,6 @@
 # Kanban
 
 ## Todo <!-- hide: archive -->
-- [ ] Presentation Layer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
-  - Centralize renderer runtime settings so applications can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
-  - Tags: framework, ui, renderer, config
-  - [ ] Component Library <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
-    - Renderable UI components with plugin extensibility.
-    - Tags: feature
-    - [ ] Implement base UIComponent interface and HTML sanitizer <!-- created_at: 2026-06-18T11:41:00-04:00 priority: normal -->
-  - [ ] Configure default rendering engine through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
-  - [ ] Configure Latte cache path through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
-  - [ ] Configure Latte strict mode / debug mode <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
-  - [ ] Allow application-level engine registration overrides <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
-  - [ ] LESS / CSS Asset Pipeline <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-    - Compile kernel, application, enabled theme, and enabled plugin LESS/CSS assets into a generated stylesheet served by the framework.
-    - Tags: framework, renderer, assets, less, css
-    - [ ] Add `wikimedia/less.php` dependency for LESS compilation <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-    - [ ] Implement static `/css` route for generated stylesheet output <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-      - Route should serve compiled CSS generated from kernel assets, application assets, the enabled theme, and all enabled plugins.
-    - [ ] Compile kernel + application + enabled extension styles in deterministic order <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-      - Order should be explicit and documented: kernel first, application overrides second, enabled theme next, enabled plugins last unless a stronger precedence rule is defined later.
-    - [ ] Cache compiled CSS under `/storage/cache/renderer/less/` <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
-      - Cache should avoid recompilation in production when source files are unchanged.
-    - [ ] Recompile LESS on every request when debug mode is enabled <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
-      - Debug mode should bypass the cached compiled CSS so developers immediately see style changes.
-    - [ ] Document asset discovery and cache invalidation behavior <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
-  - [ ] Dedicated Frontend Asset Plugins <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
-    - Move common frontend vendor assets out of the kernel and into dedicated first-party plugins so Bootstrap, Bootstrap Icons, DataTables, jQuery, and Chart.js can be installed, enabled, disabled, versioned, and overridden through the extension system.
-    - Tags: framework, extensions, assets, frontend, bootstrap, datatables, jquery, chartjs, v.1.0
-    - [ ] Create Bootstrap plugin for Bootstrap CSS/JS asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
-      - Plugin should provide Bootstrap assets through the framework asset pipeline instead of hardcoded kernel/layout references.
-    - [ ] Include Bootstrap Icons support in the Bootstrap plugin <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
-      - Bootstrap Icons should be bundled or registered by the Bootstrap plugin so icon availability follows the plugin lifecycle.
-    - [ ] Create DataTables plugin for DataTables asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Plugin should register DataTables CSS/JS assets and document its dependency on jQuery and any Bootstrap integration assets.
-    - [ ] Create jQuery plugin for jQuery asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Plugin should expose jQuery as an optional dependency for plugins that still require it without forcing it into the kernel baseline.
-    - [ ] Create Chart.js plugin for Chart.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Plugin should register Chart.js assets for dashboards, reporting, and visualization features without hardcoding Chart.js into core layouts.
-    - [ ] Define frontend asset dependency rules between plugins <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
-      - Support deterministic load order and dependency declarations such as DataTables depending on jQuery and optional Bootstrap integration depending on the Bootstrap plugin.
-    - [ ] Document frontend asset plugin conventions <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Document plugin manifest asset declarations, dependency examples, load order, override behavior, and how application layouts request assets from enabled plugins.
 - [ ] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
   - `/admin` panel with all required sub-systems.
   - Tags: feature, admin
@@ -80,6 +39,7 @@
   - [ ] Design user, organization, group, and role schema <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
   - [ ] Design local database authentication provider <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
   - [ ] Design plugin authentication provider interface <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
+  - [ ] `core.auth create-user <username> <password>` — create admin users from CLI <!-- created_at: 2026-06-18T13:07:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
   - [ ] Document authorization assignment rules for roles and groups <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
 - [ ] PostgreSQL Driver <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
   - PostgreSQL database driver built on the existing database abstraction layer. Extends the query compiler and connection system to support PostgreSQL while preserving the database-agnostic developer API.
@@ -138,39 +98,47 @@
     - [ ] Add MCP smoke tests and documentation <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
 
 ## In Progress
-- [ ] CLI System <!-- created_at: 2026-06-18T13:00:00-04:00 priority: normal -->
-  - Tags: framework, cli, v.1.0
-  - [x] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 completed_at: 2026-07-08T00:00:00-04:00 priority: high -->
-    - Command infrastructure built on top of the unified Router. Responsible for command discovery, argument parsing, command metadata, help output, and extension command registration.
+- [ ] Presentation Layer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+  - Centralize renderer runtime settings so applications can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
+  - Tags: framework, ui, renderer, config
+  - [ ] Component Library <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
+    - Renderable UI components with plugin extensibility.
     - Tags: feature
-    - Current implementation registers CLI commands through the `router.register` hook during extension bootstrap. Manifest-declared command metadata and richer help generation are future enhancements and are not required for Version 1.0.
-    - [x] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 due_at: 2026-07-10T08:00:00-04:00 completed_at: 2026-07-08T00:00:00-04:00 priority: normal -->
-      - Positional arguments are implemented.
-      - Quoted strings are supported by the shell before reaching PHP's argv and are handled correctly by the current parser.
-      - Optional flags (--flag and --key=value) are implemented.
-    - [x] Implement plugin discovery for CLI commands alongside core kernel commands <!-- created_at: 2026-06-18T13:03:00-04:00 due_at: 2026-07-10T08:00:00-04:00 completed_at: 2026-07-08T00:00:00-04:00 priority: high -->
-      - Extensions are discovered during bootstrap.
-      - The `router.register` hook allows extensions to register CLI commands automatically during initialization.
-      - This satisfies the V1.0 requirement.
-      - Manifest-declared command metadata is considered future enhancement, not required for this task.
-  - [ ] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - Bootstrap commands for testing, configuring, and managing the framework.
-    - Tags: feature
-     - [x] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-     - note: Implemented as `php cli core.init <target-path> [--force]`. Generates a minimal application skeleton with WEB and CLI entry points, config files, storage directories, template directories, and extension directories. Existing files are never overwritten; `--force` only creates missing files/directories in a non-empty target.
-    - [ ] `core.auth create-user <username> <password>` — create admin users from CLI <!-- created_at: 2026-06-18T13:07:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [x] `core.db connect` — test configured database connectivity <!-- created_at: 2026-06-30T14:52:13-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
-      - Implemented in temporary Core plugin as `php cli core.db connect`. It validates the active configured driver using the Database facade and `SELECT 1 AS ok`. Driver reconfiguration flags (`--path`, `--dsn`) remain deferred to the permanent CLI command framework. <!-- created_at: 2026-06-18T13:08:00-04:00 completed_at: 2026-06-30T14:41:55-04:00 priority: normal -->
-    - [x] `core.db read/create/update/delete` — temporary database CRUD CLI commands <!-- created_at: 2026-06-30T00:00:00-04:00 completed_at: 2026-06-30T14:42:00-04:00 priority: normal -->
-      - Implemented in temporary Core plugin as a single `core.db` dispatcher with subcommands: `read`, `create`, `update`, `delete`, and `smoke`. CRUD commands use the Database facade and query builders, validate table/column names, support a single quoted WHERE expression for read/update/delete, require WHERE for update/delete safety, and output JSON for reads.
-      - Validation: `php cli core.db connect` returns `Database OK: <driver>` and `php cli core.db smoke` returns `Core DB Smoke OK`.
-    - [x] `core.config show [key]` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 completed_at: 2026-07-08T19:35:46-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [x] `core.config unset <key>` — remove a value from local.cfg and restore inheritance from core.cfg <!-- created_at: 2026-07-08T22:14:59-04:00 completed_at: 2026-07-08T22:14:59-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [x] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 completed_at: 2026-07-08T19:35:48-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [x] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Implemented as `php cli core.install`, with optional `check` and `run` subcommands. Validates PHP/runtime requirements, required application directories, database connectivity, and generates router config files under `config/router/` without overwriting existing files.
-      - Generates Apache, Nginx, and IIS router configuration files during installation so users can deploy on any supported web server without manual routing setup.
-    - [x] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
+    - [ ] Implement base UIComponent interface and HTML sanitizer <!-- created_at: 2026-06-18T11:41:00-04:00 priority: normal -->
+  - [ ] Configure default rendering engine through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+  - [ ] Configure Latte cache path through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+  - [ ] Configure Latte strict mode / debug mode <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+  - [ ] Allow application-level engine registration overrides <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+  - [ ] LESS / CSS Asset Pipeline <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - Compile kernel, application, enabled theme, and enabled plugin LESS/CSS assets into a generated stylesheet served by the framework.
+    - Tags: framework, renderer, assets, less, css
+    - [ ] Add `wikimedia/less.php` dependency for LESS compilation <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - [ ] Implement static `/css` route for generated stylesheet output <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+      - Route should serve compiled CSS generated from kernel assets, application assets, the enabled theme, and all enabled plugins.
+    - [ ] Compile kernel + application + enabled extension styles in deterministic order <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+      - Order should be explicit and documented: kernel first, application overrides second, enabled theme next, enabled plugins last unless a stronger precedence rule is defined later.
+    - [ ] Cache compiled CSS under `/storage/cache/renderer/less/` <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+      - Cache should avoid recompilation in production when source files are unchanged.
+    - [ ] Recompile LESS on every request when debug mode is enabled <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+      - Debug mode should bypass the cached compiled CSS so developers immediately see style changes.
+    - [ ] Document asset discovery and cache invalidation behavior <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+  - [ ] Dedicated Frontend Asset Plugins <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+    - Move common frontend vendor assets out of the kernel and into dedicated first-party plugins so Bootstrap, Bootstrap Icons, DataTables, jQuery, and Chart.js can be installed, enabled, disabled, versioned, and overridden through the extension system.
+    - Tags: framework, extensions, assets, frontend, bootstrap, datatables, jquery, chartjs, v.1.0
+    - [ ] Create Bootstrap plugin for Bootstrap CSS/JS asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+      - Plugin should provide Bootstrap assets through the framework asset pipeline instead of hardcoded kernel/layout references.
+    - [ ] Include Bootstrap Icons support in the Bootstrap plugin <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+      - Bootstrap Icons should be bundled or registered by the Bootstrap plugin so icon availability follows the plugin lifecycle.
+    - [ ] Create DataTables plugin for DataTables asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Plugin should register DataTables CSS/JS assets and document its dependency on jQuery and any Bootstrap integration assets.
+    - [ ] Create jQuery plugin for jQuery asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Plugin should expose jQuery as an optional dependency for plugins that still require it without forcing it into the kernel baseline.
+    - [ ] Create Chart.js plugin for Chart.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Plugin should register Chart.js assets for dashboards, reporting, and visualization features without hardcoding Chart.js into core layouts.
+    - [ ] Define frontend asset dependency rules between plugins <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+      - Support deterministic load order and dependency declarations such as DataTables depending on jQuery and optional Bootstrap integration depending on the Bootstrap plugin.
+    - [ ] Document frontend asset plugin conventions <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Document plugin manifest asset declarations, dependency examples, load order, override behavior, and how application layouts request assets from enabled plugins.
 
 ## Validation
 - [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
@@ -183,6 +151,38 @@
     - Validate browser load triggers the Hello World plugin in WEB mode.
 
 ## Done
+- [x] CLI System <!-- created_at: 2026-06-18T13:00:00-04:00 completed_at: 2026-07-09T11:14:39-04:00 priority: normal -->
+  - Tags: framework, cli, v.1.0
+  - [x] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 completed_at: 2026-07-08T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+    - Command infrastructure built on top of the unified Router. Responsible for command discovery, argument parsing, command metadata, help output, and extension command registration.
+    - Current implementation registers CLI commands through the `router.register` hook during extension bootstrap. Manifest-declared command metadata and richer help generation are future enhancements and are not required for Version 1.0.
+    - Tags: feature
+    - [x] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 completed_at: 2026-07-08T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Positional arguments are implemented.
+      - Quoted strings are supported by the shell before reaching PHP's argv and are handled correctly by the current parser.
+      - Optional flags (--flag and --key=value) are implemented.
+    - [x] Implement plugin discovery for CLI commands alongside core kernel commands <!-- created_at: 2026-06-18T13:03:00-04:00 completed_at: 2026-07-08T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+      - Extensions are discovered during bootstrap.
+      - The `router.register` hook allows extensions to register CLI commands automatically during initialization.
+      - This satisfies the V1.0 requirement.
+      - Manifest-declared command metadata is considered future enhancement, not required for this task.
+  - [x] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 completed_at: 2026-07-09T11:14:34-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - Bootstrap commands for testing, configuring, and managing the framework.
+    - note: Implemented as `php cli core.init <target-path> [--force]`. Generates a minimal application skeleton with WEB and CLI entry points, config files, storage directories, template directories, and extension directories. Existing files are never overwritten; `--force` only creates missing files/directories in a non-empty target.
+    - Tags: feature
+    - [x] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] `core.db connect` — test configured database connectivity <!-- created_at: 2026-06-30T14:52:13-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
+      - Implemented in temporary Core plugin as `php cli core.db connect`. It validates the active configured driver using the Database facade and `SELECT 1 AS ok`. Driver reconfiguration flags (`--path`, `--dsn`) remain deferred to the permanent CLI command framework. <!-- created_at: 2026-06-18T13:08:00-04:00 completed_at: 2026-06-30T14:41:55-04:00 priority: normal -->
+    - [x] `core.db read/create/update/delete` — temporary database CRUD CLI commands <!-- created_at: 2026-06-30T00:00:00-04:00 completed_at: 2026-06-30T14:42:00-04:00 priority: normal -->
+      - Implemented in temporary Core plugin as a single `core.db` dispatcher with subcommands: `read`, `create`, `update`, `delete`, and `smoke`. CRUD commands use the Database facade and query builders, validate table/column names, support a single quoted WHERE expression for read/update/delete, require WHERE for update/delete safety, and output JSON for reads.
+      - Validation: `php cli core.db connect` returns `Database OK: <driver>` and `php cli core.db smoke` returns `Core DB Smoke OK`.
+    - [x] `core.config show [key]` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 completed_at: 2026-07-08T19:35:46-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] `core.config unset <key>` — remove a value from local.cfg and restore inheritance from core.cfg <!-- created_at: 2026-07-08T22:14:59-04:00 completed_at: 2026-07-08T22:14:59-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 completed_at: 2026-07-08T19:35:48-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Implemented as `php cli core.install`, with optional `check` and `run` subcommands. Validates PHP/runtime requirements, required application directories, database connectivity, and generates router config files under `config/router/` without overwriting existing files.
+      - Generates Apache, Nginx, and IIS router configuration files during installation so users can deploy on any supported web server without manual routing setup.
+    - [x] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
 - [x] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-08T17:00:14-04:00 priority: normal -->
   - Extensible outbound messaging subsystem for email and SMS providers. Email configuration should be loaded from `config/smtp.cfg`; SMS configuration should be loaded from `config/sms.cfg`.
   - Tags: framework, messaging, email, sms, providers, v.1.0
