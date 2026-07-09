@@ -108,6 +108,24 @@ final class Core
                     default:        return self::handleInstallRun($c);
                 }
             });
+
+            /* ------------------------------------------------------------------ --/
+              /  core.init — generate application skeleton at a target path      */
+            /* ------------------------------------------------------------------ */
+
+            $router->command('core.init', static function ($req) use ($c): Response {
+                $target    = trim($req->arg(0) ?? '');
+                $helpFlag  = $req->flag('help', false);
+                $force     = $req->flag('force', false) !== false;
+                $allArgs   = $req->args();
+
+                // Handle --help anywhere or bare usage without target.
+                if ($target === '' || \in_array('--help', $allArgs, true) || $helpFlag) {
+                    return self::handleInitHelp();
+                }
+
+                return self::handleInitRun($target, (bool)$force);
+            });
         }
 
         /* ------------------------------------------------------------------ --/
@@ -1772,5 +1790,178 @@ HELP);
     {
         $status  = $ok ? 'OK' : 'FAILED';
         return sprintf("  %-30s %13s  %s\n", "{$title}:", $status, $message);
+    }
+
+    /* --------------------------------------------------------------- */
+    /*  core.init                                                         */
+    /* --------------------------------------------------------------- */
+
+    /** Return the inline help screen for the init command                   */
+    private static function handleInitHelp(): Response
+    {
+        $help = <<<HELP
+Usage: php cli core.init <target-path> [--force] [--help]
+
+Generate a Core-Web application skeleton at <target-path>.
+
+Options:
+   --force     Create only missing files/directories when target is not empty (default: fail if target is not empty)
+   --help      Show this help message
+
+Creates:
+  index.php                     Application entry point (WEB mode)
+  cli                           CLI entry point (CLI mode, executable)
+  config/core.cfg               Core framework config (JSON)
+  config/local.cfg              User override placeholder (JSON)
+  config/                       Config directory
+  storage/                      Storage root
+  storage/cache/                Cache directory
+  storage/logs/                 Log directory
+  Templates/                    Layout/template directory
+  Templates/mail/               Mail template directory
+  Templates/sms/                SMS template directory
+  ext/                          Extensions root
+  ext/plugins/                  Plugin skeleton directory
+  ext/themes/                   Theme skeleton directory
+
+If the target directory exists and is not empty, the command fails
+unless --force is passed. With --force, only missing files/directories
+are created — never overwrite existing content.
+
+HELP;
+        return Response::text($help);
+    }
+
+    /** Create the application skeleton at $target.                           */
+    private static function handleInitRun(string $target, bool $force): Response
+    {
+        // Resolve absolute path (relative allowed).
+        if (!str_starts_with($target, '/')) {
+            $target = rtrim(\getcwd(), '/') . '/' . ltrim($target, '/');
+        }
+
+        $lines = [];
+
+        /* ---------- Target validation ------------------------------------- */
+        if (\is_dir($target)) {
+            // Check if target has any files.
+            $filesInside = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($target, \RecursiveDirectoryIterator::SKIP_DOTS)
+            );
+            $fileCount = iterator_count($filesInside);
+            if ($fileCount > 0 && !$force) {
+                return Response::text(
+                    "[FAILED]    Target directory already exists and is not empty. Use --force to create only missing items.\n",
+                    1
+                );
+            }
+        }
+
+        /* ---------- Required directories ---------------------------------- */
+        $preExist = [];
+        foreach (["{$target}/config", "{$target}/storage", "{$target}/storage/cache", "{$target}/storage/logs", "{$target}/Templates", "{$target}/Templates/mail", "{$target}/Templates/sms", "{$target}/ext", "{$target}/ext/plugins", "{$target}/ext/themes"] as $d) {
+            if (is_dir($d)) {
+                $preExist[$d] = true;
+            }
+        }
+
+        $requiredDirs = [
+            "{$target}/config",
+            "{$target}/storage",
+            "{$target}/storage/cache",
+            "{$target}/storage/logs",
+            "{$target}/Templates",
+            "{$target}/Templates/mail",
+            "{$target}/Templates/sms",
+            "{$target}/ext",
+            "{$target}/ext/plugins",
+            "{$target}/ext/themes",
+        ];
+
+        foreach ($requiredDirs as $dir) {
+            if (!is_dir($dir)) {
+                \mkdir($dir, 0755, true);
+            }
+            $display = str_replace("{$target}/", '', $dir);
+            if (isset($preExist[$dir])) {
+                $lines[] = "[SKIPPED]   {$display}\n";
+            } elseif (is_dir($dir)) {
+                $lines[] = "[CREATED]   {$display}\n";
+            } else {
+                $lines[] = "[FAILED]    {$display}\n";
+                return Response::text(implode('', $lines) . "\n=== Init failed — directory creation error ===\n", 1);
+            }
+        }
+
+        /* ---------- File contents ----------------------------------------- */
+
+        // index.php skeleton (WEB mode)
+        $indexContent = <<<'PHP'
+<?php declare(strict_types=1);
+/* Application entry point */
+require_once __DIR__ . "/vendor/autoload.php";
+$BOOTSTRAP = new \Laswitchtech\CoreWeb\Bootstrap("WEB");
+
+PHP;
+
+        // core.cfg skeleton — use `database` key per requirements
+        $coreCfg = json_encode(
+            [
+                'app'      => ['name' => 'Core-Web App', 'url' => '', 'debug' => false],
+                'database' => ['driver' => 'sqlite', 'path' => 'storage/app.db'],
+                'mailer'   => ['enabled' => false],
+            ],
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
+        );
+
+        // local.cfg — empty object per requirements
+        $localCfg = '{}';
+
+        // cli skeleton (CLI mode)
+        $cliContent = <<<'PHP'
+#!/usr/bin/env php
+<?php
+/**
+ * Core-Web CLI entry point
+ *
+ * Ultra-minimal bootstrapping:
+ *   1. Autoload Composer classes
+ *   2. Bootstrap the application in "CLI" mode
+ */
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+new \Laswitchtech\CoreWeb\Bootstrap('CLI');
+PHP;
+
+        /* ---------- File creation (never overwrite unless forced) ------------ */
+        $fileWrites = [
+            "{$target}/index.php"      => ['content' => $indexContent, 'display' => 'index.php'],
+            "{$target}/config/core.cfg" => ['content' => $coreCfg . "\n",   'display' => 'config/core.cfg'],
+            "{$target}/config/local.cfg" => ['content' => $localCfg  . "\n",  'display' => 'config/local.cfg'],
+            "{$target}/cli"             => ['content' => $cliContent,     'display' => 'cli', 'chmod' => 0755],
+        ];
+
+        foreach ($fileWrites as $pathFile => $meta) {
+            $content = $meta['content'];
+            $display = $meta['display'];
+            $shouldChmod = $meta['chmod'] ?? null;
+
+            if (file_exists($pathFile)) {
+                // Never overwrite existing files.
+                $lines[] = "[SKIPPED]   {$display} (exists)\n";
+            } elseif (file_put_contents($pathFile, $content) !== false) {
+                $lines[] = "[CREATED]   {$display}\n";
+                if ($shouldChmod !== null) {
+                    \chmod($pathFile, $shouldChmod);
+                }
+            } else {
+                $lines[] = "[FAILED]    {$display}\n";
+                return Response::text(implode('', $lines) . "\n=== Init failed — file write error ===\n", 1);
+            }
+        }
+
+        $lines[] = "\n=== Init Complete ===\n";
+        return Response::text(implode('', $lines));
     }
 }

@@ -156,7 +156,8 @@
   - [ ] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
     - Bootstrap commands for testing, configuring, and managing the framework.
     - Tags: feature
-    - [ ] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+     - [x] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+     - note: Implemented as `php cli core.init <target-path> [--force]`. Generates a minimal application skeleton with WEB and CLI entry points, config files, storage directories, template directories, and extension directories. Existing files are never overwritten; `--force` only creates missing files/directories in a non-empty target.
     - [ ] `core.auth create-user <username> <password>` — create admin users from CLI <!-- created_at: 2026-06-18T13:07:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
     - [x] `core.db connect` — test configured database connectivity <!-- created_at: 2026-06-30T14:52:13-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
       - Implemented in temporary Core plugin as `php cli core.db connect`. It validates the active configured driver using the Database facade and `SELECT 1 AS ok`. Driver reconfiguration flags (`--path`, `--dsn`) remain deferred to the permanent CLI command framework. <!-- created_at: 2026-06-18T13:08:00-04:00 completed_at: 2026-06-30T14:41:55-04:00 priority: normal -->
