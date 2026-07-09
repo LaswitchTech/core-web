@@ -9,7 +9,7 @@ use Laswitchtech\CoreWeb\Renderer\Resource\Entry;
  *
  * Templates are compiled to PHP cache (warm) and served with metadata for debugging.
  * The cache directory defaults to ``{tmp}/coreweb/latte-{ENVNAME}``; set the
- * ``latte_cache_dir`` config key during bootstrap if you need a custom path.
+ * ``renderer.latte.cache_path`` config key during bootstrap if you need a custom path.
  *
  * Documentation: docs/development/architecture/Renderer/Engine/LatteEngine.md
  */
@@ -29,7 +29,7 @@ final class LatteEngine implements EngineInterface
             if (is_string($v) && $v !== '') {
                 $rawConfig = $v;
             }
-        } catch (\Throwable) { /* Config not yet loaded — use defaults below. */ }
+        } catch (\Throwable) { /* Config not yet loaded -- use defaults below. */ }
 
         /** @var non-empty-string */
         $dir = $this->resolveCachePath($rawConfig, $appRoot);
@@ -46,7 +46,7 @@ final class LatteEngine implements EngineInterface
 
         // Fallback to system temp on mkdir failure -- do not throw to preserve compatibility.
         trigger_error(
-            'LatteEngine: cannot create renderer cache directory "' . $dir . '" — '
+            'LatteEngine: cannot create renderer cache directory "' . $dir . '" -- '
             . 'falling back to sys_get_temp_dir()',
             E_USER_WARNING
         );
@@ -57,9 +57,9 @@ final class LatteEngine implements EngineInterface
     /**
      * Resolve the cache dir from a raw config value.
      *
-     * - Empty / unknown  → default ``{app_root}/storage/cache/renderer/latte``.
-     * - Absolute path     → used as-is.
-     * - Relative path     → resolved against ``$appRoot``.
+     * - Empty / unknown  -> default ``{app_root}/storage/cache/renderer/latte``.
+     * - Absolute path     -> used as-is.
+     * - Relative path     -> resolved against ``$appRoot``.
      *
      * @param string          $rawConfig value (may be empty).
      * @param non-empty-string $appRoot   application root directory.
@@ -69,12 +69,12 @@ final class LatteEngine implements EngineInterface
     private function resolveCachePath(string $rawConfig, string $appRoot): string
     {
         if ($rawConfig !== '') {
-            // Absolute path — use as-is (no /latte appended).
+            // Absolute path -- use as-is (no /latte appended).
             if (is_string(parse_url($rawConfig, PHP_URL_SCHEME)) || str_starts_with($rawConfig, '/')) {
                 return rtrim($rawConfig, '/');
             }
 
-            // Relative path — resolve against app_root exactly.
+            // Relative path -- resolve against app_root exactly.
             return rtrim(rtrim($appRoot, '/') . '/' . ltrim($rawConfig, '/'), '/');
         }
 
@@ -97,15 +97,17 @@ final class LatteEngine implements EngineInterface
         $template = new \Latte\Engine();
         $template->setTempDirectory($this->cacheDir);
 
-        // Apply strict mode settings from config (defaults to false -- no change to current behavior).
-        /** @var mixed $v */
-        if (($v = \Laswitchtech\CoreWeb\Config::get('renderer.latte.strict_types', null)) === true) {
-            $template->setStrictTypes(true);
-        }
-        /** @var mixed $w */
-        if (($w = \Laswitchtech\CoreWeb\Config::get('renderer.latte.strict_parsing', null)) === true) {
-            $template->setStrictParsing(true);
-        }
+        // Apply config to Latte engine (strict mode only -- debug_mode is read but there is no Latte API for it).
+        $useStrict = (\Laswitchtech\CoreWeb\Config::get('renderer.latte.strict_mode', null)) === true;
+
+        try {
+            if (is_callable([$template, 'setStrictTypes'])) {
+                $template->setStrictTypes($useStrict);
+            }
+            if (is_callable([$template, 'setStrictParsing'])) {
+                $template->setStrictParsing($useStrict);
+            }
+        } catch (\Throwable) { /* Continue on Latte version mismatch. */ }
 
         try {
             return (string) $template->renderToString($entry->path, $data);
