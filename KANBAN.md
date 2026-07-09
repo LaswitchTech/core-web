@@ -97,7 +97,7 @@
     - [ ] Add MCP configuration keys <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
     - [ ] Add MCP smoke tests and documentation <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
 
-## In Progress
+## In Progress <!-- hide: archive -->
 - [ ] Presentation Layer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Centralize renderer runtime settings so applications can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
   - Tags: framework, ui, renderer, config
@@ -140,17 +140,15 @@
     - [ ] Document frontend asset plugin conventions <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Document plugin manifest asset declarations, dependency examples, load order, override behavior, and how application layouts request assets from enabled plugins.
 
-## Validation
-- [ ] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
+## Done
+- [x] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-09T12:40:06-04:00 priority: normal -->
   - Tags: testing
-  - [ ] Full cross-platform routing validation <!-- created_at: 2026-06-18T13:00:00-04:00 priority: high -->
+  - [x] Full cross-platform routing validation <!-- created_at: 2026-06-18T13:00:00-04:00 completed_at: 2026-07-09T12:40:05-04:00 priority: high -->
     - Future enhancement: test routing across Apache, Nginx, and IIS in CI with the skeleton application on localhost.
     - Tags: testing
-  - [ ] Add Bootstrap smoke tests <!-- created_at: 2026-06-19T00:00:00-04:00 priority: normal -->
+  - [x] Add Bootstrap smoke tests <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-07-09T12:40:03-04:00 priority: normal -->
     - Validate `php cli` boots successfully and triggers the Hello World plugin.
     - Validate browser load triggers the Hello World plugin in WEB mode.
-
-## Done
 - [x] CLI System <!-- created_at: 2026-06-18T13:00:00-04:00 completed_at: 2026-07-09T11:14:39-04:00 priority: normal -->
   - Tags: framework, cli, v.1.0
   - [x] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 completed_at: 2026-07-08T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
