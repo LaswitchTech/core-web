@@ -166,7 +166,8 @@
     - [x] `core.config show [key]` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 completed_at: 2026-07-08T19:35:46-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
     - [x] `core.config unset <key>` — remove a value from local.cfg and restore inheritance from core.cfg <!-- created_at: 2026-07-08T22:14:59-04:00 completed_at: 2026-07-08T22:14:59-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
     - [x] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 completed_at: 2026-07-08T19:35:48-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - [ ] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Implemented as `php cli core.install`, with optional `check` and `run` subcommands. Validates PHP/runtime requirements, required application directories, database connectivity, and generates router config files under `config/router/` without overwriting existing files.
       - Generates Apache, Nginx, and IIS router configuration files during installation so users can deploy on any supported web server without manual routing setup.
     - [x] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
 

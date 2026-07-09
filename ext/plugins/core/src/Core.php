@@ -88,6 +88,26 @@ final class Core
                         return Response::text("Usage: core.config show [key] | set <key> <value> | unset <key>\n", 400);
                 }
             });
+
+            /* ------------------------------------------------------------------ --/
+              /  core.install — run framework bootstrap, validate env, generate   */
+            /*  router config                                                      */
+            /* ------------------------------------------------------------------ */
+
+            $router->command('core.install', static function ($req) use ($c): Response {
+                $subcmd = trim($req->arg(0) ?? '');
+
+                if ($subcmd === '--help' || $subcmd === '-h') {
+                    return self::handleInstallHelp();
+                }
+
+                switch ($subcmd) {
+                    case 'check':   $chk      = self::buildCheckOutput($c);
+                                    return Response::text(self::renderInstallCheck($chk));
+                    case 'run':     return self::handleInstallRun($c);
+                    default:        return self::handleInstallRun($c);
+                }
+            });
         }
 
         /* ------------------------------------------------------------------ --/
@@ -1520,4 +1540,237 @@ SQL;
         }
     }
 
+    /* ================================================================== */
+    /*  core.install handlers                                                 */
+    /* ================================================================== */
+
+    private static function handleInstallHelp(): Response
+    {
+        return Response::text(<<<'HELP'
+Usage: php cli core.install <subcommand>
+
+Subcommands:
+  check   Validate environment (PHP version, extensions, paths, DB) without making changes.
+  run     Run validation checks and generate router config files (.htaccess, nginx.conf, web.config).
+
+Examples:
+  php cli core.install check
+  php cli core.install run
+
+HELP);
+    }
+
+    private static function buildCheckOutput(\Laswitchtech\CoreWeb\Container $c): array
+    {
+        $appRoot   = (string)$c->resolve('app_root');
+        $lines     = [];
+        $failed    = 0;
+
+        // 1. PHP version
+        $phpVer      = PHP_VERSION;
+        $minPhpVer   = '8.2';
+        $phpOk       = version_compare($phpVer, $minPhpVer, '>=');
+        if (!$phpOk) { ++$failed; }
+        $lines[]     = self::formatCheckLine('PHP Version', "PHP {$phpVer} (minimum {$minPhpVer} required)", $phpOk);
+
+        // 2. Required PHP extensions
+        $requiredExts   = ['pdo_sqlite', 'json', 'pcre', 'filter', 'mbstring'];
+        $missingExts    = [];
+        foreach ($requiredExts as $ext) {
+            if (!\extension_loaded($ext)) {
+                $missingExts[] = $ext;
+            }
+        }
+        // Allow pdo_mysql as alternative to pdo_sqlite.
+        if (\in_array('pdo_sqlite', $requiredExts, true) && !\in_array('pdo_sqlite', \get_loaded_extensions(), true)) {
+            try {
+                $drivers = [];
+                foreach (\PDO::getAvailableDrivers() as $d) {
+                    $drivers[] = strtolower($d);
+                }
+                if (empty($drivers)) {
+                    $missingExts[] = 'pdo_sqlite (or pdo_mysql)';
+                }
+            } catch (\Throwable $_e) { /* no drivers available */ }
+        }
+
+        $extOk   = empty($missingExts);
+        $extMsg  = $extOk
+            ? 'All OK (' . implode(', ', $requiredExts) . ')'
+            : 'MISSING: ' . implode(', ', $missingExts);
+        if (!$extOk) { ++$failed; }
+        $lines[] = self::formatCheckLine('Required PHP Extensions', $extMsg, $extOk);
+
+        // 3. app_root
+        $appRootOk   = is_dir($appRoot);
+        if (!$appRootOk) { ++$failed; }
+        $lines[]     = self::formatCheckLine('App Root', $appRoot, $appRootOk);
+
+        // 4. Required directories — check existence / canCreate (does NOT create)
+        $requiredDirs  = [
+            'config/'       => "{$appRoot}/config",
+            'storage/'      => "{$appRoot}/storage",
+            'storage/cache/' => "{$appRoot}/storage/cache",
+            'storage/logs/'  => "{$appRoot}/storage/logs",
+        ];
+        foreach ($requiredDirs as $label => $dirPath) {
+            if (is_file($dirPath)) {
+                ++$failed;
+                $lines[] = self::formatCheckLine(
+                    $label,
+                    "{$dirPath} (exists but is a file)",
+                    false
+                );
+                continue;
+            }
+
+            // Dir does not exist — report whether we would be able to create it.
+            if (!is_dir($dirPath)) {
+                $parentDir = dirname($dirPath);
+                $canCreate = is_writable($parentDir) && !file_exists($dirPath);
+                $status    = $canCreate ? '[CREATABLE]' : '[NOT CREATABLE]';
+                if (!$canCreate) { ++$failed; }
+                $lines[]   = self::formatCheckLine(
+                    $label,
+                    "{$dirPath} (does not exist {$status})",
+                    $canCreate
+                );
+                continue;
+            }
+
+            // Directory already exists.
+            $resolved  = realpath($dirPath) ?: $dirPath;
+            $lines[]   = self::formatCheckLine(
+                $label,
+                "{$resolved} (exists)",
+                true
+            );
+        }
+
+        // 5. Database connectivity
+        $dbOk        = false;
+        $dbMsg       = 'not available';
+        try {
+            $dbService   = $c->resolve('database');
+            if (\method_exists($dbService, 'pdo')) {
+                $pdo      = $dbService->pdo();
+                $driver  = $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+                $result   = $pdo->query('SELECT 1 AS ok');
+                if ($result !== false) {
+                    $dbOk    = true;
+                    $dbMsg   = "{$driver}: yes";
+                } else {
+                    $dbMsg   = "{$driver}: query failed" . implode(': ', $pdo->errorInfo());
+                }
+            } else {
+                /* Database service present but does not expose pdo(). */
+                $dbMsg     = 'database class found (no pdo method)';
+            }
+        } catch (\Throwable $_e) {
+            // Fallback: try raw SQLite in temp.
+            try {
+                $tmpDb      = tempnam(sys_get_temp_dir(), 'cw-db-');
+                $fallback   = new \PDO("sqlite:{$tmpDb}");
+                $fallback->query('SELECT 1 AS ok');
+                @unlink($tmpDb);
+                $dbOk       = true;
+                $dbMsg      = 'sqlite (temp file, no persistent DB configured)';
+            } catch (\Throwable $_fe) {
+                $dbMsg      = 'not available (no driver or DSN configured)';
+            }
+        }
+        if (!$dbOk) { ++$failed; }
+        $lines[]    = self::formatCheckLine('Database Connectivity', $dbMsg, $dbOk);
+
+        return ['lines' => $lines, 'failed' => $failed];
+    }
+
+    /** Generate router config files and produce the final install report.       */
+    private static function handleInstallRun(\Laswitchtech\CoreWeb\Container $c): Response
+    {
+        $appRoot   = (string)$c->resolve('app_root');
+
+        // 1. Run check first to gather results for the report.                */
+        /** @var array{lines: list<string>, failed: int} */
+        $checkResult   = self::buildCheckOutput($c);
+
+        if ($checkResult['failed'] > 0) {
+            // Still render the summary but do not generate config files.
+            return Response::text(implode('', $checkResult['lines']) . "\n[WARN] {$checkResult['failed']} required check(s) failed — config files skipped.\n");
+        }
+
+        // 2. Create output directory                                            */
+        $outputDir     = "{$appRoot}/config/router";
+        if (!is_dir($outputDir)) {
+            @mkdir($outputDir, 0755, true);
+        }
+
+        /** @var \Laswitchtech\CoreWeb\Router\Config\Http\Apache::generate() : string */
+        $apacheGen     = \Laswitchtech\CoreWeb\Router\Config\Http\Apache::generate();
+        /** @var \Laswitchtech\CoreWeb\Router\Config\Http\Nginx::generate() : string */
+        $nginxGen      = \Laswitchtech\CoreWeb\Router\Config\Http\Nginx::generate();
+        /** @var \Laswitchtech\CoreWeb\Router\Config\Http\IIS::generate() : string */
+        $iisGen        = \Laswitchtech\CoreWeb\Router\Config\Http\IIS::generate();
+
+        // 3. Determine file statuses BEFORE writing                             */
+        $files         = [
+            "{$outputDir}/.htaccess"  => ['display' => 'config/router/.htaccess',      'content' => $apacheGen],
+            "{$outputDir}/nginx.conf" => ['display' => 'config/router/nginx.conf',     'content' => $nginxGen],
+            "{$outputDir}/web.config" => ['display' => 'config/router/web.config',     'content' => $iisGen],
+        ];
+
+        $had           = []; // pre-existed before our writes
+        foreach ($files as $fp => $_) {
+            $had[$fp] = file_exists($fp);
+        }
+
+        // 4. Write / report                                                     */
+        $lines         = [""];
+
+        foreach ($checkResult['lines'] as $l) {
+            $lines[]     = $l;
+        }
+
+        $lines[]        = "\n=== Config Files Generated ===\n";
+        $hadWriteError = false;
+
+        foreach ($files as $fullPath => $meta) {
+            if ($had[$fullPath]) {
+                $lines[]    = "  [SKIPPED] {$meta['display']}\n";
+            } elseif (@file_put_contents($fullPath, $meta['content']) !== false) {
+                $lines[]    = "  [GENERATED] {$meta['display']}\n";
+            } else {
+                $lines[]    = "  [FAILED]    {$meta['display']}\n";
+                $hadWriteError = true;
+            }
+        }
+
+        if ($hadWriteError) {
+            return Response::text(implode('', $lines) . "\n=== Install failed (write errors) ===\n", 500);
+        }
+
+        $lines[]        = "\n=== Install Complete ===\n";
+
+        return Response::text(implode('', $lines));
+    }
+
+    /** ------------------------------------------------------------------ */
+    /** @param array{lines: list<string>, failed: int} $check */
+    private static function renderInstallCheck(array $check): string
+    {
+        $lines        = $check['lines'];
+        $totalFailed  = 0;
+        foreach ($lines as $l) {
+            if (str_contains($l, 'FAILED')) { ++$totalFailed; }
+        }
+        $label        = $totalFailed > 0 ? "=== Failed: {$totalFailed} ===" : '=== Install check passed ===';
+        $lines[]      = "\n{$label}\n";
+        return implode('', $lines);
+    }
+
+    private static function formatCheckLine(string $title, string $message, bool $ok): string
+    {
+        $status  = $ok ? 'OK' : 'FAILED';
+        return sprintf("  %-30s %13s  %s\n", "{$title}:", $status, $message);
+    }
 }
