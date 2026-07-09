@@ -23,30 +23,64 @@ final class Registry extends \ArrayObject
     }
 
     /**
+     * Replace or register an engine by a specific name.
+     *
+     * Returns the previous engine instance if one was replaced, or null.
+     */
+    public function replace(string $name, EngineInterface $engine): ?EngineInterface
+    {
+        $existing = null;
+        if ($this->offsetExists($name)) {
+            /** @var EngineInterface $existing */
+            $existing = $this->offsetGet($name);
+        }
+
+        $this->offsetUnset($name);
+        $this->offsetSet($name, $engine);
+
+        return $existing;
+    }
+
+    /**
      * Resolve the engine to use for a given Entry.
      *
      * Resolution strategy:
-     *   1. If metadata['engine'] is set and registered, return that engine.
-     *   2. If metadata['engine'] is set but not registered, throw RenderException.
-     *   3. Otherwise return the default 'php' engine if registered.
+     *   1. metadata['engine] first (registered only — no fallback).
+     *   2. File extension fallback (.latte → latte, .php → php).
+     *   3. renderer.default from config if set and registered.
+     *   4. Final fallback to 'php' if registered.
      */
     public function resolve(Entry $entry): EngineInterface
     {
-        // Try metadata override first.
+        // 1. Meta-data override (registered only — no fallback).
         $engineName = $entry->metadata['engine'] ?? null;
 
         if (is_string($engineName)) {
-            // Metadata is set: must be a registered engine — no fallback.
             if ($this->offsetExists($engineName)) {
                 return $this->offsetGet($engineName);
             }
 
             throw new RenderException(
-                "Engine '{$engineName}' referenced in metadata but not registered."
+                "Engine '{$engineName}' referenced in meta-data but not registered."
             );
         }
 
-        // Fallback to 'php' engine when no engine metadata is set.
+        // 2. File extension fallback (map .ext to engine name).
+        if (($engineName = $this->extensionToEngine($entry)) !== null) {
+            if ($this->offsetExists($engineName)) {
+                return $this->offsetGet($engineName);
+            }
+        }
+
+        // 3. renderer.default from config (if set and registered).
+        /** @var mixed $defaultEngine */
+        $defaultEngine = \Laswitchtech\CoreWeb\Config::get('renderer.default', null);
+
+        if (is_string($defaultEngine) && $defaultEngine !== '' && $this->offsetExists($defaultEngine)) {
+            return $this->offsetGet($defaultEngine);
+        }
+
+        // 4. Final fallback to 'php'.
         if ($this->offsetExists('php')) {
             return $this->offsetGet('php');
         }
@@ -54,5 +88,23 @@ final class Registry extends \ArrayObject
         throw new RenderException(
             "No renderer engines registered. At least 'php' must be registered."
         );
+    }
+
+    /**
+     * Map an Entry's path extension to a known engine name.
+     *
+     * - .latte → latte
+     * - .php   → php
+     * Returns null when the extension has no mapping.
+     */
+    private function extensionToEngine(Entry $entry): ?string
+    {
+        $ext = strtolower(pathinfo($entry->path, PATHINFO_EXTENSION));
+
+        return match ($ext) {
+            'latte' => 'latte',
+            'php' => 'php',
+            default => null,
+        };
     }
 }
