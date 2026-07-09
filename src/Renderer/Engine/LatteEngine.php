@@ -18,21 +18,18 @@ final class LatteEngine implements EngineInterface
     /** @var non-empty-string */
     private string $cacheDir;
 
-    public function __construct(string $appRoot)
-    {
-        // Resolve cache path: config → relative (wrt app_root) → default.
-        $rawConfig = '';
+    private bool $useStrict;
 
-        try {
-            /** @var mixed $v */
-            $v = \Laswitchtech\CoreWeb\Config::get('renderer.latte.cache_path', null);
-            if (is_string($v) && $v !== '') {
-                $rawConfig = $v;
-            }
-        } catch (\Throwable) { /* Config not yet loaded -- use defaults below. */ }
-
+    /** @param non-empty-string|null $cachePath  absolute or relative cache directory; null → defaults. */
+    public function __construct(
+        private readonly string         $appRoot,
+        ?string                         $cachePath = null,
+        private readonly bool           $strictMode = false,
+        private readonly bool           $debugMode  = false,
+    ) {
+        // Resolve cache path: explicit → default.
         /** @var non-empty-string */
-        $dir = $this->resolveCachePath($rawConfig, $appRoot);
+        $dir = $this->resolveCachePath($cachePath);
 
         // Attempt to create the directory tree; tolerate if it already exists (--ignore-if-exists).
         $created  = @mkdir($dir, 0755, true);
@@ -55,31 +52,30 @@ final class LatteEngine implements EngineInterface
     }
 
     /**
-     * Resolve the cache dir from a raw config value.
+     * Resolve the cache dir from an explicit or implicit config value.
      *
-     * - Empty / unknown  -> default ``{app_root}/storage/cache/renderer/latte``.
+     * - ``null`` / empty  -> default ``{appRoot}/storage/cache/renderer/latte``.
      * - Absolute path     -> used as-is.
-     * - Relative path     -> resolved against ``$appRoot``.
+     * - Relative path     -> resolved against ``$this->appRoot``.
      *
-     * @param string          $rawConfig value (may be empty).
-     * @param non-empty-string $appRoot   application root directory.
+     * @param string|null $cachePath explicit value (may be empty).
      *
      * @return non-empty-string
      */
-    private function resolveCachePath(string $rawConfig, string $appRoot): string
+    private function resolveCachePath(?string $cachePath): string
     {
-        if ($rawConfig !== '') {
+        if ($cachePath !== '' && $cachePath !== null) {
             // Absolute path -- use as-is (no /latte appended).
-            if (is_string(parse_url($rawConfig, PHP_URL_SCHEME)) || str_starts_with($rawConfig, '/')) {
-                return rtrim($rawConfig, '/');
+            if (is_string(parse_url($cachePath, PHP_URL_SCHEME)) || str_starts_with($cachePath, '/')) {
+                return rtrim($cachePath, '/');
             }
 
-            // Relative path -- resolve against app_root exactly.
-            return rtrim(rtrim($appRoot, '/') . '/' . ltrim($rawConfig, '/'), '/');
+            // Relative path -- resolve against appRoot exactly.
+            return rtrim(rtrim($this->appRoot, '/') . '/' . ltrim($cachePath, '/'), '/');
         }
 
         // Default cache directory when no config path is set.
-        return rtrim($appRoot, '/') . '/storage/cache/renderer/latte';
+        return rtrim($this->appRoot, '/') . '/storage/cache/renderer/latte';
     }
 
     public function name(): string
@@ -97,15 +93,13 @@ final class LatteEngine implements EngineInterface
         $template = new \Latte\Engine();
         $template->setTempDirectory($this->cacheDir);
 
-        // Apply config to Latte engine (strict mode only -- debug_mode is read but there is no Latte API for it).
-        $useStrict = (\Laswitchtech\CoreWeb\Config::get('renderer.latte.strict_mode', null)) === true;
-
+        // Apply strict mode (debug_mode is stored but not wired to any Latte API).
         try {
             if (is_callable([$template, 'setStrictTypes'])) {
-                $template->setStrictTypes($useStrict);
+                $template->setStrictTypes($this->useStrict);
             }
             if (is_callable([$template, 'setStrictParsing'])) {
-                $template->setStrictParsing($useStrict);
+                $template->setStrictParsing($this->useStrict);
             }
         } catch (\Throwable) { /* Continue on Latte version mismatch. */ }
 
@@ -114,5 +108,27 @@ final class LatteEngine implements EngineInterface
         } catch (\Latte\RuntimeException $e) {
             throw new \Laswitchtech\CoreWeb\Renderer\Error\RenderException("Latte engine: render failed: {$e->getMessage()}", 0, $e);
         }
+    }
+
+    // ------------------------------------------------------------------ --/
+     // Intentionally undocumented getters (used by unit tests / admin
+     // introspection).  Do not rely on these in production code.            */
+
+    /** Expose the resolved cache path for introspection only. */
+    public function getCacheDir(): string
+    {
+        return $this->cacheDir;
+    }
+
+    /** Expose the strict-mode flag for introspection only. */
+    public function getStrictMode(): bool
+    {
+        return $this->strictMode;
+    }
+
+    /** Expose the debug-mode flag for introspection only. */
+    public function isDebugMode(): bool
+    {
+        return $this->debugMode;
     }
 }

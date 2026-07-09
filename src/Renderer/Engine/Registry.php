@@ -10,8 +10,15 @@ use Laswitchtech\CoreWeb\Renderer\Error\RenderException;
  *
  * Documentation: docs/development/architecture/Renderer/Engine/Registry.md
  */
-final class Registry extends \ArrayObject
+final class Registry
 {
+    /** @var array<string, EngineInterface> */
+    private array $engines = [];
+
+    // --------------------------------------------------------------------
+    // Public API
+    // --------------------------------------------------------------------
+
     /**
      * Register an engine instance.
      *
@@ -19,7 +26,7 @@ final class Registry extends \ArrayObject
      */
     public function register(EngineInterface $engine): void
     {
-        $this->offsetSet($engine->name(), $engine);
+        $this->engines[$engine->name()] = $engine;
     }
 
     /**
@@ -29,16 +36,46 @@ final class Registry extends \ArrayObject
      */
     public function replace(string $name, EngineInterface $engine): ?EngineInterface
     {
-        $existing = null;
-        if ($this->offsetExists($name)) {
-            /** @var EngineInterface $existing */
-            $existing = $this->offsetGet($name);
-        }
+        $existing = $this->engines[$name] ?? null;
+        unset($this->engines[$name]);
 
-        $this->offsetUnset($name);
-        $this->offsetSet($name, $engine);
+        $this->engines[$name] = $engine;
 
         return $existing;
+    }
+
+    /**
+     * Check whether an engine with the given name is registered.
+     */
+    public function has(string $name): bool
+    {
+        return isset($this->engines[$name]);
+    }
+
+    /**
+     * Get a registered engine by name, or null when not found.
+     */
+    public function get(string $name): ?EngineInterface
+    {
+        return $this->engines[$name] ?? null;
+    }
+
+    /**
+     * Return all registered engines as an array keyed by name.
+     *
+     * @return array<string, EngineInterface>
+     */
+    public function all(): array
+    {
+        return $this->engines;
+    }
+
+    /**
+     * Return the number of registered engines.
+     */
+    public function count(): int
+    {
+        return \count($this->engines);
     }
 
     /**
@@ -56,8 +93,8 @@ final class Registry extends \ArrayObject
         $engineName = $entry->metadata['engine'] ?? null;
 
         if (is_string($engineName)) {
-            if ($this->offsetExists($engineName)) {
-                return $this->offsetGet($engineName);
+            if (isset($this->engines[$engineName])) {
+                return $this->engines[$engineName];
             }
 
             throw new RenderException(
@@ -67,8 +104,8 @@ final class Registry extends \ArrayObject
 
         // 2. File extension fallback (map .ext to engine name).
         if (($engineName = $this->extensionToEngine($entry)) !== null) {
-            if ($this->offsetExists($engineName)) {
-                return $this->offsetGet($engineName);
+            if (isset($this->engines[$engineName])) {
+                return $this->engines[$engineName];
             }
         }
 
@@ -76,19 +113,23 @@ final class Registry extends \ArrayObject
         /** @var mixed $defaultEngine */
         $defaultEngine = \Laswitchtech\CoreWeb\Config::get('renderer.default', null);
 
-        if (is_string($defaultEngine) && $defaultEngine !== '' && $this->offsetExists($defaultEngine)) {
-            return $this->offsetGet($defaultEngine);
+        if (is_string($defaultEngine) && $defaultEngine !== '' && isset($this->engines[$defaultEngine])) {
+            return $this->engines[$defaultEngine];
         }
 
         // 4. Final fallback to 'php'.
-        if ($this->offsetExists('php')) {
-            return $this->offsetGet('php');
+        if (isset($this->engines['php'])) {
+            return $this->engines['php'];
         }
 
         throw new RenderException(
             "No renderer engines registered. At least 'php' must be registered."
         );
     }
+
+    // --------------------------------------------------------------------
+    // Internal helpers
+    // --------------------------------------------------------------------
 
     /**
      * Map an Entry's path extension to a known engine name.
