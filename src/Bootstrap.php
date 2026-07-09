@@ -35,6 +35,7 @@ use Laswitchtech\CoreWeb\Helper\Registry as HelperRegistry;
 use Laswitchtech\CoreWeb\Helper\Bag;
 use Laswitchtech\CoreWeb\Manifest\Parser as ManifestParser;
 use Laswitchtech\CoreWeb\Asset\Registry as AssetRegistry;
+use Laswitchtech\CoreWeb\Asset\LessCompiler;
 use Laswitchtech\CoreWeb\Message\Template\TemplateRegistry;
 use Laswitchtech\CoreWeb\Message\Template\TemplateRegistryInterface;
 
@@ -1488,6 +1489,47 @@ class Bootstrap
                 'container' => static::$instance,
                 'mode'      => 'web',
             ]);
+        }
+
+        // Register core /css route for compiled Less output (WEB only).
+        $c = static::$instance;
+        if ($c !== null) {
+            $appRoot = $c->resolve('app_root');
+            if (is_string($appRoot) && $appRoot !== '') {
+                $router->get('/css', static function () use ($c, $appRoot): Response {
+                    // Validate app_root at request time.
+                    if (!is_string($appRoot) || $appRoot === '') {
+                        return (new Response(400))
+                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                            ->withBody('Invalid app root');
+                    }
+
+                    // Resolve cache_dir at request time.
+                    $rawCacheDir = Config::get('renderer.less.cache_dir', 'storage/cache/renderer/less');
+                    if (!is_string($rawCacheDir) || $rawCacheDir === '') {
+                        $rawCacheDir = 'storage/cache/renderer/less';
+                    }
+                    $cacheDir = str_starts_with($rawCacheDir, '/') ? $rawCacheDir : "{$appRoot}/{$rawCacheDir}";
+
+                    // Create cache directory at request time.
+                    if (!is_dir($cacheDir)) {
+                        @mkdir($cacheDir, 0755, true);
+                    }
+
+                    // Resolve debug mode and asset registry at request time.
+                    $debug         = (bool) Config::get('app.debug', false);
+                    /* @var \Laswitchtech\CoreWeb\Asset\Registry */
+                    $assetRegistry = $c->resolve('asset_registry');
+
+                    // Compile Less per-request (enables debug: recompile on every /css request).
+                    $compiler      = new LessCompiler($appRoot, $cacheDir);
+                    $css           = $compiler->compile($assetRegistry, $debug);
+
+                    return (new Response(200))
+                        ->setHeader('Content-Type', 'text/css; charset=UTF-8')
+                        ->withBody($css);
+                });
+            }
         }
 
         // Dispatch the request and send response.

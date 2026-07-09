@@ -1,0 +1,12 @@
+// HelloWorld plugin — shared variables for style compilation
+@primary-color:        #3498db;
+@secondary-color:      #ecf0f1;
+@tertiary-color:       #bdc3c7;
+@border-color:         #95a5a6;
+
+// Helper mixin: convert rem values at a 16px baseline
+@baseline-font-size:   16px;
+
+rem-calc(@value) {
+    @ret: (@value / @baseline-font-size);
+}

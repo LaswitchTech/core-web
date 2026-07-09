@@ -616,12 +616,18 @@ final class HelloWorld
 
         /** @var AssetRegistry $registry */
         $registry = $context['registry'];
-        $name     = self::getPluginDir() !== null ? basename(self::getPluginDir()) : 'hello-world';
+        $dir      = self::getPluginDir();
 
-        // One CSS entry (priority 0 → plugin rank).
+        // One CSS entry (priority 0 → plugin rank) — local LESS source file.
+        $name     = 'hello-world';
+        if ($dir !== null) {
+            $cssSrc = "{$dir}/styles/style.less";
+        } else {
+            $cssSrc = "https://cdn.example.com/vendor/{$name}/style.css?v=1.0.0";
+        }
         $cssEntry = new AssetEntry(
             "{$name}/style.css",
-            "https://cdn.example.com/vendor/{$name}/style.css?v=1.0.0",
+            $cssSrc,
             AssetEntry::TYPE_CSS,
             AssetEntry::PROVIDER_PLUGIN,
             0,
