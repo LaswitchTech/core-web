@@ -34,6 +34,7 @@ use Laswitchtech\CoreWeb\Helper\Config as ConfigHelper;
 use Laswitchtech\CoreWeb\Helper\Registry as HelperRegistry;
 use Laswitchtech\CoreWeb\Helper\Bag;
 use Laswitchtech\CoreWeb\Manifest\Parser as ManifestParser;
+use Laswitchtech\CoreWeb\Asset\Registry as AssetRegistry;
 use Laswitchtech\CoreWeb\Message\Template\TemplateRegistry;
 use Laswitchtech\CoreWeb\Message\Template\TemplateRegistryInterface;
 
@@ -105,6 +106,7 @@ class Bootstrap
             $this->registerMessagingServices($c);
             $this->registerHelperServices($c);
             $this->fireLifecycleHooks();
+            $this->initAssets();
 
             switch ($this->mode) {
                 case self::MODE_WEB:
@@ -626,6 +628,34 @@ class Bootstrap
         // 3. Bind registry (Bag wraps it as a singleton below).
         $c->set('helper_registry', $registry);
         $c->registerSingleton('helpers', static fn ($container) => new Bag($container->resolve('helper_registry')));
+    }
+
+    /* ------------------------------------------------------------------ --/
+      /  Asset Registry                                                         */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Initialise the `Asset\Registry`, store it in the container, and fire
+     * ``asset.register`` so extensions can push CSS / JS entries.
+     *
+     * Placed after helper-registration so plugins that need helpers during
+     * registration (e.g. asset helpers) have them available.
+     */
+    private function initAssets(): void
+    {
+        $registry = new AssetRegistry();
+
+        static::$instance->set('asset_registry', $registry);
+
+        // Fire extension hook so plugins / themes can register CSS & JS assets.
+        $hookRegistry = static::$instance->resolve('hook_registry');
+        if ($hookRegistry instanceof \Laswitchtech\CoreWeb\Hook\Registry) {
+            $hookRegistry->trigger('asset.register', [
+                'registry'  => $registry,
+                'container' => static::$instance,
+                'mode'      => strtolower($this->mode),
+            ]);
+        }
     }
 
     /* ------------------------------------------------------------------ --/

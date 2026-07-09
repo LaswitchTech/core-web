@@ -3,8 +3,14 @@
     "name": "Hello World",
     "version": "1.0.0",
     "description": "Testing harness — Hello World extension.",
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\": "src"
+        }
+    },
     "hooks": [
         "router.register::Laswitchtech\\CoreWeb\\Plugin\\HelloWorld::registerRoutes",
-        "renderer.register::Laswitchtech\\CoreWeb\\Plugin\\HelloWorld::registerRenderer"
+        "renderer.register::Laswitchtech\\CoreWeb\\Plugin\\HelloWorld::registerRenderer",
+        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\HelloWorld::registerAssets"
     ]
 }

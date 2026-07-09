@@ -9,6 +9,8 @@ use Laswitchtech\CoreWeb\Router\Router;
 use Laswitchtech\CoreWeb\Router\Response;
 use Laswitchtech\CoreWeb\Router\Request\Web;
 use Laswitchtech\CoreWeb\Router\Request\Cli;
+use Laswitchtech\CoreWeb\Asset\Entry as AssetEntry;
+use Laswitchtech\CoreWeb\Asset\Registry as AssetRegistry;
 
 final class HelloWorld
 {
@@ -603,5 +605,39 @@ final class HelloWorld
         }
 
         return self::$pluginDir;
+    }
+
+    /** Register demo CSS + JS entries during `asset.register`. */
+    public static function registerAssets(array $context): void
+    {
+        if (!isset($context['registry']) || !$context['registry'] instanceof AssetRegistry) {
+            return;
+        }
+
+        /** @var AssetRegistry $registry */
+        $registry = $context['registry'];
+        $name     = self::getPluginDir() !== null ? basename(self::getPluginDir()) : 'hello-world';
+
+        // One CSS entry (priority 0 → plugin rank).
+        $cssEntry = new AssetEntry(
+            "{$name}/style.css",
+            "https://cdn.example.com/vendor/{$name}/style.css?v=1.0.0",
+            AssetEntry::TYPE_CSS,
+            AssetEntry::PROVIDER_PLUGIN,
+            0,
+            ['integrity' => 'sha384-example-css', 'preload' => true],
+        );
+        $registry->register($cssEntry);
+
+        // One JS entry (priority → plugin rank).
+        $jsEntry = new AssetEntry(
+            "{$name}/app.js",
+            "https://cdn.example.com/vendor/{$name}/app.js?v=1.0.0",
+            AssetEntry::TYPE_JS,
+            AssetEntry::PROVIDER_PLUGIN,
+            0,
+            ['integrity' => 'sha384-example-js', 'defer' => true],
+        );
+        $registry->register($jsEntry);
     }
 }
