@@ -105,10 +105,14 @@
     - Renderable UI components with plugin extensibility.
     - Tags: feature
     - [ ] Implement base UIComponent interface and HTML sanitizer <!-- created_at: 2026-06-18T11:41:00-04:00 priority: normal -->
-  - [ ] Configure default rendering engine through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
-  - [ ] Configure Latte cache path through Config <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
-  - [ ] Configure Latte strict mode / debug mode <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
-  - [ ] Allow application-level engine registration overrides <!-- created_at: 2026-06-23T00:00:00-04:00 priority: normal -->
+  - [x] Configure default rendering engine through Config <!-- created_at: 2026-06-23T00:00:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 priority: normal -->
+    - Implemented via renderer.default with metadata first, file extension fallback second, configured default third, and php fallback last.
+  - [x] Configure Latte cache path through Config <!-- created_at: 2026-06-23T00:00:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 priority: normal -->
+    - Implemented via renderer.latte.cache_path. Empty value preserves default storage/cache/renderer/latte behavior; relative paths resolve against app_root.
+  - [x] Configure Latte strict mode / debug mode <!-- created_at: 2026-06-23T00:00:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 priority: normal -->
+    - Implemented via renderer.latte.strict_mode and renderer.latte.debug_mode. strict_mode is applied to supported Latte strict APIs; debug_mode is reserved/documented because the installed Latte Engine exposes no direct debug API.
+  - [x] Allow application-level engine registration overrides <!-- created_at: 2026-06-23T00:00:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 priority: normal -->
+    - Implemented via renderer.engine.register hook after built-in php and latte engines are registered. Hook listeners receive the engine registry and may call register() or replace().
   - [ ] LESS / CSS Asset Pipeline <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
     - Compile kernel, application, enabled theme, and enabled plugin LESS/CSS assets into a generated stylesheet served by the framework.
     - Tags: framework, renderer, assets, less, css
