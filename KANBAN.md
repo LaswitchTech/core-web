@@ -113,19 +113,19 @@
     - Implemented via renderer.latte.strict_mode and renderer.latte.debug_mode. strict_mode is applied to supported Latte strict APIs; debug_mode is reserved/documented because the installed Latte Engine exposes no direct debug API.
   - [x] Allow application-level engine registration overrides <!-- created_at: 2026-06-23T00:00:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 priority: normal -->
     - Implemented via renderer.engine.register hook after built-in php and latte engines are registered. Hook listeners receive the engine registry and may call register() or replace().
-  - [ ] LESS / CSS Asset Pipeline <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+  - [x] LESS / CSS Asset Pipeline <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-10T21:30:00-04:00 priority: high -->
     - Compile kernel, application, enabled theme, and enabled plugin LESS/CSS assets into a generated stylesheet served by the framework.
     - Tags: framework, renderer, assets, less, css
     - [x] Add `wikimedia/less.php` dependency for LESS compilation <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:42-04:00 priority: high -->
     - [x] Implement static `/css` route for generated stylesheet output <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:18-04:00 priority: high -->
       - Route should serve compiled CSS generated from kernel assets, application assets, the enabled theme, and all enabled plugins.
-    - [ ] Compile kernel + application + enabled extension styles in deterministic order <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - [x] Compile kernel + application + enabled extension styles in deterministic order <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-10T21:30:00-04:00 priority: high -->
       - Order should be explicit and documented: kernel first, application overrides second, enabled theme next, enabled plugins last unless a stronger precedence rule is defined later.
     - [x] Cache compiled CSS under `/storage/cache/renderer/less/` <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:28-04:00 priority: normal -->
       - Cache should avoid recompilation in production when source files are unchanged.
     - [x] Recompile LESS on every request when debug mode is enabled <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:32-04:00 priority: normal -->
       - Debug mode should bypass the cached compiled CSS so developers immediately see style changes.
-    - [ ] Document asset discovery and cache invalidation behavior <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+    - [x] Document asset discovery and cache invalidation behavior <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-10T21:30:00-04:00 priority: normal -->
   - [ ] Dedicated Frontend Asset Plugins <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
     - Move common frontend vendor assets out of the kernel and into dedicated first-party plugins so Bootstrap, Bootstrap Icons, DataTables, jQuery, and Chart.js can be installed, enabled, disabled, versioned, and overridden through the extension system.
     - Tags: framework, extensions, assets, frontend, bootstrap, datatables, jquery, chartjs, v.1.0
