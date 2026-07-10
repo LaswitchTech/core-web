@@ -116,14 +116,14 @@
   - [ ] LESS / CSS Asset Pipeline <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
     - Compile kernel, application, enabled theme, and enabled plugin LESS/CSS assets into a generated stylesheet served by the framework.
     - Tags: framework, renderer, assets, less, css
-    - [ ] Add `wikimedia/less.php` dependency for LESS compilation <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
-    - [ ] Implement static `/css` route for generated stylesheet output <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
+    - [x] Add `wikimedia/less.php` dependency for LESS compilation <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:42-04:00 priority: high -->
+    - [x] Implement static `/css` route for generated stylesheet output <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:18-04:00 priority: high -->
       - Route should serve compiled CSS generated from kernel assets, application assets, the enabled theme, and all enabled plugins.
     - [ ] Compile kernel + application + enabled extension styles in deterministic order <!-- created_at: 2026-06-24T00:00:00-04:00 priority: high -->
       - Order should be explicit and documented: kernel first, application overrides second, enabled theme next, enabled plugins last unless a stronger precedence rule is defined later.
-    - [ ] Cache compiled CSS under `/storage/cache/renderer/less/` <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+    - [x] Cache compiled CSS under `/storage/cache/renderer/less/` <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:28-04:00 priority: normal -->
       - Cache should avoid recompilation in production when source files are unchanged.
-    - [ ] Recompile LESS on every request when debug mode is enabled <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
+    - [x] Recompile LESS on every request when debug mode is enabled <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:32-04:00 priority: normal -->
       - Debug mode should bypass the cached compiled CSS so developers immediately see style changes.
     - [ ] Document asset discovery and cache invalidation behavior <!-- created_at: 2026-06-24T00:00:00-04:00 priority: normal -->
   - [ ] Dedicated Frontend Asset Plugins <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
