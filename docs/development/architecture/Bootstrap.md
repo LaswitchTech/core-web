@@ -157,6 +157,50 @@ private function bootCli(): void
 8. Dispatches the request: `$response = $router->dispatch(Cli::fromArgv($_SERVER['argv'] ?? []))`.
 9. Sends response: `$response->send()`.
 
+### Asset Lifecycle (`initAssets()` + `/css` Route)
+
+#### `initAssets()` — Registry Creation and Population
+
+Executed after `initExtensions()` but before mode-specific dispatch. Creates the asset registry with kernel/application conventions, stores it in the container, then triggers the `asset.register` hook for extension population:
+
+1. **Create fresh `$registry = new AssetRegistry()`**
+2. **Register kernel styles** — convention: `{$kernelRoot}/Assets/styles.less`. If file exists, calls `$registry->css('kernel/styles', realpath($kernelStyler), AssetEntry::PROVIDER_CORE, 100)`. Kernel root is determined by `CORE_WEB_ROOT` constant or `dirname(__DIR__)`.
+3. **Register application styles** — convention: `{$appRoot}/Assets/styles.less`. If file exists:
+    - Gets `$realpath = realpath($appStyler)`.
+    - **Dedup guard**: If kernel and app resolve to the same physical file (`realpath($kernelStyler) === $realpath`), skips registration entirely to prevent duplicate compilation.
+    - Otherwise: calls `$registry->css('app/styles', $realpath, AssetEntry::PROVIDER_APP, 200)`.
+4. **Store in container**: `$c->set('asset_registry', $registry)`
+5. **Trigger `asset.register` hook** — fires only if the registry instance is `\Laswitchtech\CoreWeb\Hook\Registry`, passing:
+    - `'registry'` → the populated AssetRegistry
+    - `'container'` → `static::$instance` (current bootstrap run)
+    - `'mode'` → lowercase string (`'web'` or `'cli'`)
+
+This is where enabled themes/plugins register their CSS/JS assets by calling `$registry->css('...', ...)` or `$registry->js('...', ...)`. Only **enabled** extensions have their hooks registered (in `initExtensions()`), so disabled extensions cannot populate the asset registry.
+
+#### `/css` Route — Per-Request Compilation (WEB-only)
+
+Registered in `bootWeb()` after router creation but before dispatch. Serves compiled CSS by resolving all registry entries at request time and compiling `.less` files through `LessCompiler`. The route is only available in WEB mode:
+
+**Path**: `GET /css`
+**Content-Type**: `text/css; charset=UTF-8`
+**Status**: 200 (success), 400 (invalid app root)
+
+The handler performs these steps at request time:
+
+1. **Validate `app_root`** — resolved from container (`$c->resolve('app_root')`). If not a non-empty string, returns 400 with body `'Invalid app root'`.
+2. **Resolve cache directory** — reads `renderer.less.cache_dir` from config via `Config::get()`, defaulting to `'storage/cache/renderer/less'`. Prepends `$appRoot` for relative paths.
+3. **Ensure cache directory exists** — `@mkdir($cacheDir, 0755, true)` (best-effort, no throw).
+4. **Resolve debug mode and asset registry** at request time:
+    - `$debug = (bool) Config::get('app.debug', false)` — if `true`, compilation bypasses all cache for every `/css` request.
+    - `$assetRegistry = $c->resolve('asset_registry')` — the same registry instance created in `initAssets()`.
+5. **Create compiler**: `$compiler = new LessCompiler($appRoot, $cacheDir)`
+6. **Compile per-request**: `$css = $compiler->compile($assetRegistry, $debug)`
+7. **Return 200 response** with compiled CSS body and appropriate `Content-Type` header.
+
+The `/css` route enables hot-reloading during development (when debug is on) because the full Less pipeline runs on every request. In production with debug disabled, caching via `LessCompiler` ensures minimal overhead by serving pre-compiled CSS from disk when source files haven't changed.
+
+---
+
 ### Container Bindings Summary
 
 The Bootstrap class binds exactly these keys into the container (in registration order):
