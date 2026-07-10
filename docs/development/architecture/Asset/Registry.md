@@ -33,7 +33,7 @@ private array $store = [];
 // ]
 ```
 
-The `$nextOrder` counter is monotonically increasing, assigned to every entry at registration time for deterministic tie-breaking during compilation.
+The `$nextOrder` counter is monotonically increasing and increments for **every** registration attempt (including those rejected by precedence) at the time of the call, assigned to every inserted entry at registration time for deterministic tie-breaking during compilation.
 
 ## Public API
 
@@ -101,13 +101,13 @@ Return all registered JS entries keyed by normalized asset name. Same behavior a
 
 ```
 1. Validate entry type and provider (throws \InvalidArgumentException on invalid).
-2. Assign fresh $order = ++$nextOrder; normalize name.
+2. Assign fresh $order = ++$nextOrder; normalize name. ($nextOrder increments here regardless of whether this registration will be accepted or rejected by precedence rules.)
 3. Create a COPY of the Entry with fresh order number.
 4. If no existing slot → insert unconditionally.
 5. If existing slot:
-   a. Compare priority: higher wins. New < existing → keep existing, return.
-   b. Same priority → compare provider rank (lower=first). New rank > existing → keep existing, return.
-   c. Same priority + same rank → compare order. new >= existing → keep existing, return.
+    a. Compare priority: higher wins. New < existing → keep existing, return.
+    b. Same priority → compare provider rank (lower=first). New rank > existing → keep existing, return.
+    c. Same priority + same rank → compare order. new >= existing → keep existing, return.
 6. New entry replaces existing: $this->store[$type][$norm] = $newEntry.
 7. Return $this.
 ```
@@ -156,6 +156,7 @@ $hookRegistry->trigger('asset.register', [
 This is the phase where:
 - **Enabled themes** call `$registry->css('my-theme/theme', __DIR__ . '/assets/style.less', Entry::PROVIDER_THEME, 300);`
 - **Enabled plugins** call `$registry->js('my-plugin/components', __DIR__ . '/js/components.js', Entry::PROVIDER_PLUGIN, 400);`
+- A **CSS/LESS plugin example**: a provider plugin registering an absolute readable `.less` path at priority 400 — `$registry->css('my-plugin/forms', '/absolute/path/to/ext/plugins/my-plugin/assets/forms.less', Entry::PROVIDER_PLUGIN, 400);`
 - Only themes and plugins whose manifests appear in the enabled state (from `extensions.cfg`) have their `$extensionBase/hooks` registered via `Hook\Registry::addClassCall()`, so only **enabled** extensions can populate the registry.
 
 ### 3. Compilation (per-request on `/css`)
@@ -211,15 +212,15 @@ A single numeric value (`$priority`) cannot distinguish between every unique sou
 - Provider rank as the secondary discriminator (built-in convention for tier hierarchy).
 - Registration order as the tertiary discriminator (monotonic counter ensures strict total ordering).
 
-### 3. Entries Are Copied Not Referenced on Insertion
+### 3. register() Copies, doAdd() Constructs a New Entry
 
-Both `register()` and `doAdd()` create a fresh copy of the entry with a new `$order` number before storage. This prevents mutation of entry objects after they have been registered, ensuring that registration time semantics (priority, order) are stable for the lifetime of the bootstrap execution.
+`register()` creates a fresh **copy** of the supplied Entry object with a new `$order` number before storage, preventing mutation of the original. `doAdd()` constructs a **new** Entry directly (it does not accept one as a parameter). Both ensure registration-time semantics (priority, order) are stable for the lifetime of the bootstrap execution.
 
 ### 4. Path Is Not Validated at Registration
 
 The Registry does not call `is_file()` or `realpath()` during `css()`, `js()`, or `register()`. The path is taken on trust:
 - Kernel and application conventions pass `realpath()` directly to ensure valid, resolved paths.
-- Extension-supplied paths are trusted because extension manifests include the path string; the caller knows the file location.
+- Extension hook callbacks resolve their own asset paths at runtime and call `$registry->css()` / `$registry->js()` with those absolute paths; the registry does not read paths from manifests.
 - Validation (existence + readability) happens lazily in `LessCompiler::compile()`, which silently skips unreadable entries rather than throwing. This prevents a single missing asset from breaking the entire CSS pipeline.
 
 ### 5. replace() Bypasses Precedence Intentionally

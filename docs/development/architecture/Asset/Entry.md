@@ -42,7 +42,7 @@ All declared as `public` (no getters). The name is normalized automatically.
 | `provider` | `readonly string` | Source provider: `core`, `app`, `theme`, or `plugin`. Determines **precedence rank** for conflict resolution. |
 | `priority` | `readonly int` | Numeric priority passed during registration. Higher values win conflicts; used in LessCompiler ascending sort order. |
 | `metadata` | `readonly array` | Arbitrary associative metadata attached to the entry (not used by core code). |
-| `order` | `readonly int` | Monotonically increasing counter assigned by the Registry at registration time. Only used for **deterministic** tie-breaking during compilation sorting. |
+| `order` | `readonly int` | Monotonically increasing counter assigned by the Registry at registration time. Used for **deterministic** tie-breaking within same-priority/same-provider registry conflicts and for LessCompiler sorting order. |
 
 ### Provider Rank Table
 
@@ -101,7 +101,7 @@ $pluginEntry = new Entry('my-plugin/components/css', '/ext/plugins/my-plugin/src
 When the Registry encounters duplicate (type, name) slots in `register()` or `doAdd()`:
 
 1. **Higher numeric priority wins.** The new entry replaces the existing one if its `$priority` > existing's `$priority`.
-2. **Same priority** → provider rank (lower rank = higher precedence). If new entry's rank ≤ existing rank, existing wins.
+2. **Same priority** → provider rank (lower rank = higher precedence). If new provider rank > existing, existing wins; if new < existing, new entry wins; if equal, fall through to rule 3.
 3. **Same priority and same rank** → registration order (`order`). Earlier registration (lower order) wins because the new entry gets a later order number.
 
 Provider rank is **only used during conflict resolution**. It does **not** affect LessCompiler sort order -- that uses `$priority` ascending first, then `$order` ascending, then `$name` string comparison.

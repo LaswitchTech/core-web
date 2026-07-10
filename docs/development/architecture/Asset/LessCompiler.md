@@ -13,7 +13,7 @@ final class LessCompiler { ... }
 ```
 
 - **`final`** — no subclassing expected.
-- The compiler resolves `$cacheDir` at runtime from `Config::get('less.cache_dir')`, defaulting to `'storage/cache/renderer/less'` relative to the app root, or `sys_get_temp_dir()` as absolute fallback when empty.
+- LessCompiler does **not** read Config. Bootstrap resolves `renderer.less.cache_dir` and passes the result to `LessCompiler::__construct()` as `$cacheDir`. The constructor itself falls back to `sys_get_temp_dir()` when the supplied cacheDir is empty or whitespace-only; no other default or fallback logic lives in this class.
 
 ## Constructor
 
@@ -37,7 +37,7 @@ Compilation pipeline:
 1. **Filter** — call `$registry->allCss()`. For each entry:
    - Path must not be shorter than 5 characters (`strlen < 5` → skip: `.less` is 5 chars).
    - Path must end with `.less` (case-insensitive: `strtolower(substr($entry->path, -5)) !== '.less'`).
-   - File must **exist** and be **readable** (`is_path()` check; silently skipped on failure).
+   - File must **exist** and be **readable** (`is_readable()` check; silently skipped on failure).
    - `file_get_contents()` on the path must succeed. If it returns `false`, skip.
 
 2. **Build sort array** — collect matching entries into a flat list:
@@ -79,9 +79,9 @@ JSON fallback: if `json_encode` throws `\JsonException`, a deterministic string 
 
 7. **Compile via Less_Parser** — instantiate `Less_Parser()`, set base directory to `"$appRoot/"`, call `$parser->parseFile($entry['path'], $baseDir)` for each sorted entry (the order defined above), then retrieve compiled CSS with `$parser->getCSS()`.
 
-8. **Cache write** — write the compiled CSS through `writeCache()` (best-effort, no throw). Return the CSS string regardless of cache write success/failure.
+8. **Cache write** — if `$debug` is `false`, write the compiled CSS through `writeCache()` (best-effort, no throw). Return the CSS string regardless of cache write success/failure. If `$debug` is `true`, skip cache writing entirely.
 
-9. **Debug mode** — when `$debug` is `true`, skip steps 5 and 6 entirely (never read cache), always recompile, do not write cache (step 8 is still called but with a path that won't be reused). Effectively: every `/css` request recompiles the full pipeline from source.
+9. **Debug mode** — when `$debug` is `true`, skip steps 5 and 6 entirely (never read cache), always recompile, do not calculate a cache path for writing, and do not call `writeCache()`. Effectively: every `/css` request recompiles the full pipeline from source with no intermediate cache file.
 
 ### Cache Key Details
 
@@ -95,7 +95,7 @@ The cache key is derived from **paths + modification times + file sizes + conten
 Cache writes use **best-effort temp file + atomic rename**:
 
 1. Ensure `$cacheDir` exists via `@mkdir($dir, 0755, true)`. If it fails and still isn't a directory, bail silently.
-2. Build deterministic temp path: `{cacheDir}/{basename}.tmp.{pid}.{random_hex}` where random bytes come from `bin2hex(random_bytes(8))` (16 hex chars).
+2. Build a collision-resistant temporary path: `{cacheDir}/{basename}.tmp.{pid}.{random_hex}` where random bytes come from `bin2hex(random_bytes(8))` (16 hex chars).
 3. Write content to the temp file via `@file_put_contents($tmpPath, $content)`. On failure, `@unlink($tmpPath)` and return.
 4. Atomically rename: `@rename($tmpPath, $path)`. On failure, `@unlink($tmpPath)` and return.
 5. **No exceptions** — any failure at any step silently skips the cache write. CSS output is never blocked by a failed cache write.
@@ -128,9 +128,9 @@ Provider rank (`app=0, theme=1, plugin=2, core=3`) was considered for use as a s
 - **Determinism requirement.** Using `$order` (monotonic counter) as the tiebreaker between same-priority entries guarantees strict total ordering without requiring cross-entry provider comparisons.
 - **Documentation clarity.** When a developer sees priority 300 for theme and 400 for plugin, they can see directly in their code what order things will compile — no lookup needed to understand the precedence chain.
 
-### 3. No Compilation Error Handling During `compile()`
+### 3. `parseFile()` Exceptions Propagate
 
-`Less_Parser::parseFile()` failures silently continue (the parser may not add the file to its internal state; `$parser->getCSS()` still returns whatever it compiled). There is no error propagation, logging, or exception thrown for parse errors in individual files. This follows the design principle that a single broken asset must not block the entire CSS pipeline.
+`Less_Parser::parseFile()` is **not** wrapped in try/catch inside `compile()`. If a file fails to parse (syntax error, missing import, invalid Less), the exception propagates unhandled and stops compilation for that request. Parse errors are **not** silently skipped or recovered.
 
 ### 4. Cache Write Is Non-Critical
 
