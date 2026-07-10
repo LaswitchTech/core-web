@@ -1,0 +1,15 @@
+{
+    "type": "plugin",
+    "name": "Bootstrap",
+    "version": "5.3.3",
+    "description": "First-party Bootstrap 5.3 framework assets.",
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\BootstrapIcons\\": "icons"
+        }
+    },
+    "hooks": [
+        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\BootstrapIcons\\BootstrapIconsAssetProvider::registerAssets",
+        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\Bootstrap\\BootstrapAssetProvider::registerAssets"
+    ]
+}

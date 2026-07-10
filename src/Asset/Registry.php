@@ -153,8 +153,60 @@ final class Registry
     }
 
     /* ------------------------------------------------------------------ --/
-     /  Registration                                                           */
+      /  Ordered Retrieval                                                      */
     /* ------------------------------------------------------------------ */
+
+    /**
+     * Return all CSS entries sorted by priority → order → name (all ascending).
+     *
+     * @return Entry[]
+     */
+    public function orderedCss(): array
+    {
+        return $this->ordered(Entry::TYPE_CSS);
+    }
+
+    /**
+     * Return all JS entries sorted by priority → order → name (all ascending).
+     *
+     * @return Entry[]
+     */
+    public function orderedJs(): array
+    {
+        return $this->ordered(Entry::TYPE_JS);
+    }
+
+    /* ------------------------------------------------------------------ --/
+      /  Internal                                                             */
+    /* ------------------------------------------------------------------ */
+
+    /** Return sorted entry array for the given type, or empty array when none exist. */
+    private function ordered(string $type): array
+    {
+        $entries = array_values($this->store[$type] ?? []);
+
+        if ($entries === []) {
+            return [];
+        }
+
+        usort($entries, fn (Entry $a, Entry $b): int => self::cmpEntry($a, $b));
+
+        return $entries;
+    }
+
+    /** Shared comparator: priority ↑ → order ↑ → name ↑. */
+    private static function cmpEntry(Entry $a, Entry $b): int
+    {
+        if ($a->priority !== $b->priority) {
+            return $a->priority <=> $b->priority;
+        }
+
+        if ($a->order !== $b->order) {
+            return $a->order <=> $b->order;
+        }
+
+        return $a->name <=> $b->name;
+    }
 
     /** Register an existing Entry object with precedence enforcement. */
     public function register(Entry $entry): self

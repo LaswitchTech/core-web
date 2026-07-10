@@ -1567,6 +1567,84 @@ class Bootstrap
             }
         }
 
+        // Register core /{type}/{name} route for served local assets (WEB only).
+        $c = static::$instance;
+        if ($c !== null) {
+            $appRoot = $c->resolve('app_root');
+            if (is_string($appRoot) && $appRoot !== '') {
+                $router->get('/{type}/{name}', static function () use ($c, $appRoot): Response {
+                    // Validate app_root at request time.
+                    if (!is_string($appRoot) || $appRoot === '') {
+                        return (new Response(400))
+                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                            ->withBody('Invalid app root');
+                    }
+
+                    // Resolve request parameters.
+                    $request = Web::fromGlobals();
+                    $type    = strtolower(trim((string) $request->param('type')));
+                    $name    = trim((string) $request->param('name'));
+
+                    // Only css and js are supported.
+                    if ($type !== \Laswitchtech\CoreWeb\Asset\Entry::TYPE_CSS && $type !== \Laswitchtech\CoreWeb\Asset\Entry::TYPE_JS) {
+                        return (new Response(404))
+                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                            ->withBody('Not found');
+                    }
+
+                    // Name must not be empty.
+                    if ($name === '') {
+                        return (new Response(404))
+                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                            ->withBody('Not found');
+                    }
+
+                    // Resolve asset registry at request time.
+                    /* @var \Laswitchtech\CoreWeb\Asset\Registry */
+                    $assetRegistry = $c->resolve('asset_registry');
+                    if (!($assetRegistry instanceof \Laswitchtech\CoreWeb\Asset\Registry)) {
+                        return (new Response(500))
+                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                            ->withBody('Internal error');
+                    }
+
+                    // Look up the asset entry; reject unknown assets.
+                    $entry = $assetRegistry->get($type, $name);
+                    if (!($entry instanceof \Laswitchtech\CoreWeb\Asset\Entry)) {
+                        return (new Response(404))
+                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                            ->withBody('Not found');
+                    }
+
+                    // Reject http:// and https:// URLs — never expose arbitrary filesystem paths.
+                    if (str_starts_with($entry->path, 'http://') || str_starts_with($entry->path, 'https://')) {
+                        return (new Response(403))
+                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                            ->withBody('Forbidden');
+                    }
+
+                    // Resolve the full path relative to app root.
+                    $fullPath = str_starts_with($entry->path, '/') ? $entry->path : "{$appRoot}/{$entry->path}";
+
+                    // Reject unreadable files.
+                    if (!is_file($fullPath) || !is_readable($fullPath)) {
+                        return (new Response(404))
+                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                            ->withBody('Not found');
+                    }
+
+                    // Serve the file with correct content type.
+                    $contentType = ($type === \Laswitchtech\CoreWeb\Asset\Entry::TYPE_CSS)
+                        ? 'text/css; charset=UTF-8'
+                        : 'application/javascript';
+
+                    return (new Response(200))
+                        ->setHeader('Content-Type', $contentType)
+                        ->withBody(file_get_contents($fullPath));
+                });
+            }
+        }
+
         // Dispatch the request and send response.
         $response = $router->dispatch(Web::fromGlobals());
         $response->send();
