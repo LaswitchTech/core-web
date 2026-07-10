@@ -568,6 +568,7 @@ final class HelloWorld
                     return Response::text("Logger FAILED: " . $_e->getMessage() . "\n", 500);
                 }
             });
+
         }
     }
 

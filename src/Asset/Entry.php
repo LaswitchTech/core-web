@@ -29,21 +29,22 @@ final readonly class Entry
         self::PROVIDER_CORE    => 3,
     ];
 
+    public string $name;
+    public readonly string $path;
+    public readonly string $type;
+    public readonly string $provider;
+    public readonly int $priority;
+    public readonly array $metadata;
+    public readonly int $order;
+
     public function __construct(
-        /** Asset name (normalized to lowercase in constructor). Non-empty. */
-        public string $name,
-        /** Absolute or relative file path of the asset. Non-empty. */
-        public string $path,
-        /** Either 'css' or 'js'. Validated in constructor. */
-        public string $type,
-        /** Source provider: app | theme | plugin | core. */
-        public string $provider = self::PROVIDER_CORE,
-        /** Integer priority — higher numeric wins conflicts. */
-        public int    $priority = 0,
-        /** Arbitrary associative metadata (no schema). */
-        public array  $metadata = [],
-        /** Registration order assigned by the registry at insert time. Monotonically increasing integer. */
-        public int    $order = 0,
+        string $name,
+        string $path,
+        string $type,
+        string $provider = self::PROVIDER_CORE,
+        int $priority = 0,
+        array $metadata = [],
+        int $order = 0,
     ) {
         if (!in_array($type, self::VALID_TYPES, true)) {
             throw new \InvalidArgumentException(
@@ -57,8 +58,18 @@ final readonly class Entry
             );
         }
 
-        // Normalize name to lowercase for case-insensitive lookups.
-        $this->name = strtolower(trim($name));
+        $normalizedName = strtolower(trim($name));
+        if ($normalizedName === '') {
+            throw new \InvalidArgumentException('Asset name must not be empty after trimming.');
+        }
+
+        $this->name     = $normalizedName;
+        $this->path     = $path;
+        $this->type     = $type;
+        $this->provider = $provider;
+        $this->priority = $priority;
+        $this->metadata = $metadata;
+        $this->order    = $order;
     }
 
     /** Provider precedence rank (lower = higher priority). */
