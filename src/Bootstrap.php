@@ -35,6 +35,7 @@ use Laswitchtech\CoreWeb\Helper\Config as ConfigHelper;
 use Laswitchtech\CoreWeb\Helper\Registry as HelperRegistry;
 use Laswitchtech\CoreWeb\Helper\Bag;
 use Laswitchtech\CoreWeb\Manifest\Parser as ManifestParser;
+use Laswitchtech\CoreWeb\Asset\Entry as AssetEntry;
 use Laswitchtech\CoreWeb\Asset\Registry as AssetRegistry;
 use Laswitchtech\CoreWeb\Asset\LessCompiler;
 use Laswitchtech\CoreWeb\Message\Template\TemplateRegistry;
@@ -646,6 +647,39 @@ class Bootstrap
     private function initAssets(): void
     {
         $registry = new AssetRegistry();
+
+        // ── 1. Kernel asset (first compilation tier) -----------------------------
+        // Convention: {$kernelRoot}/Assets/styles.less
+        $kernelRoot = defined('CORE_WEB_ROOT') ? (string) CORE_WEB_ROOT : dirname(__DIR__);
+        $kernelStyler = "{$kernelRoot}/Assets/styles.less";
+        if (is_file($kernelStyler)) {
+            $registry->css(
+                'kernel/styles',
+                realpath($kernelStyler),
+                AssetEntry::PROVIDER_CORE,
+                100,
+            );
+        }
+
+        // ── 2. Application asset (second tier) -----------------------------------
+        // Convention: {$appRoot}/Assets/styles.less
+        $appStyler = "{$this->appRoot}/Assets/styles.less";
+        if (is_file($appStyler)) {
+            $realpath = realpath($appStyler);
+
+            // Prevent duplicate compilation: skip when app stylesheet resolves to
+            // the same physical file as the kernel stylesheet.
+            if ($kernelStyler !== null && realpath($kernelStyler) === $realpath) {
+                // fall through — do not register twice
+            } else {
+                $registry->css(
+                    'app/styles',
+                    $realpath,
+                    AssetEntry::PROVIDER_APP,
+                    200,
+                );
+            }
+        }
 
         static::$instance->set('asset_registry', $registry);
 

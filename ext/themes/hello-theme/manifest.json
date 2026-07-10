@@ -1,0 +1,13 @@
+{
+    "type": "theme",
+    "name": "Hello Theme",
+    "version": "1.0.0",
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Theme\\": "src"
+        }
+    },
+    "hooks": [
+        "asset.register::Laswitchtech\\CoreWeb\\Theme\\HelloTheme::registerAssets"
+    ]
+}

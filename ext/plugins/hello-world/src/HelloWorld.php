@@ -631,7 +631,7 @@ final class HelloWorld
             $cssSrc,
             AssetEntry::TYPE_CSS,
             AssetEntry::PROVIDER_PLUGIN,
-            0,
+            400,
             ['integrity' => 'sha384-example-css', 'preload' => true],
         );
         $registry->register($cssEntry);
