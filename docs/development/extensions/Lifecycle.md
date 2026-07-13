@@ -14,9 +14,10 @@ The sequence is fixed — no hooks fire during discovery itself:
  3. All-extension metadata indexing             stored in `extension_index_all`       → full manifest snapshot
  4. Lifecycle filtering                         reads `config/extensions.cfg`         → enabled/locked/disabled pruning
  5. Dependency validation (enabled-only)        against filtered enabled manifests     → fail-fast on unresolved deps
- 6. Autoloader Installation                     spl_autoload_register()               → Laswitchtech\CoreWeb\Plugin\* / Theme\*
- 7. Hook + Layout Registration                  Registry::addCallback / addClassCall  → dotted hooks → placeholders
- 8. Final enabled-only `extension_index`        Container::set()                      → keyed by name; lifecycle-ready
+ 6. Dependency ordering                          topological sort of enabled set         → dependencies before dependents; unrelated preserve discovery order
+ 7. Autoloader Installation                     spl_autoload_register()               → Laswitchtech\CoreWeb\Plugin\* / Theme\*
+ 8. Hook + Layout Registration                  Registry::addCallback / addClassCall  → dotted hooks → placeholders
+ 9. Final enabled-only `extension_index`        Container::set()                      → keyed by name; lifecycle-ready
 ```
 
 ### Phase Details
@@ -62,9 +63,20 @@ foreach ($m->depends as $dep) {
 }
 ```
 
-Unresolved dependencies cause a hard `RuntimeException` at bootstrap. No topological sort or transitive resolution exists.
+Unresolved dependencies cause a hard `RuntimeException` at bootstrap.
 
-#### 3. Autoloader Installation
+#### 3. Dependency Ordering (Topological Sort)
+
+Enabled extensions are **stably topologically sorted** before any registration occurs:
+
+- All dependency edges from the enabled set are collected and assembled into a DAG.
+- A stable topological sort is performed; an extension that has no ordering constraint relative to another preserves its discovery order.
+- Dependencies always appear before dependents in the final ordering — every transitive dependency is guaranteed to come first.
+- If a cycle is detected during topological sorting, bootstrap fails immediately with a `RuntimeException` listing the manifests that could not be sorted.
+
+This step ensures deterministic hook registration order: a plugin's hooks are registered only after all its (transitive) dependencies' hooks have been registered.
+
+#### 4. Autoloader Installation
 
 All extension `src/` directories are gathered and registered in a single `spl_autoload_register()` callback that responds to two namespace prefixes:
 
@@ -73,7 +85,7 @@ All extension `src/` directories are gathered and registered in a single `spl_au
 
 This step runs **before** Hook registration so that class-based hook callbacks can be resolved via reflection. Duplicate directories are deduplicated.
 
-#### 4. Hook Registration
+#### 5. Hook Registration
 
 For each extension, every `hooks` entry is processed:
 
@@ -82,7 +94,7 @@ For each extension, every `hooks` entry is processed:
 | Dotted-only (no `::`) | `"page.before_render"` | Registers `$hookName` with an empty placeholder callback `fn () => []`. No resolution failure. |
 | Hook name + class::method | `"layout.header::Example\\Plugin\\onLayoutHeader"` | Split on first `::`, then on last `::` within the class/method part. Resolves via `Hook\Registry::addClassCall()`. **Fails bootstrap** if reflected class or method does not exist. |
 
-#### 5. Layout Registration
+#### 6. Layout Registration
 
 Each `layouts` entry is a string identifier (e.g., `"sidebar"`). Bootstrap registers a placeholder hook named `layout.{identifier}`:
 
@@ -94,18 +106,21 @@ foreach ($manifest->layouts as $layoutDef) {
 
 Layouts do **not** register via `addClassCall()`; they are purely placeholder hooks that signal the layout's existence to downstream subsystems.
 
-#### 6. Metadata Indexing
+#### 7. Metadata Indexing
 
-Each extension's metadata is stored in the Container under `extension_index`, keyed by `$manifest->name`. The index stores six fields: type, version, directory, depends, origin, and kernelCompat.
+Each extension's metadata is stored in the Container under `extension_index`, keyed by `$manifest->name`. The index stores nine fields: type, version, directory, slug, depends, origin, kernelCompat, compatStatus, and locked.
 
 ```
 extension_index["example-plugin"] = {
-    type:          "plugin",
-    version:       "1.0.0",
-    directory:     "/absolute/path/to/ext/plugins/example-plugin",
-    depends:        ["core.authentication"],
-    origin:         "app",
-    kernelCompat:   "^1.0",
+    type:         "plugin",
+    version:      "1.0.0",
+    directory:    "/absolute/path/to/ext/plugins/example-plugin",
+    slug:          "datatables-bootstrap",
+    depends:       ["core.authentication"],
+    origin:        "app",
+    kernelCompat:  "^1.0",
+    compatStatus:  "compatible",
+    locked:         false,
 }
 ```
 
@@ -154,6 +169,7 @@ After extensions are registered, the active subsystem (WEB or CLI) boots:
 | Manifest missing required fields | `Parser::validate()` exceptions | Per-manifest (tolerant — skip) |
 | Hook name regex mismatch | `InvalidArgumentException` on validate() | Per-hook definition (tolerant — skip) |
 | Unresolved dependency | `RuntimeException` thrown during `$knownNames` loop | Bootstrap-wide (hard fail) |
+| Dependency cycle detection | `RuntimeException` listing unsorted manifests | Bootstrap-wide (hard fail) |
 | Class/method callback resolution | `addClassCall()` throws if class or method doesn't exist | Bootstrap-wide (hard fail) |
 | Dotted-only hook name parsing | No error — registered as empty placeholder callback | Informational only |
 | Missing ext/ directory | Silent early return with empty registry | Non-error (normal for Composer installs) |
@@ -302,9 +318,13 @@ Extension enable/disable state does **not** modify manifest format or discovery 
 - Enabled names are verified for existing in `extension_index` before mutation.
 - Already-disabled extensions produce a confirmation message but no state change or pending event.
 
-## Future Lifecycle Features (Not Implemented)
+## Features Implemented Beyond Scope
+
+Declared dependency chains are transitively ordered by the topological sort (Steps 3 and 6 in Bootstrap-phase Lifecycle): every direct dependency's own dependencies load before dependents. Every declared dependency must already be discovered and enabled; automatic enabling, installation, or acquisition of missing dependencies is not implemented. Dependency version constraints are not supported by `depends`; only existence checking against the known manifest set occurs.
+
+## Lifecycle Features (Not Implemented)
 
 The following lifecycle capabilities are planned but not present in the current codebase:
 
-- **Transitive dependency resolution** — Following dependency chains to ensure all transitive deps are satisfied.
-- **Cycle detection** — Detecting and reporting circular dependencies during discovery.
+- **Version-constraint enforcement** — Currently `kernel-compat` constraints are warning-only during discovery; unrecognized patterns default to compatible instead of blocking bootstrap.
+- **Automatic dependency installation** — Resolving and installing missing extensions from a repository.

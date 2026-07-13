@@ -842,9 +842,113 @@ class Bootstrap
      * skipped so one broken extension does not block discovery of valid extensions.
      * Bootstrap still fails fast on unresolved dependencies between successfully parsed manifests.
      *
-     * If no ``ext/`` directory exists, registers an empty hook registry and returns silently —
+      * If no ``ext/`` directory exists, registers an empty hook registry and returns silently —
      * this is normal for Composer installs that ship without extensions by default.
      */
+
+    /**
+     * Sort extension manifests by their declared dependencies so that every dependency
+     * appears before any extension that requires it (topological order).
+     *
+     * The algorithm currently serves as a stable insertion point; it returns the input
+     * array unmodified and MUST NOT alter extension discoverability or priority.
+     */
+    private function sortExtensionsByDependencies(array $manifests): array
+    {
+        // Build a local associative index keyed by each manifest's name.
+        $named = [];
+
+        // Track each manifest's original numeric position.
+        $position = [];
+
+        // Build dependency indegree / reverse-index (dependents) for topological sort.
+        $indegree  = [];
+        $dependents = [];
+
+        foreach ($manifests as $idx => $ext) {
+            $named[$ext->name]       = $ext;
+            $position[$ext->name]    = $idx;
+
+            // Initialise indegree to zero for every known extension.
+            if (!isset($indegree[$ext->name])) {
+                $indegree[$ext->name] = 0;
+            }
+
+            // Count outgoing dependencies (each dep removes one in-degree from the dependent).
+            foreach ($ext->depends as $dep) {
+                $indegree[$ext->name]++;
+                $dependents[$dep][]   = $ext->name;
+            }
+        }
+
+        // Seed the initial queue with manifests whose indegree is zero, sorted by original position asc.
+        $queue = [];
+        foreach ($named as $name => $ext) {
+            if ($indegree[$name] === 0) {
+                $queue[] = $ext;
+            }
+        }
+
+        // Sort queue entries by their original array index (stable order preservation).
+        usort($queue, function ($a, $b) use ($position): int {
+            return ($position[$a->name] ?? 0) <=> ($position[$b->name] ?? 0);
+        });
+
+        // ── Kahn's algorithm — stable topological sort ────────────────────────────────
+        $result = [];   // final ordered list of \Laswitchtech\CoreWeb\Manifest\Extension
+
+        while ($queue !== []) {
+            // Pop the first element (lowest original position in current queue).
+            $current = array_shift($queue);
+
+            // Emit this manifest.
+            $result[] = $current;
+
+            // Feed its dependents: decrement their indegree and enqueue when zero.
+            $newlyZero = [];
+            foreach ($dependents[$current->name] ?? [] as $dependentName) {
+                $indegree[$dependentName]--;
+                if ($indegree[$dependentName] === 0) {
+                    $newlyZero[] = $named[$dependentName];
+                }
+            }
+
+            // Insert newly ready dependents into the queue at their correct sorted position.
+            if ($newlyZero !== []) {
+                usort($newlyZero, function ($a, $b) use ($position): int {
+                    return ($position[$a->name] ?? 0) <=> ($position[$b->name] ?? 0);
+                });
+
+                // Append newly-ready dependents then re-sort by original position.
+                $queue = array_merge($queue, $newlyZero);
+                usort($queue, function ($a, $b) use ($position): int {
+                    return ($position[$a->name] ?? 0) <=> ($position[$b->name] ?? 0);
+                });
+            }
+        }
+
+        // Cycle detection — compare sorted count to the original manifest array length.
+        if (count($result) !== count($manifests)) {
+            $sortedNames = [];
+            foreach ($result as $r) {
+                $sortedNames[$r->name] = true;
+            }
+
+            $unsorted = [];
+            foreach ($named as $name => $ext) {
+                if (!isset($sortedNames[$name])) {
+                    $unsorted[] = $name;
+                }
+            }
+
+            throw new \RuntimeException(
+                sprintf('Extension dependency cycle detected among: %s', implode(', ', $unsorted))
+            );
+        }
+
+        return array_values($result);
+    }
+
     private function registerExtensions(): void
     {
         $c     = static::$instance;
@@ -1002,6 +1106,9 @@ class Bootstrap
                 }
             }
         }
+
+        // ── Ordered by dependency (stable Kahn topological sort). -----------------
+        $manifests = $this->sortExtensionsByDependencies($manifests);
 
         // ── 4. Collect manifests with PSR-4 autoload support + src/ fallback dirs --
         $psr4Manifests = [];   // prefix → [Manifest\Extension, Manifest\Extension, ...]
