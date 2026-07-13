@@ -11,6 +11,12 @@ Extensions are user-provided packages that modify or extend Core-Web's behavior 
 
 Extensions are installed under the application's `ext/` directory tree.
 
+### Related Documentation
+
+| Doc | Description |
+|-----|-------------|
+| [Frontend Asset Plugin Conventions](./FrontendAssetPluginConventions.md) | Naming, dependency ordering, load order, and manifest/provider conventions for plugins that register frontend assets via the `asset.register` hook. |
+
 ## Directory Structure
 
 ```
@@ -91,7 +97,7 @@ Each extension root contains a `manifest.json` (or `extension.json`) file. The m
 |-----------|------------|---------------------------------------------------|------------------------------------------|---------|
 | `hooks`   | list<string> | Hook definitions registered during pre-boot phase. | See [Hook Format](#hook-format) below.   | `[]`    |
 | `layouts` | list<string> | Layout placeholders provided by the extension.    | Each is a string identifier (not an object). | `[]`  |
-| `depends` | list<string> | Extension name-slugs this extension requires.    | Non-empty strings; validated at bootstrap. Can contain any name. (Current implementation does not resolve these beyond existence checking.) | `[]` |
+| `depends` | list<string> | Extension name-slugs this extension requires.    | Non-empty strings; validated at bootstrap and stably topologically sorted so that every dependency registers before its dependents; unrelated extensions preserve discovery order. Declared dependency chains are transitively ordered by the topological sort so that each direct dep's own deps load first. Every declared dependency must already be discovered and enabled; automatic enabling, installation, or acquisition of missing dependencies is not implemented. Dependency version constraints are not supported by `depends`. | `[]` |
 | `autoload.psr-4` | object | Composer-style PSR-4 namespace mappings for autoload registration. | See [PSR-4 Autoload Mappings](#psr-4-autoload-mappings) below. Keys are prefix strings ending with `\`; values are relative directory paths. Empty or malformed entries are warned on STDERR and skipped without blocking the extension. | `{}` |
 
 ### PSR-4 Autoload Mappings
@@ -172,7 +178,7 @@ The identifier is used purely as a name; no template resolution or slot composit
 
 Bootstrap discovers extensions from **two base directories** during `Bootstrap::registerExtensions()` (called from `initExtensions()` before Router/CLI subsystems boot). Both roots are walked in a single pass:
 
-1. **Framework root**. The package/vendor install directory (`vendor/laswitchtech/core-web/ext`).
+1. **Kernel root**. The package/vendor install directory (`vendor/laswitchtech/core-web/ext`).
 2. **Application root**. The user's application directory (`<app-root>/ext`).
 
 Discovery order matters because it determines override precedence (see below).
@@ -182,15 +188,16 @@ Discovery order matters because it determines override precedence (see below).
 Both roots are walked in the order listed above and their results merged before any downstream processing:
 
 1. Discover & parse every manifest.json / extension.json across **both** roots
-2. Deduplicate by extension `name`. The *last* entry for a given name wins, which means an application extension always overrides a framework extension with the same name.
+2. Deduplicate by extension `name`. The *last* entry for a given name wins, which means an application extension always overrides a kernel extension with the same name.
 3. Tolerant kernel-compat validation for each extension on the deduplicated list (see [Kernel Compatibility Metadata](#kernel-compatibility-metadata)). Incompatible extensions produce warnings to STDERR but are **not** blocked from discovery — discovery continues regardless of result.
-4. Fail fast on unresolved dependencies between successfully parsed (deduplicated) manifests (flat existence check in Bootstrap).
-5. Register any declared PSR-4 namespace mappings from `autoload.psr-4` (applied per extension, processed framework root before app root so that user extensions can shadow or extend framework autoloading). The legacy `Laswitchtech\CoreWeb\Plugin\*` and `Laswitchtech\CoreWeb\Theme\*` prefix registrations on `src/` directories **remain supported** alongside the new PSR-4 mechanism.
- 6. Resolve each hook string on the deduplicated list:
-    - Dotted-only → placeholder callback on the named hook
-    - Contains `::` → split into hook name + class/method; register via `Hook\Registry::addClassCall()` (fails bootstrap if class or method does not exist). Class resolution uses Bootstrap's registered PSR-4 namespace mappings — any extension-declared prefixes are available for non-framework namespaces.
-7. Resolve each layout string → placeholder callback on `layout.{name}` hook (deduplicated).
-8. Index extension metadata into the Container under `extension_index` keyed by `$manifest->name`, storing: `type`, `version`, `directory`, `depends`, `origin`, `kernelCompat`, and `compatStatus`.
+4. Fail fast on unresolved dependencies between successfully parsed (deduplicated) manifests (existence check in Bootstrap).
+5. Stably topologically sort dependencies so that every dependency registers before its dependents; unrelated extensions preserve discovery order.
+6. Register any declared PSR-4 namespace mappings from `autoload.psr-4` (applied per extension, processed kernel root before app root so that user extensions can shadow or extend kernel autoloading). The legacy `Laswitchtech\CoreWeb\Plugin\*` and `Laswitchtech\CoreWeb\Theme\*` prefix registrations on `src/` directories **remain supported** alongside the new PSR-4 mechanism.
+ 7. Resolve each hook string on the deduplicated list:
+     - Dotted-only → placeholder callback on the named hook
+      - Contains `::` → split into hook name + class/method; register via `Hook\Registry::addClassCall()` (fails bootstrap if class or method does not exist). Class resolution uses Bootstrap's registered PSR-4 namespace mappings — any extension-declared prefixes are available for non-kernel namespaces.
+ 8. Resolve each layout string → placeholder callback on `layout.{name}` hook (deduplicated).
+ 9. Index extension metadata into the Container under `extension_index` keyed by `$manifest->name`, storing: `type`, `version`, `directory`, `depends`, `origin`, `kernelCompat`, and `compatStatus`.
 
 All downstream operations (dependency checking, autoloading, hook registration, metadata indexing) operate **only on the deduplicated set**.
 
@@ -198,11 +205,11 @@ All downstream operations (dependency checking, autoloading, hook registration, 
 
 Extension identity is its `"name"` field. When two manifests from different bases share the same name:
 
-- The application root manifest overrides the framework root manifest.
+- The application root manifest overrides the kernel root manifest.
 - Only the winning (deduplicated) extension is used for dependencies, autoloading, and hooks.
-- Override happens via last-write-wins during the associative-array merge step; no explicit origin comparison is needed because Bootstrap always processes framework first, then app.
+- Override happens via last-write-wins during the associative-array merge step; no explicit origin comparison is needed because Bootstrap always processes kernel first, then app.
 
-This makes it possible for a user to shadow any bundled framework extension simply by placing an extension of the same name in their own `ext/` directory.
+This makes it possible for a user to shadow any bundled kernel extension simply by placing an extension of the same name in their own `ext/` directory.
 
 ### Origin Metadata
 
@@ -210,7 +217,7 @@ Each parsed `Extension` value object carries an `$origin` property indicating wh
 
 | Value       | Meaning                                         |
 |-------------|-------------------------------------------------|
-| `'framework'` | Extension lives in the framework/package `ext/` root.  |
+| `'kernel'` | Extension lives in the kernel/package `ext/` root.  |
 | `'app'`         | Extension lives in the application `ext/` root.    |
 
 The origin is set by `Parser::discover($baseDir, $origin)` at parse time and can be inspected at runtime (e.g., for diagnostics). It is not used to enforce policy — it is metadata only.
@@ -256,7 +263,7 @@ Bootstrap binds diagnostic keys into the Container for each discovered root:
 
 | Key | Value |
 |-----|-------|
-| `extension_base.framework` | Absolute path to framework `ext/` root (if found). |
+| `extension_base.kernel` | Absolute path to kernel `ext/` root (if found). |
 | `extension_base.app`       | Absolute path to application `ext/` root (if found). |
 
 Discovery is tolerant: individual malformed manifests are logged to STDERR and skipped so one broken extension does not block discovery of valid extensions. If no `ext/` directory exists on any base, an empty Hook\Registry and empty `extension_index` are registered and the process returns silently.
@@ -337,8 +344,8 @@ Discovery happens **before** the active subsystem (Router/CLI) boots, ensuring a
 - Hook strings are validated against the regex pattern shown above; invalid hooks throw an InvalidArgumentException during parsing.
 - Class-based hook callbacks (strings containing `::`) fail bootstrap if the class or method does not exist — `Hook\Registry::addClassCall()` throws at registration time.
 - Dotted-only hook names (no `::`) are registered as empty placeholder callbacks; they do **not** cause resolution failures.
-- Dependency verification is a flat existence check: unresolved dependencies throw RuntimeException during Bootstrap, but no topological sort or transitive resolution is performed.
-- **PSR-4 mappings are not Composer-managed** — V1 extensions do not declare `composer.json` dependencies; all autoloading is handled by the framework's own bootstrap-level `spl_autoload_register()` calls from manifest-parsed data.
+- Dependency verification is a fail-fast existence check; unresolved dependencies throw `RuntimeException` during Bootstrap. Stably sorted: dependencies are ordered before dependents via topological sort (every transitive dependency appears before its dependents); unrelated extensions preserve discovery order. Cycle detection is implemented — circular dependencies cause an immediate bootstrap failure with a descriptive error. Declared dependency chains are transitively ordered by the topological sort so that each direct dep's own deps load first. Every declared dependency must already be discovered and enabled; automatic enabling, installation, or acquisition of missing dependencies is not implemented. Dependency version constraints are not supported by `depends`.
+- **PSR-4 mappings are framework-managed, not Composer-managed** — V1 extensions do not declare `composer.json` dependencies; all autoloading is handled by the framework's own bootstrap-level `spl_autoload_register()` calls from manifest-parsed data.
 - **Missing mapped class files do not throw during autoload** — if a PSR-4 mapping points to a directory that does not contain the expected file, the autoload mechanism silently falls back without fatal error; only valid, existing files are autoloaded successfully. This ensures extensions with partial or misconfigured mappings do not crash the application at startup.
 - **Invalid autoloading mappings** — namespace prefixes lacking a trailing `\` or empty directory values produce a STDERR warning during discovery and are skipped; they never prevent an extension from loading.
 
@@ -346,11 +353,7 @@ Discovery happens **before** the active subsystem (Router/CLI) boots, ensuring a
 
 The following features are planned but not yet implemented. They are listed here for reference only.
 
-### Extension State Management
-- `extension.enable` and `extension.disable` CLI commands to toggle extension activation state without removing files.
-
 ### CLI Commands
-- `extension.list` — list all discovered extensions with type, version, status.
 - `extension.install` / `extension.uninstall` — CLI-based install/uninstall workflows.
 
 ### Service & Route Registration
@@ -365,10 +368,8 @@ The following features are planned but not yet implemented. They are listed here
 - Full layout template resolution and slot-based rendering (Renderer subsystem).
 - Object-schema layouts: `{"slot": "sidebar", "template": "layouts/sidebar.twig"}` for richer template routing beyond the current string-identifier placeholder approach.
 
-### Dependency Resolution Improvements
-- **Topological sort** of `depends` for proper load ordering instead of flat existence check.
-- **Transitive dependency resolution** — follow depends chains to ensure all transitive dependencies are loaded before the extension activates.
-- **Cycle detection** — detect and report direct and transitive dependency cycles during discovery.
+### Dependency Constraints
+- **Version-constraint enforcement** — currently `kernel-compat` constraints are warning-only during discovery; unrecognized patterns default to compatible. Automatic installation, auto-enabling of missing dependencies, and dependency version constraint semantics via `depends` are not supported at this time.
 
 ### Manifest Schema Enrichment
 - Optional richer hook object schema: `{"name": "...", "callback": "...", "priority": 10}` instead of plain strings.
