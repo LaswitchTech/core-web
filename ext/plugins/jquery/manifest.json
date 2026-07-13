@@ -1,0 +1,14 @@
+{
+    "type": "plugin",
+    "name": "jquery",
+    "version": "1.0.0",
+    "depends": [],
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\Jquery\\": "src/"
+        }
+    },
+    "hooks": [
+        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\Jquery\\JqueryAssetProvider::registerAssets"
+    ]
+}

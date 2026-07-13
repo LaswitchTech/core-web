@@ -87,6 +87,22 @@ final class HelloWorld
             $router->get('/hello', fn (Web $_req) => Response::html('<h1>Hello World!</h1>'));
         }
 
+        // Local binary assets (not renderer-dependent).
+        // Serve jQuery from the jquery plugin as /js/jquery.
+        $jqueryPath = __DIR__ . '/../../../jquery/Assets/js/jquery.min.js';
+        if (is_file($jqueryPath) && is_readable($jqueryPath)) {
+            $router->get('/js/jquery', function () use ($jqueryPath): Response {
+                $content = file_get_contents($jqueryPath);
+                if ($content === false) {
+                    return new \Laswitchtech\CoreWeb\Router\Response(404)->withBody('Not found');
+                }
+                /** @var Response $resp */
+                $resp    = (new \Laswitchtech\CoreWeb\Router\Response())->withStatus(Response::STATUS_OK);
+                $resp->setHeader('Content-Type', 'application/javascript');
+                return $resp->withBody($content);
+            });
+        }
+
         // Legacy CLI route.
         $router->command('hello.world', function (Cli $req): Response {
             return Response::text('Hello ' . $req->arg(0, 'World') . "!\n");
