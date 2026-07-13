@@ -129,7 +129,7 @@
   - [ ] Dedicated Frontend Asset Plugins <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
     - Move common frontend vendor assets out of the kernel and into dedicated first-party plugins so Bootstrap, Bootstrap Icons, DataTables, jQuery, and Chart.js can be installed, enabled, disabled, versioned, and overridden through the extension system.
     - Tags: framework, extensions, assets, frontend, bootstrap, datatables, jquery, chartjs, v.1.0
-    - [ ] Create jQuery plugin for jQuery asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] Create jQuery plugin for jQuery asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-13T15:18:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Plugin should expose jQuery as an optional dependency for plugins that still require it without forcing it into the kernel baseline.
     - [ ] Create Bootstrap plugin for Bootstrap CSS/JS asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
       - Plugin should provide Bootstrap assets through the framework asset pipeline instead of hardcoded kernel/layout references.
