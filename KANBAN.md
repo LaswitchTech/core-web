@@ -131,18 +131,25 @@
     - Tags: framework, extensions, assets, frontend, bootstrap, datatables, jquery, chartjs, v.1.0
     - [x] Create jQuery plugin for jQuery asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-13T15:18:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Plugin should expose jQuery as an optional dependency for plugins that still require it without forcing it into the kernel baseline.
-    - [ ] Create Bootstrap plugin for Bootstrap CSS/JS asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
-      - Plugin should provide Bootstrap assets through the framework asset pipeline instead of hardcoded kernel/layout references.
-    - [ ] Include Bootstrap Icons support in the Bootstrap plugin <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
-      - Bootstrap Icons should be bundled or registered by the Bootstrap plugin so icon availability follows the plugin lifecycle.
-    - [ ] Create DataTables plugin for DataTables asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Plugin should register DataTables CSS/JS assets and document its dependency on jQuery and any Bootstrap integration assets.
-    - [ ] Create Chart.js plugin for Chart.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Plugin should register Chart.js assets for dashboards, reporting, and visualization features without hardcoding Chart.js into core layouts.
     - [x] Define frontend asset dependency rules between plugins <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-13T13:13:53-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
       - Support deterministic load order and dependency declarations such as DataTables depending on jQuery and optional Bootstrap integration depending on the Bootstrap plugin.
     - [x] Document frontend asset plugin conventions <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-13T13:13:53-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Document plugin manifest asset declarations, dependency examples, load order, override behavior, and how application layouts request assets from enabled plugins.
+    - [x] Create Bootstrap plugin for Bootstrap CSS/JS asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-13T13:26:38-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+      - Plugin should provide Bootstrap assets through the framework asset pipeline instead of hardcoded kernel/layout references.
+    - [x] Include Bootstrap Icons support in the Bootstrap plugin <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-13T13:26:38-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+      - Bootstrap Icons should be bundled or registered by the Bootstrap plugin so icon availability follows the plugin lifecycle.
+    - [ ] Create DataTables plugin for DataTables asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Plugin should register DataTables CSS/JS assets and document its dependency on jQuery and any Bootstrap integration assets.
+      - [ ] Add datatables-buttons to the datatables plugin <!-- created_at: 2026-07-13T12:33:25-04:00 priority: normal -->
+      - [ ] Add datatables-columncontrol to the datatables plugin <!-- created_at: 2026-07-13T12:33:35-04:00 priority: normal -->
+      - [ ] Add datatables-responsive to the datatables plugin <!-- created_at: 2026-07-13T12:33:42-04:00 priority: normal -->
+      - [ ] Add datatables-rowgroup to the datatables plugin <!-- created_at: 2026-07-13T12:33:50-04:00 priority: normal -->
+      - [ ] Add datatables-scroller to the datatables plugin <!-- created_at: 2026-07-13T12:33:55-04:00 priority: normal -->
+      - [ ] Add datatables-select to the datatables plugin <!-- created_at: 2026-07-13T12:34:01-04:00 priority: normal -->
+      - [ ] Add datatables-staterestore to the datatables plugin <!-- created_at: 2026-07-13T12:34:12-04:00 priority: normal -->
+    - [ ] Create Chart.js plugin for Chart.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Plugin should register Chart.js assets for dashboards, reporting, and visualization features without hardcoding Chart.js into core layouts.
 
 ## Done
 - [x] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-09T12:40:06-04:00 priority: normal -->

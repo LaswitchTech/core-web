@@ -5,11 +5,13 @@
     "description": "First-party Bootstrap 5.3 framework assets.",
     "autoload": {
         "psr-4": {
-            "Laswitchtech\\CoreWeb\\Plugin\\BootstrapIcons\\": "icons"
+            "Laswitchtech\\CoreWeb\\Plugin\\Bootstrap\\": "src/Bootstrap/",
+            "Laswitchtech\\CoreWeb\\Plugin\\BootstrapIcons\\": "src/BootstrapIcons/"
         }
     },
     "hooks": [
         "asset.register::Laswitchtech\\CoreWeb\\Plugin\\BootstrapIcons\\BootstrapIconsAssetProvider::registerAssets",
-        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\Bootstrap\\BootstrapAssetProvider::registerAssets"
+        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\Bootstrap\\BootstrapAssetProvider::registerAssets",
+        "router.register::Laswitchtech\\CoreWeb\\Plugin\\BootstrapIcons\\BootstrapIconsFontProvider::registerRoutes"
     ]
 }

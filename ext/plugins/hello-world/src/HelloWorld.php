@@ -94,7 +94,7 @@ final class HelloWorld
             $router->get('/js/jquery', function () use ($jqueryPath): Response {
                 $content = file_get_contents($jqueryPath);
                 if ($content === false) {
-                    return new \Laswitchtech\CoreWeb\Router\Response(404)->withBody('Not found');
+                    return (new \Laswitchtech\CoreWeb\Router\Response(404))->withBody('Not found');
                 }
                 /** @var Response $resp */
                 $resp    = (new \Laswitchtech\CoreWeb\Router\Response())->withStatus(Response::STATUS_OK);

@@ -1679,7 +1679,7 @@ class Bootstrap
         if ($c !== null) {
             $appRoot = $c->resolve('app_root');
             if (is_string($appRoot) && $appRoot !== '') {
-                $router->get('/{type}/{name}', static function () use ($c, $appRoot): Response {
+                $router->get('/{type}/{name}', static function (Web $request) use ($c, $appRoot): Response {
                     // Validate app_root at request time.
                     if (!is_string($appRoot) || $appRoot === '') {
                         return (new Response(400))
@@ -1688,7 +1688,6 @@ class Bootstrap
                     }
 
                     // Resolve request parameters.
-                    $request = Web::fromGlobals();
                     $type    = strtolower(trim((string) $request->param('type')));
                     $name    = trim((string) $request->param('name'));
 

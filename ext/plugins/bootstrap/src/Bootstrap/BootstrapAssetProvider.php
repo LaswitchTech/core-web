@@ -15,8 +15,7 @@ final class BootstrapAssetProvider
             return;
         }
 
-        $pluginRoot = dirname(__DIR__);
-        $cssFile    = 'bootstrap.min.css';
+        $pluginRoot = dirname(__DIR__, 2);        $cssFile    = 'bootstrap.min.css';
         $cssPath    = $pluginRoot . '/Assets/css/' . $cssFile;
 
         if (!file_exists($cssPath) || !is_readable($cssPath)) {

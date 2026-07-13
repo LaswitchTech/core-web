@@ -25,7 +25,7 @@ final class BootstrapIconsAssetProvider
         }
 
         $registry->css(
-            'bootstrap-icons/bootstrap-icons',
+            'bootstrap-icons',
             realpath($cssFile),
             Entry::PROVIDER_PLUGIN,
             400,
