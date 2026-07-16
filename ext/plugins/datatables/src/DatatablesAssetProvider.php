@@ -38,6 +38,9 @@ final class DatatablesAssetProvider
         $columnControlJsPath   = $pluginRoot . '/Assets/js/dataTables.columnControl.min.js';
         $columnControlBs5JsPath = $pluginRoot . '/Assets/js/columnControl.bootstrap5.min.js';
         $columnControlBs5CssPath= $pluginRoot . '/Assets/css/columnControl.bootstrap5.min.css';
+        $rowGroupJsPath          = $pluginRoot . '/Assets/js/dataTables.rowGroup.min.js';
+        $rowGroupBs5JsPath       = $pluginRoot . '/Assets/js/rowGroup.bootstrap5.min.js';
+        $rowGroupBs5CssPath      = $pluginRoot . '/Assets/css/rowGroup.bootstrap5.min.css';
 
         if (!is_file($coreJsPath) || !is_readable($coreJsPath)) {
             return;
@@ -91,6 +94,15 @@ final class DatatablesAssetProvider
             return;
         }
         if (!is_file($columnControlBs5CssPath) || !is_readable($columnControlBs5CssPath)) {
+            return;
+        }
+        if (!is_file($rowGroupJsPath) || !is_readable($rowGroupJsPath)) {
+            return;
+        }
+        if (!is_file($rowGroupBs5JsPath) || !is_readable($rowGroupBs5JsPath)) {
+            return;
+        }
+        if (!is_file($rowGroupBs5CssPath) || !is_readable($rowGroupBs5CssPath)) {
             return;
         }
 
@@ -219,6 +231,15 @@ final class DatatablesAssetProvider
             400,
         );
 
+        // RowGroup BS5 CSS — rowGroup.bootstrap5.min.css
+        $registry->css(
+            'plugins/datatables',
+            'rowGroup.bootstrap5.min.css',
+            realpath($rowGroupBs5CssPath),
+            Entry::PROVIDER_PLUGIN,
+            400,
+        );
+
         // 13. Buttons ColVis JS — buttons.colVis.min.js
         $registry->js(
             'plugins/datatables',
@@ -260,6 +281,24 @@ final class DatatablesAssetProvider
             'plugins/datatables',
             'columnControl.bootstrap5.min.js',
             realpath($columnControlBs5JsPath),
+            Entry::PROVIDER_PLUGIN,
+            400,
+        );
+
+        // RowGroup core JS — dataTables.rowGroup.min.js
+        $registry->js(
+            'plugins/datatables',
+            'dataTables.rowGroup.min.js',
+            realpath($rowGroupJsPath),
+            Entry::PROVIDER_PLUGIN,
+            400,
+        );
+
+        // RowGroup BS5 JS — rowGroup.bootstrap5.min.js
+        $registry->js(
+            'plugins/datatables',
+            'rowGroup.bootstrap5.min.js',
+            realpath($rowGroupBs5JsPath),
             Entry::PROVIDER_PLUGIN,
             400,
         );

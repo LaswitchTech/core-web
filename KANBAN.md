@@ -171,7 +171,7 @@
       - [x] Add datatables-buttons to the datatables plugin <!-- created_at: 2026-07-13T12:33:25-04:00 completed_at: 2026-07-16T07:51:49-04:00 priority: normal -->
       - [x] Add datatables-columncontrol to the datatables plugin <!-- created_at: 2026-07-13T12:33:35-04:00 completed_at: 2026-07-16T14:30:00-04:00 priority: normal -->
       - [x] Add datatables-responsive to the datatables plugin <!-- created_at: 2026-07-13T12:33:42-04:00 completed_at: 2026-07-16T07:51:53-04:00 priority: normal -->
-      - [ ] Add datatables-rowgroup to the datatables plugin <!-- created_at: 2026-07-13T12:33:50-04:00 priority: normal -->
+      - [x] Add datatables-rowgroup to the datatables plugin <!-- created_at: 2026-07-13T12:33:50-04:00 completed_at: 2026-07-16T18:30:00-04:00 priority: normal -->
       - [ ] Add datatables-scroller to the datatables plugin <!-- created_at: 2026-07-13T12:33:55-04:00 priority: normal -->
       - [x] Add datatables-select to the datatables plugin <!-- created_at: 2026-07-13T12:34:01-04:00 completed_at: 2026-07-16T07:51:56-04:00 priority: normal -->
       - [ ] Add datatables-staterestore to the datatables plugin <!-- created_at: 2026-07-13T12:34:12-04:00 priority: normal -->
