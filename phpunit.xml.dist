@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         failOnWarning="true"
+         stopOnFailure="false">
+    <testsuites>
+        <testsuite name="Asset Registry">
+            <directory suffix="Test.php">./tests/Asset</directory>
+        </testsuite>
+        <testsuite name="Helper URLs">
+            <directory suffix="Test.php">./tests/Helper</directory>
+        </testsuite>
+        <testsuite name="Router Assets">
+            <directory suffix="Test.php">./tests/Router</directory>
+        </testsuite>
+        <testsuite name="Provider Scopes">
+            <directory suffix="Test.php">./tests/Provider</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+    </source>
+</phpunit>
