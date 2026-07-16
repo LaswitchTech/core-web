@@ -174,7 +174,7 @@
       - [x] Add datatables-rowgroup to the datatables plugin <!-- created_at: 2026-07-13T12:33:50-04:00 completed_at: 2026-07-16T18:30:00-04:00 priority: normal -->
       - [x] Add datatables-scroller to the datatables plugin <!-- created_at: 2026-07-13T12:33:55-04:00 completed_at: 2026-07-16T19:00:00-04:00 priority: normal -->
       - [x] Add datatables-select to the datatables plugin <!-- created_at: 2026-07-13T12:34:01-04:00 completed_at: 2026-07-16T07:51:56-04:00 priority: normal -->
-      - [ ] Add datatables-staterestore to the datatables plugin <!-- created_at: 2026-07-13T12:34:12-04:00 priority: normal -->
+      - [x] Add datatables-staterestore to the datatables plugin <!-- created_at: 2026-07-13T12:34:12-04:00 completed_at: 2026-07-16T19:30:00-04:00 priority: normal -->
     - [ ] Create Chart.js plugin for Chart.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Plugin should register Chart.js assets for dashboards, reporting, and visualization features without hardcoding Chart.js into core layouts.
     - [ ] Create Select2.js plugin for Select2.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->

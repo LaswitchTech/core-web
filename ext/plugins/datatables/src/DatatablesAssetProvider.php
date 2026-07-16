@@ -44,7 +44,10 @@ final class DatatablesAssetProvider
 
         $scrollerJsPath = $pluginRoot . '/Assets/js/dataTables.scroller.min.js';
         $scrollerBs5JsPath = $pluginRoot . '/Assets/js/scroller.bootstrap5.min.js';
-        $scrollerBs5CssPath = $pluginRoot . '/Assets/css/scroller.bootstrap5.min.css';
+        $scrollerBs5CssPath   = $pluginRoot . '/Assets/css/scroller.bootstrap5.min.css';
+        $stateRestoreJsPath     = $pluginRoot . '/Assets/js/dataTables.stateRestore.min.js';
+        $stateRestoreBs5JsPath  = $pluginRoot . '/Assets/js/stateRestore.bootstrap5.min.js';
+        $stateRestoreBs5CssPath = $pluginRoot . '/Assets/css/stateRestore.bootstrap5.min.css';
 
         if (!is_file($coreJsPath) || !is_readable($coreJsPath)) {
             return;
@@ -119,6 +122,18 @@ final class DatatablesAssetProvider
         }
 
         if (!is_file($scrollerBs5CssPath) || !is_readable($scrollerBs5CssPath)) {
+            return;
+        }
+
+        if (!is_file($stateRestoreJsPath) || !is_readable($stateRestoreJsPath)) {
+            return;
+        }
+
+        if (!is_file($stateRestoreBs5JsPath) || !is_readable($stateRestoreBs5JsPath)) {
+            return;
+        }
+
+        if (!is_file($stateRestoreBs5CssPath) || !is_readable($stateRestoreBs5CssPath)) {
             return;
         }
 
@@ -280,6 +295,15 @@ final class DatatablesAssetProvider
             400,
         );
 
+        // StateRestore BS5 CSS — stateRestore.bootstrap5.min.css
+        $registry->css(
+            'plugins/datatables',
+            'stateRestore.bootstrap5.min.css',
+            realpath($stateRestoreBs5CssPath),
+            Entry::PROVIDER_PLUGIN,
+            400,
+        );
+
         // 13. Buttons ColVis JS — buttons.colVis.min.js
         $registry->js(
             'plugins/datatables',
@@ -303,6 +327,24 @@ final class DatatablesAssetProvider
             'plugins/datatables',
             'buttons.print.min.js',
             realpath($buttonsPrintJsPath),
+            Entry::PROVIDER_PLUGIN,
+            400,
+        );
+
+        // StateRestore core JS
+        $registry->js(
+            'plugins/datatables',
+            'dataTables.stateRestore.min.js',
+            realpath($stateRestoreJsPath),
+            Entry::PROVIDER_PLUGIN,
+            400,
+        );
+
+        // StateRestore BS5 JS
+        $registry->js(
+            'plugins/datatables',
+            'stateRestore.bootstrap5.min.js',
+            realpath($stateRestoreBs5JsPath),
             Entry::PROVIDER_PLUGIN,
             400,
         );
