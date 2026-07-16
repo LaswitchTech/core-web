@@ -35,6 +35,9 @@ final class DatatablesAssetProvider
         $buttonsColVisJsPath= $pluginRoot . '/Assets/js/buttons.colVis.min.js';
         $buttonsHtml5JsPath =$pluginRoot . '/Assets/js/buttons.html5.min.js';
         $buttonsPrintJsPath = $pluginRoot . '/Assets/js/buttons.print.min.js';
+        $columnControlJsPath   = $pluginRoot . '/Assets/js/dataTables.columnControl.min.js';
+        $columnControlBs5JsPath = $pluginRoot . '/Assets/js/columnControl.bootstrap5.min.js';
+        $columnControlBs5CssPath= $pluginRoot . '/Assets/css/columnControl.bootstrap5.min.css';
 
         if (!is_file($coreJsPath) || !is_readable($coreJsPath)) {
             return;
@@ -79,6 +82,15 @@ final class DatatablesAssetProvider
             return;
         }
         if (!is_file($buttonsPrintJsPath) || !is_readable($buttonsPrintJsPath)) {
+            return;
+        }
+        if (!is_file($columnControlJsPath) || !is_readable($columnControlJsPath)) {
+            return;
+        }
+        if (!is_file($columnControlBs5JsPath) || !is_readable($columnControlBs5JsPath)) {
+            return;
+        }
+        if (!is_file($columnControlBs5CssPath) || !is_readable($columnControlBs5CssPath)) {
             return;
         }
 
@@ -169,6 +181,15 @@ final class DatatablesAssetProvider
             400,
         );
 
+        // 10. ColumnControl CSS — columnControl.bootstrap5.min.css
+        $registry->css(
+            'plugins/datatables',
+            'columnControl.bootstrap5.min.css',
+            realpath($columnControlBs5CssPath),
+            Entry::PROVIDER_PLUGIN,
+            400,
+        );
+
         /* ---- Buttons assets (preserved in original sequence) ---- */
 
         // 10. Buttons JS — dat/dataTables.buttons.min.js
@@ -221,6 +242,24 @@ final class DatatablesAssetProvider
             'plugins/datatables',
             'buttons.print.min.js',
             realpath($buttonsPrintJsPath),
+            Entry::PROVIDER_PLUGIN,
+            400,
+        );
+
+        // 16. ColumnControl core JS — dataTables.columnControl.min.js
+        $registry->js(
+            'plugins/datatables',
+            'dataTables.columnControl.min.js',
+            realpath($columnControlJsPath),
+            Entry::PROVIDER_PLUGIN,
+            400,
+        );
+
+        // 17. ColumnControl BS5 JS — columnControl.bootstrap5.min.js
+        $registry->js(
+            'plugins/datatables',
+            'columnControl.bootstrap5.min.js',
+            realpath($columnControlBs5JsPath),
             Entry::PROVIDER_PLUGIN,
             400,
         );
