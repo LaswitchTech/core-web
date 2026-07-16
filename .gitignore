@@ -6,3 +6,4 @@ list.sh
 /storage/cache/
 /log/*.log
 .DS_Store
+.phpunit.result.cache
