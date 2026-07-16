@@ -33,7 +33,7 @@ final class JqueryAssetProvider
             'jquery.min.js',
             $resolvedAbsolutePath,
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
             ['default' => true],
         );
     }

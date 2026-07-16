@@ -35,7 +35,7 @@ final class JsZipAssetProvider
             $jsFile,
             $resolvedAbsolutePath,
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
             ['default' => true],
         );
     }

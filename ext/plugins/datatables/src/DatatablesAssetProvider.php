@@ -147,7 +147,7 @@ final class DatatablesAssetProvider
             'datatables.bootstrap5.min.css',
             realpath($bs5CssPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
             ['default' => true],
         );
 
@@ -156,7 +156,7 @@ final class DatatablesAssetProvider
             'scroller.bootstrap5.min.css',
             realpath($scrollerBs5CssPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 2. JS — datatables.min.js (the explicit JS default)
@@ -165,7 +165,7 @@ final class DatatablesAssetProvider
             'datatables.min.js',
             realpath($coreJsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
             ['default' => true],
         );
 
@@ -174,7 +174,7 @@ final class DatatablesAssetProvider
             'dataTables.scroller.min.js',
             realpath($scrollerJsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         $registry->js(
@@ -182,7 +182,7 @@ final class DatatablesAssetProvider
             'scroller.bootstrap5.min.js',
             realpath($scrollerBs5JsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 3. JS — datatables.bootstrap5.min.js
@@ -191,7 +191,7 @@ final class DatatablesAssetProvider
             'datatables.bootstrap5.min.js',
             realpath($bs5JsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 4. JS — datatables.responsive.min.js
@@ -200,7 +200,7 @@ final class DatatablesAssetProvider
             'datatables.responsive.min.js',
             realpath($responsiveJsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 5. JS — responsive.bootstrap5.min.js
@@ -209,7 +209,7 @@ final class DatatablesAssetProvider
             'responsive.bootstrap5.min.js',
             realpath($responsiveBs5JsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 6. CSS — responsive.bootstrap5.min.css
@@ -218,7 +218,7 @@ final class DatatablesAssetProvider
             'responsive.bootstrap5.min.css',
             realpath($responsiveBs5CssPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 7. JS — datatables.select.min.js
@@ -227,7 +227,7 @@ final class DatatablesAssetProvider
             'datatables.select.min.js',
             realpath($selectJsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 8. JS — select.bootstrap5.min.js
@@ -236,7 +236,7 @@ final class DatatablesAssetProvider
             'select.bootstrap5.min.js',
             realpath($selectBs5JsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 9. CSS — select.bootstrap5.min.css
@@ -245,7 +245,7 @@ final class DatatablesAssetProvider
             'select.bootstrap5.min.css',
             realpath($selectBs5CssPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 10. ColumnControl CSS — columnControl.bootstrap5.min.css
@@ -254,7 +254,7 @@ final class DatatablesAssetProvider
             'columnControl.bootstrap5.min.css',
             realpath($columnControlBs5CssPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         /* ---- Buttons assets (preserved in original sequence) ---- */
@@ -265,7 +265,7 @@ final class DatatablesAssetProvider
             'dataTables.buttons.min.js',
             realpath($buttonsJsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 11. Buttons BS5 JS — buttons.bootstrap5.min.js
@@ -274,7 +274,7 @@ final class DatatablesAssetProvider
             'buttons.bootstrap5.min.js',
             realpath($buttonsBs5JsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 12. Buttons BS5 CSS — buttons.bootstrap5.min.css
@@ -283,7 +283,7 @@ final class DatatablesAssetProvider
             'buttons.bootstrap5.min.css',
             realpath($buttonsBs5CssPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // RowGroup BS5 CSS — rowGroup.bootstrap5.min.css
@@ -292,7 +292,7 @@ final class DatatablesAssetProvider
             'rowGroup.bootstrap5.min.css',
             realpath($rowGroupBs5CssPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // StateRestore BS5 CSS — stateRestore.bootstrap5.min.css
@@ -301,7 +301,7 @@ final class DatatablesAssetProvider
             'stateRestore.bootstrap5.min.css',
             realpath($stateRestoreBs5CssPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 13. Buttons ColVis JS — buttons.colVis.min.js
@@ -310,7 +310,7 @@ final class DatatablesAssetProvider
             'buttons.colVis.min.js',
             realpath($buttonsColVisJsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 14. Buttons HTML5 JS — buttons.html5.min.js
@@ -319,7 +319,7 @@ final class DatatablesAssetProvider
             'buttons.html5.min.js',
             realpath($buttonsHtml5JsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 15. Buttons Print JS — buttons.print.min.js
@@ -328,7 +328,7 @@ final class DatatablesAssetProvider
             'buttons.print.min.js',
             realpath($buttonsPrintJsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // StateRestore core JS
@@ -337,7 +337,7 @@ final class DatatablesAssetProvider
             'dataTables.stateRestore.min.js',
             realpath($stateRestoreJsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // StateRestore BS5 JS
@@ -346,7 +346,7 @@ final class DatatablesAssetProvider
             'stateRestore.bootstrap5.min.js',
             realpath($stateRestoreBs5JsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 16. ColumnControl core JS — dataTables.columnControl.min.js
@@ -355,7 +355,7 @@ final class DatatablesAssetProvider
             'dataTables.columnControl.min.js',
             realpath($columnControlJsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // 17. ColumnControl BS5 JS — columnControl.bootstrap5.min.js
@@ -364,7 +364,7 @@ final class DatatablesAssetProvider
             'columnControl.bootstrap5.min.js',
             realpath($columnControlBs5JsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // RowGroup core JS — dataTables.rowGroup.min.js
@@ -373,7 +373,7 @@ final class DatatablesAssetProvider
             'dataTables.rowGroup.min.js',
             realpath($rowGroupJsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
         // RowGroup BS5 JS — rowGroup.bootstrap5.min.js
@@ -382,7 +382,7 @@ final class DatatablesAssetProvider
             'rowGroup.bootstrap5.min.js',
             realpath($rowGroupBs5JsPath),
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
     }
 }

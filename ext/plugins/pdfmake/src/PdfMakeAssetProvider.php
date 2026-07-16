@@ -47,7 +47,7 @@ final class PdfMakeAssetProvider
             $pdfFile,
             $resolvedPdf,
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
             ['default' => true],
         );
 
@@ -57,7 +57,7 @@ final class PdfMakeAssetProvider
             $vfsFile,
             $resolvedVfs,
             Entry::PROVIDER_PLUGIN,
-            400,
+            300,
         );
 
     }
