@@ -15,32 +15,51 @@ final class BootstrapAssetProvider
             return;
         }
 
-        $pluginRoot = dirname(__DIR__, 2);        $cssFile    = 'bootstrap.min.css';
-        $cssPath    = $pluginRoot . '/Assets/css/' . $cssFile;
+        $pluginRoot = dirname(__DIR__, 2);
+        $registry   = $context['registry'];
 
-        if (!file_exists($cssPath) || !is_readable($cssPath)) {
+        // Bootstrap CSS — the explicit default for this scope
+        $cssFile     = 'bootstrap.min.css';
+        $cssPath      = $pluginRoot . '/Assets/css/' . $cssFile;
+
+        if (!is_file($cssPath) || !is_readable($cssPath)) {
             return;
         }
 
-        $registry = $context['registry'];
+        $resolvedCss = realpath($cssPath);
+        if ($resolvedCss === false) {
+            return;
+        }
+
         $registry->css(
-            'bootstrap',
-            realpath($cssPath),
+            'plugins/bootstrap',
+            $cssFile,
+            $resolvedCss,
             Entry::PROVIDER_PLUGIN,
             400,
+            ['default' => true],
         );
 
-        $jsPath = $pluginRoot . '/Assets/js/bootstrap.bundle.min.js';
+        // Bootstrap JS — the explicit JS default for this scope
+        $jsFile       = 'bootstrap.bundle.min.js';
+        $jsPath       = $pluginRoot . '/Assets/js/' . $jsFile;
 
         if (!is_file($jsPath) || !is_readable($jsPath)) {
             return;
         }
 
+        $resolvedJs = realpath($jsPath);
+        if ($resolvedJs === false) {
+            return;
+        }
+
         $registry->js(
-            'bootstrap',
-            realpath($jsPath),
+            'plugins/bootstrap',
+            $jsFile,
+            $resolvedJs,
             Entry::PROVIDER_PLUGIN,
             400,
+            ['default' => true],
         );
     }
 }

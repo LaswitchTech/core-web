@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Laswitchtech\CoreWeb\Plugin\Jquery;
+namespace Laswitchtech\CoreWeb\Plugin\JsZip;
 
 use Laswitchtech\CoreWeb\Asset\Entry;
 use Laswitchtech\CoreWeb\Asset\Registry;
 
-final class JqueryAssetProvider
+final class JsZipAssetProvider
 {
     public static function registerAssets(array $context): void
     {
@@ -15,8 +15,9 @@ final class JqueryAssetProvider
             return;
         }
 
-        $pluginRoot = dirname(__DIR__);
-        $jsPath     = $pluginRoot . '/Assets/js/jquery.min.js';
+        $pluginRoot     = dirname(__DIR__);
+        $jsFile         = 'jszip.min.js';
+        $jsPath         = $pluginRoot . '/Assets/js/' . $jsFile;
 
         if (!is_file($jsPath) || !is_readable($jsPath)) {
             return;
@@ -28,9 +29,10 @@ final class JqueryAssetProvider
         }
 
         $registry = $context['registry'];
+
         $registry->js(
-            'plugins/jquery',
-            'jquery.min.js',
+            'plugins/jszip',
+            $jsFile,
             $resolvedAbsolutePath,
             Entry::PROVIDER_PLUGIN,
             400,

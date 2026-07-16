@@ -2,241 +2,203 @@
 
 ## Purpose
 
-Store for CSS and JS asset registrations keyed by `(type, name)` with precedence-based conflict resolution. The registry is created during `Bootstrap::initAssets()`, populated with kernel and application conventions, then filled by enabled extensions through the `asset.register` hook. Compiled entries are passed to `LessCompiler` per-request via the `/css` route.
+Store for CSS and JS asset registrations keyed by a three-level identity `(type → scope → file)`. Provides precedence-based conflict resolution, deterministic sorting, and explicit-default lookups. No legacy flat-name compatibility API exists — every public method addresses the composite `$scope` + `$file` identity directly.
 
 ## Class Definition
 
 ```php
 namespace Laswitchtech\CoreWeb\Asset;
 
-final class Registry { ... }
+final class Registry { }
 ```
 
 - **`final`** — no subclassing expected.
-- **Non-readonly** — maintains mutable internal `$store` and `$nextOrder` counter for registration lifecycle.
-- **Not a singleton** — one instance created per bootstrap run in `Bootstrap::initAssets()` and stored in the container as `'asset_registry'`.
+- **Non-readonly** — mutable internal `$store` and monotonic `$nextOrder`.
+- **Not a singleton** — one instance created per bootstrap, keyed as `'asset_registry'` in the container.
 
-## Storage Structure
+## Internal Identity & Storage
 
-Entries are stored as a nested array keyed by type then name:
+Entries are stored in a three-level nested array:
 
 ```php
-/** @var array<string, array<string, Entry>>  [type][name] => Entry */
+/** @var array<string, array<string, array<string, Entry>>>  [type][scope][file] => Entry */
 private array $store = [];
 
-// Internal structure example for CSS assets:
+// Example populated store:
 // [
 //     'css' => [
-//         'kernel/styles' => Entry{...},
-//         'app/styles'    => Entry{...},
+//         'kernel'       => ['styles' => Entry{…}],
+//         'app'          => ['styles' => Entry{…}],
+//         'themes/my-th' => ['theme'  => Entry{…}],
+//     ],
+//     'js'  => [
+//         'plugins/admin' => ['app'    => Entry{…}],
 //     ],
 // ]
 ```
 
-The `$nextOrder` counter is monotonically increasing and increments for **every** registration attempt (including those rejected by precedence) at the time of the call, assigned to every inserted entry at registration time for deterministic tie-breaking during compilation.
+Identity tuple: `(type, scope, file)` — all three are trimmed; `$scope` and `$type` are lowercased. No flat-name key exists anywhere in the public or internal API.
 
 ## Public API
 
-### `css(string $name, string $path, string $provider = Entry::PROVIDER_CORE, int $priority = 0, array $metadata = []): self`
+### `css(string $scope, string $file, string $path, string $provider = Entry::PROVIDER_CORE, int $priority = 0, array $metadata = []): self`
 
-Convenience method to register a CSS asset. Delegates to `doAdd()` internally.
+Register a CSS asset. Delegates to `doAdd()`.
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `$name` | — | Asset name (case-insensitive). |
-| `$path` | — | Absolute or relative file path. Not validated for existence at registration time. |
-| `$provider` | `Entry::PROVIDER_CORE` | Source provider determining precedence rank. |
-| `$priority` | `0` | Higher numeric priority wins conflicts. |
-| `$metadata` | `[]` | Arbitrary associative metadata array. |
+| `$scope` | — | Extension scope: `{kind}/{slug}` (e.g. `themes/my-theme`, `plugins/admin`) or root (`kernel`, `app`). Lowercase, no leading/trailing slashes. |
+| `$file` | — | Leaf filename (no path separators). Preserves original casing after trim. |
+| `$path` | — | Absolute or relative filesystem path to the source file. Not existence-validated at registration time. Must not be empty. |
+| `$provider` | `core` | Source provider: `app`, `theme`, `plugin`, `core`. Determines precedence rank. |
+| `$priority` | `0` | Higher numeric priority wins conflicts during insertion. |
+| `$metadata` | `[]` | Arbitrary associative metadata (e.g. `['default' => true]`). |
 
 Returns `$this` for method chaining.
 
-### `js(string $name, string $path, string $provider = Entry::PROVIDER_CORE, int $priority = 0, array $metadata = []): self`
+```php
+// Kernel stylesheet
+$registry->css('kernel', 'styles.less', '/opt/app/kernel/styles.less', Entry::PROVIDER_CORE, 100);
 
-Convenience method to register a JS asset. Same signature and behavior as `css()`, uses `Entry::TYPE_JS`.
+// Application override with default marker
+$registry->css('app', 'styles.less', '/opt/app/assets/app.scss', Entry::PROVIDER_APP, 200, ['default' => true]);
+
+// Theme stylesheet
+$registry->css('themes/my-theme', 'theme.less', __DIR__ . '/theme.less', Entry::PROVIDER_THEME, 300);
+
+// Plugin JS
+$registry->js('plugins/admin', 'app.js', __DIR__ . '/app.js', Entry::PROVIDER_PLUGIN, 400);
+```
+
+### `js(string $scope, string $file, string $path, string $provider = Entry::PROVIDER_CORE, int $priority = 0, array $metadata = []): self`
+
+Register a JS asset. Same signature and behavior as `css()`; uses `Entry::TYPE_JS`.
+
+```php
+$registry->js('plugins/admin', 'app.js', __DIR__ . '/app.js', Entry::PROVIDER_PLUGIN, 400);
+```
 
 ### `register(Entry $entry): self`
 
-Register an existing `Entry` object with full precedence rule enforcement. The entry is **copied** (not stored by reference) with a fresh order number to prevent post-registration mutations from affecting resolution order.
+Register an existing `Entry` object with full precedence enforcement. The entry is **copied** (not stored by reference) with a fresh `$order` number.
 
 Precedence rules during insertion:
 
-1. If no existing entry for `(type, name)` — insert unconditionally.
-2. New priority > existing priority — replace.
-3. New priority < existing priority — keep existing (higher priority wins).
-4. Same priority — compare provider rank (lower = better; `app` beats `theme`, which beats `plugin`, which beats `core`). If new rank is worse, keep existing.
-5. Same priority and same rank — compare order. Existing was registered earlier (lower order), so keep it.
-
-Throws `\InvalidArgumentException` if the entry has an invalid type or provider that isn't in `VALID_TYPES` / `VALID_PROVIDERS`.
-
-### `replace(string $type, string $name, ?Entry $entry = null): ?Entry`
-
-Unconditional replacement or removal — **bypasses all precedence rules**. Used for hot-swap scenarios.
-
-| Behavior | Effect |
-|----------|--------|
-| `replace('css', 'name')` | Remove and return previous Entry (or `null`). |
-| `replace('css', 'name', null)` | Same as above — remove and return previous Entry. |
-| `replace('css', 'name', $newEntry)` | Unconditionally store replacement, return previous Entry (or `null`). New entry gets a fresh order number. Type must match lookup `$type`. |
-
-### `has(string $type, string $name): bool`
-
-Check whether an asset exists for the given `(type, name)`. Names are normalized (lowercased and trimmed) before lookup.
-
-### `get(string $type, string $name): ?Entry`
-
-Get a single entry by `(type, name)`, or `null` if not found. Returns a reference to the Entry object (not a copy).
-
-### `allCss(): array<string, Entry>`
-
-Return all registered CSS entries keyed by normalized asset name. Does not apply any sorting — entries are returned in whatever internal bucket order. Consumers (primarily `LessCompiler`) must sort before processing.
-
-### `allJs(): array<string, Entry>`
-
-Return all registered JS entries keyed by normalized asset name. Same behavior as `allCss()` but for JS type.
-
-## Internal Implementation
-
-### `register(Entry $entry): self` — Full Precedence Logic
-
-```
-1. Validate entry type and provider (throws \InvalidArgumentException on invalid).
-2. Assign fresh $order = ++$nextOrder; normalize name. ($nextOrder increments here regardless of whether this registration will be accepted or rejected by precedence rules.)
-3. Create a COPY of the Entry with fresh order number.
-4. If no existing slot → insert unconditionally.
-5. If existing slot:
-    a. Compare priority: higher wins. New < existing → keep existing, return.
-    b. Same priority → compare provider rank (lower=first). New rank > existing → keep existing, return.
-    c. Same priority + same rank → compare order. new >= existing → keep existing, return.
-6. New entry replaces existing: $this->store[$type][$norm] = $newEntry.
-7. Return $this.
-```
-
-### `doAdd(string $name, string $path, string $type, string $provider, int $priority, array $metadata): self`
-
-Internal: construct and insert an Entry with precedence enforcement. Called by `css()` and `js()`. Follows the exact same precedence rules as `register()`, but constructs the Entry directly instead of accepting one as a parameter. Provider is normalized to lowercase; validated against `VALID_PROVIDERS`. Throws `\InvalidArgumentException` on empty `$name` or `$path`.
-
-## Bootstrap Lifecycle
-
-### 1. Creation (during `Bootstrap::initAssets()`)
-
-```
-bootstrap run() chain:
-   initConfig → initContainer → registerCoreServices → ... → initExtensions → initTemplateRegistry → registerMessagingServices → registerHelperServices → fireLifecycleHooks → **initAssets**
-
-Inside initAssets():
-   $registry = new AssetRegistry();
-   
-   // Register kernel styles.less (priority 100, Provider::CORE)
-   if (is_file($kernelRoot . '/Assets/styles.less')) {
-       $registry->css('kernel/styles', realpath(...), Entry::PROVIDER_CORE, 100);
-   }
-   
-   // Register app styles.less (priority 200, Provider::APP) with dedup guard
-   if (is_file($appRoot . '/Assets/styles.less')) {
-       $realpath = realpath($appStyler);
-       if ($kernelStyler is same file → skip; else register at priority 200, provider app)
-   }
-   
-   $container->set('asset_registry', $registry);
-```
-
-### 2. Population (via `asset.register` hook)
-
-After the registry is stored in the container, `initAssets()` triggers the `asset.register` hook:
+1. No existing entry for `(type, scope, file)` → insert unconditionally.
+2. New `$priority` > existing `$priority` → replace.
+3. New `$priority` < existing `$priority` → keep existing (higher priority wins).
+4. Same priority → compare provider rank (lower = better: `app` beats `theme` beats `plugin` beats `core`). If new rank is worse, keep existing.
+5. Same priority and same provider rank → compare order. Existing was registered earlier (lower `$order`), so keep it.
 
 ```php
-$hookRegistry->trigger('asset.register', [
-    'registry'  => $registry,
-    'container' => static::$instance,
-    'mode'      => strtolower($this->mode), // 'web' or 'cli'
-]);
+$registry->register(new Entry('kernel', 'styles.less', '/css/kernel.css', Entry::TYPE_CSS, Entry::PROVIDER_CORE, 100));
+// vs. replace(…): register() applies precedence; replace() bypasses it.
 ```
 
-This is the phase where:
-- **Enabled themes** call `$registry->css('my-theme/theme', __DIR__ . '/assets/style.less', Entry::PROVIDER_THEME, 300);`
-- **Enabled plugins** call `$registry->js('my-plugin/components', __DIR__ . '/js/components.js', Entry::PROVIDER_PLUGIN, 400);`
-- A **CSS/LESS plugin example**: a provider plugin registering an absolute readable `.less` path at priority 400 — `$registry->css('my-plugin/forms', '/absolute/path/to/ext/plugins/my-plugin/assets/forms.less', Entry::PROVIDER_PLUGIN, 400);`
-- Only themes and plugins whose manifests appear in the enabled state (from `extensions.cfg`) have their `$extensionBase/hooks` registered via `Hook\Registry::addClassCall()`, so only **enabled** extensions can populate the registry.
+### `replace(string $type, string $scope, string $file, ?Entry $entry = null): ?Entry`
 
-### 3. Compilation (per-request on `/css`)
+Unconditional replacement or removal — **bypasses all precedence rules**. Type must match on insertion.
 
-The container key `'asset_registry'` is resolved at request time during the `/css` route handler in `bootWeb()`:
+| Call | Effect |
+|------|--------|
+| `replace('css', 'kernel', 'styles.less')` | Remove and return previous Entry (or `null`). |
+| `replace('css', 'kernel', 'styles.less', null)` | Same as above. |
+| `replace('css', 'kernel', 'styles.less', $newEntry)` | Unconditionally store `$newEntry`, return previous Entry (or `null`). |
 
 ```php
-$assetRegistry = $c->resolve('asset_registry');
-$compiler = new LessCompiler($appRoot, $cacheDir);
-$css      = $compiler->compile($assetRegistry, debugMode);
+// Remove an entry
+$prev = $registry->replace('css', 'kernel', 'styles.less');
+
+// Swap with a new entry
+$prev = $registry->replace('css', 'kernel', 'styles.less', $newEntry);
 ```
 
-The registry does **not** perform any sorting. Sorting happens in `LessCompiler::compile()` using the three-key sort: `priority` ascending → `order` ascending → `name` ascending (alphabetical). Provider rank is explicitly **not used for compilation order** — only for precedence resolution during conflict/same-name collision handling.
+### `has(string $type, string $scope, string $file): bool`
 
-## Conflict Resolution versus Compilation Order
+Check whether an asset exists for `(type, scope, file)`. All three arguments are normalized (lowercased + trimmed; slashes stripped from scope).
 
-A critical distinction: **conflict resolution at registration time** and **compile-time source ordering are two separate processes**.
+```php
+$exists = $registry->has('css', 'kernel', 'styles.less');  // true / false
+```
 
-### Registration-Time (Registry)
+### `get(string $type, string $scope, string $file): ?Entry`
 
-When duplicate `(type, name)` slots collide:
-- Higher numeric `$priority` wins the conflict → becomes the sole surviving entry.
-- Same priority → provider rank: `app(0) > theme(1) > plugin(2) > core(3)`.
-- Same priority + same rank → registration order: first in wins (lower `$order`).
+Get a single entry by `(type, scope, file)`, or `null` if not found. Returns the stored Entry directly (not a copy).
 
-### Compilation-Time (LessCompiler)
+```php
+$entry = $registry->get('css', 'kernel', 'styles.less');
+if ($entry !== null) {
+    echo $entry->path;  // public property, no getter needed.
+}
+```
 
-The single surviving entries are sorted for compilation order by:
-1. **`$priority` ascending** — lower numeric values compile first. The default source tier map is:
-   - Kernel (priority 100) → compiles first
-   - Application (priority 200) → compiles second
-   - Theme (recommended priority 300) → compiles third
-   - Plugin (recommended priority 400) → compiles fourth
-   
-   Higher priorities compile later, ensuring that lower-priority source CSS has its rules emitted first and higher-priority rules can override via normal CSS cascade.
+### `getScope(string $type, string $scope): array`
 
-2. **`$order` ascending** — deterministic tie-breaking within the same priority tier. Earlier registration → earlier compilation.
+Return all entries matching an exact `(type, scope)` bucket (all files within that scope). Returns an empty array when the scope contains zero entries.
 
-3. **`$name` string comparison** — final alphabetical tie-breaker when both `$priority` and `$order` are identical.
+```php
+$entries = $registry->getScope('css', 'kernel');  // Entry[] keyed by filename
+// ['styles.less' => Entry{…}]
+```
 
-**Provider rank is not used for compilation order.** Provider rank only affects which entry wins a same-name conflict at registration time. Once resolved, the surviving entries compile by priority → order → name only.
+### `getDefault(string $type, string $scope): ?Entry`
 
-## Key Design Decisions
+Return the **explicitly marked** default entry for a given `(type, scope)`. An entry counts as default only when its metadata satisfies: `(metadata['default'] ?? false) === true`.
 
-### 1. Registry Is Order-Neutral; Compiler Enforces Ordering
+- Exactly one marked default → return that Entry.
+- Zero or more than one marked defaults → return `null` (no inference, no best-effort fallback).
 
-The registry intentionally does **not** sort entries internally. It stores them as a plain nested array `[type][name]` to minimize overhead during registration and keep the store neutral with respect to iteration order (which is an implementation detail of PHP arrays). Sorting is delegated entirely to `LessCompiler`, which has access to all three sort keys (`priority`, `order`, `name`) needed for deterministic output.
+```php
+$default = $registry->getDefault('css', 'app');
+// If metadata['default'] === true on exactly one entry in store['css']['app']:
+//   returns that Entry
+// Otherwise: null
+```
 
-### 2. Precedence Resolution Uses Three-Tier Tie-Breaking
+### `allCss()`, `allJs()` — unordered lists
 
-A single numeric value (`$priority`) cannot distinguish between every unique source, so conflict resolution uses:
-- Priority as the primary discriminator (configurable at registration time).
-- Provider rank as the secondary discriminator (built-in convention for tier hierarchy).
-- Registration order as the tertiary discriminator (monotonic counter ensures strict total ordering).
+```php
+/** @var Entry[] */
+$allCss = $registry->allCss();  // flat list, no sorting guarantees
+$allJs  = $registry->allJs();
+```
 
-### 3. register() Copies, doAdd() Constructs a New Entry
+## Ordering & Conflict Precedence
 
-`register()` creates a fresh **copy** of the supplied Entry object with a new `$order` number before storage, preventing mutation of the original. `doAdd()` constructs a **new** Entry directly (it does not accept one as a parameter). Both ensure registration-time semantics (priority, order) are stable for the lifetime of the bootstrap execution.
+### Deterministic Ordering
 
-### 4. Path Is Not Validated at Registration
+When entries need to be ordered (via `orderedCss()`, `orderedJs()`, or downstream consumers):
 
-The Registry does not call `is_file()` or `realpath()` during `css()`, `js()`, or `register()`. The path is taken on trust:
-- Kernel and application conventions pass `realpath()` directly to ensure valid, resolved paths.
-- Extension hook callbacks resolve their own asset paths at runtime and call `$registry->css()` / `$registry->js()` with those absolute paths; the registry does not read paths from manifests.
-- Validation (existence + readability) happens lazily in `LessCompiler::compile()`, which silently skips unreadable entries rather than throwing. This prevents a single missing asset from breaking the entire CSS pipeline.
+```
+priority ↑ → registration order ($nextOrder++) ↑ → scope ↑ → filename ↑
+```
 
-### 5. replace() Bypasses Precedence Intentionally
+- `$nextOrder++` increments on **every** call to `doAdd()` or `register()`, including entries whose insertion is later rejected by precedence.
+- `$priority` ascending: lower values first. Default convention — kernel (100), app (200), theme (300), plugin (400).
+- `$order` ascending: registration sequence number. Earlier registrations compile before later ones within the same priority.
+- Scope then filename as final alphabetical tie-breaker when both priority and order collide (theoretically impossible in practice, but ensures a total order).
 
-`replace()` exists as an escape hatch — when code needs to unconditionally swap or remove an entry (e.g., programmatic test setup, admin overrides), precedence rules are not applied. The replacement Entry type must match the lookup type; mismatch throws `\InvalidArgumentException`.
+### Conflict Precedence for the Same Identity `(type, scope, file)`
 
-## Current Behavior Notes / Limitations
+At registration time (`doAdd()` / `register()`), when an entry for the exact same `(type, scope, file)` already exists:
 
-### 1. No Type-Safe Asset Pipeline
+1. **Higher `$priority` wins.** New > existing → replace; new < existing → keep existing.
+2. **Same priority** → provider rank (lower rank = higher precedence). Provider order: `app(0) > theme(1) > plugin(2) > core(3)`. If new rank > existing, keep existing; if new < existing, replace.
+3. **Same priority + same provider rank** → registration order. Existing was registered earlier (lower `$order`), so keep it.
 
-The registry accepts arbitrary paths for `$path`. There is no built-in validation that `.less` files exist for CSS entries or that JS entry paths are actual JavaScript/TypeScript files. This applies at both the Registry and LessCompiler levels — `LessCompiler::compile()` filters to only `.less` files (checked by path suffix `.less`; case-insensitive check on last 5 characters), but a `.css` or other file registered as a CSS asset would sit silently in the store without being compiled.
+```php
+// Same (css, app, styles.less): higher-priority replacement wins
+$registry->css('app', 'styles.less', '/a.css', Entry::PROVIDER_APP, 200);   // first: priority=200
+$registry->css('app', 'styles.less', '/b.css', Entry::PROVIDER_APP, 300);   // second: priority=300 → replaces the above
 
-### 2. All Entries Stored Per-Type Separately
+// Same priority — provider rank tie-breaker
+$registry->css('themes/x', 't.less', '/t1.css', Entry::PROVIDER_THEME, 300);  // theme = rank(1)
+$registry->css('themes/y', 't.less', '/t2.css', Entry::PROVIDER_PLUGIN, 300); // plugin = rank(2) → keeps existing (theme wins)
+```
 
-CSS entries and JS entries live in completely separate buckets (`$store['css']` and `$store['js']`). There is no cross-type conflict resolution — registering both an entry named `foo.css` as type `css` and another named `foo` as type `js` does not produce a collision. They are independent registrations.
+### Key Design Decisions
 
-### 3. No Pagination or Batch Retrieval
-
-The registry only provides `allCss()` / `allJs()` (entire bucket) and `get(type, name)` (single entry). There is no partial retrieval method (e.g., "give me entries with provider = 'theme' only"). Filtering is the responsibility of the consumer.
+- **Registry is order-neutral during storage.** Sorting is delegated entirely to consumers (`orderedCss()`, `LessCompiler`). The `$store` array carries no ordering guarantees.
+- **`$nextOrder` increments unconditionally** on every registration attempt, guaranteeing strict total ordering without rollbacks.
+- **Provider rank affects only conflict resolution**, not compilation or display order. Once a winner is chosen at registration time, the surviving entry's `$priority` and `$order` alone determine its position in compiled output.
+- **No legacy flat-name API.** Every lookup method (`has()`, `get()`, `replace()`) requires all three identity arguments. There is no two-argument or name-only interface.

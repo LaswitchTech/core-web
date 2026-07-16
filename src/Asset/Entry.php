@@ -29,7 +29,8 @@ final readonly class Entry
         self::PROVIDER_CORE    => 3,
     ];
 
-    public string $name;
+    public readonly string $scope;
+    public readonly string $file;
     public readonly string $path;
     public readonly string $type;
     public readonly string $provider;
@@ -38,7 +39,8 @@ final readonly class Entry
     public readonly int $order;
 
     public function __construct(
-        string $name,
+        string $scope,
+        string $file,
         string $path,
         string $type,
         string $provider = self::PROVIDER_CORE,
@@ -58,12 +60,85 @@ final readonly class Entry
             );
         }
 
-        $normalizedName = strtolower(trim($name));
-        if ($normalizedName === '') {
-            throw new \InvalidArgumentException('Asset name must not be empty after trimming.');
+        $normalizedScope = strtolower(trim($scope));
+        $normalizedScope = trim($normalizedScope, '/');
+
+        if ($normalizedScope === '') {
+            throw new \InvalidArgumentException('Asset scope must not be empty.');
         }
 
-        $this->name     = $normalizedName;
+        if (str_contains($normalizedScope, '\\')) {
+            throw new \InvalidArgumentException('Asset scope must not contain backslashes.');
+        }
+
+        $isRootScope = $normalizedScope === 'kernel'
+            || $normalizedScope === 'app';
+
+        $scopeParts = explode('/', $normalizedScope);
+
+        if (!$isRootScope && count($scopeParts) !== 2) {
+            throw new \InvalidArgumentException(
+                'Extension asset scope must contain exactly two segments.'
+            );
+        }
+
+        if (
+            !$isRootScope
+            && !in_array($scopeParts[0], ['themes', 'plugins'], true)
+        ) {
+            throw new \InvalidArgumentException(
+                'Extension asset scope must begin with "themes" or "plugins".'
+            );
+        }
+
+        if (
+            !$isRootScope
+            && preg_match('/^[a-z0-9][a-z0-9_-]*$/', $scopeParts[1]) !== 1
+        ) {
+            throw new \InvalidArgumentException(
+                'Extension asset scope contains an invalid extension name.'
+            );
+        }
+
+        $normalizedFile = trim($file);
+
+        if ($normalizedFile === '') {
+            throw new \InvalidArgumentException('Asset filename must not be empty.');
+        }
+
+        if (
+            str_contains($normalizedFile, '/')
+            || str_contains($normalizedFile, '\\')
+        ) {
+            throw new \InvalidArgumentException(
+                'Asset filename must not contain path separators.'
+            );
+        }
+
+        if ($normalizedFile === '.' || $normalizedFile === '..') {
+            throw new \InvalidArgumentException(
+                'Asset filename must not be "." or "..".'
+            );
+        }
+
+        if (str_contains($normalizedFile, "\0")) {
+            throw new \InvalidArgumentException(
+                'Asset filename must not contain null bytes.'
+            );
+        }
+
+        if (basename($normalizedFile) !== $normalizedFile) {
+            throw new \InvalidArgumentException(
+                'Asset filename must be a leaf filename.'
+            );
+        }
+
+        if ($path === '') {
+            throw new \InvalidArgumentException('Asset path must not be empty.');
+        }
+
+        $this->scope = $normalizedScope;
+        $this->file  = $normalizedFile;
         $this->path     = $path;
         $this->type     = $type;
         $this->provider = $provider;

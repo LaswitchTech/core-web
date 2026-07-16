@@ -1,0 +1,20 @@
+{
+    "type": "plugin",
+    "name": "datatables",
+    "version": "2.3.8",
+    "description": "First-party DataTables assets with Bootstrap 5 integration.",
+    "depends": [
+        "jquery",
+        "Bootstrap",
+        "jszip",
+        "pdfmake"
+    ],
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\Datatables\\": "src/"
+        }
+    },
+    "hooks": [
+        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\Datatables\\DatatablesAssetProvider::registerAssets"
+    ]
+}

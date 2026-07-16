@@ -18,15 +18,22 @@ final class BootstrapIconsAssetProvider
         }
 
         $pluginRoot = dirname(__DIR__, 2);
-        $cssFile   = $pluginRoot . '/Assets/css/bootstrap-icons.min.css';
+        $cssFile     = 'bootstrap-icons.min.css';
+        $cssPath      = $pluginRoot . '/Assets/css/' . $cssFile;
 
-        if (!is_readable($cssFile)) {
+        if (!is_file($cssPath) || !is_readable($cssPath)) {
+            return;
+        }
+
+        $resolvedCss = realpath($cssPath);
+        if ($resolvedCss === false) {
             return;
         }
 
         $registry->css(
-            'bootstrap-icons',
-            realpath($cssFile),
+            'plugins/bootstrap',
+            $cssFile,
+            $resolvedCss,
             Entry::PROVIDER_PLUGIN,
             400,
         );

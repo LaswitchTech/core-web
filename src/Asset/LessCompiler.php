@@ -7,7 +7,7 @@ use Less_Parser;
 /**
  * Compile and cache .less assets from the Asset Registry.
  *
- * Sorting uses priority ↑ → order ↑ → name ↑ (provider rank is NOT used for compilation order).
+ * Sorting uses priority ↑ → order ↑ → scope ↑ → file ↑ (provider rank is NOT used for compilation order).
  *
  * Documentation: docs/development/architecture/Asset/LessCompiler.md
  */
@@ -52,7 +52,8 @@ final class LessCompiler
             $lessFiles[] = [
                 'priority' => $entry->priority,
                 'order'    => $entry->order,
-                'name'     => $entry->name,
+                'scope'    => $entry->scope,
+                'file'     => $entry->file,
                 'path'     => $entry->path,
                 'mtime'    => filemtime($entry->path),
                 'size'     => filesize($entry->path),
@@ -65,7 +66,7 @@ final class LessCompiler
             return '';
         }
 
-        // Sort: priority ↑ → order ↑ → name ↑ (alphabetical).
+        // Sort: priority ↑ → order ↑ → scope ↑ → file ↑.
         usort($lessFiles, static function (array $a, array $b): int {
             if ($a['priority'] !== $b['priority']) {
                 return $a['priority'] <=> $b['priority'];
@@ -73,7 +74,11 @@ final class LessCompiler
             if ($a['order'] !== $b['order']) {
                 return $a['order'] <=> $b['order'];
             }
-            return $a['name'] <=> $b['name'];
+            if ($a['scope'] !== $b['scope']) {
+                return $a['scope'] <=> $b['scope'];
+            }
+
+            return $a['file'] <=> $b['file'];
         });
 
         // Cache key: path + mtime + size + sha256 of file contents.

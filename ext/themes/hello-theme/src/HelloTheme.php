@@ -2,8 +2,6 @@
 
 namespace Laswitchtech\CoreWeb\Theme;
 
-use Laswitchtech\CoreWeb\Asset\Entry as AssetEntry;
-
 /**
  * Hello Theme — minimal enabled theme that registers one LESS asset via hook.
  */
@@ -17,9 +15,7 @@ final class HelloTheme
      */
     public static function registerAssets(array $context): void
     {
-        $registry = $context['registry'] ?? null;
-
-        if (!($registry instanceof \Laswitchtech\CoreWeb\Asset\Registry)) {
+        if (!($context['registry'] ?? null) instanceof \Laswitchtech\CoreWeb\Asset\Registry) {
             return;
         }
 
@@ -34,20 +30,23 @@ final class HelloTheme
         // Construct the absolute path to the LESS source.
         $fullPath = "{$dir}/styles/style.less";
 
-        if (!is_readable($fullPath)) {
+        if (!is_file($fullPath) || !is_readable($fullPath)) {
             return;
         }
 
-        $assetName = "hello-theme/style.css";
+        $resolved  = realpath($fullPath);
+        if ($resolved === false) {
+            return;
+        }
 
-        $entry = new AssetEntry(
-            name:     $assetName,
-            path:     $fullPath,
-            type:     AssetEntry::TYPE_CSS,
-            provider: AssetEntry::PROVIDER_THEME,
-            priority: 300,
+        // Explicit default: the CSS scope has exactly one principal asset.
+        $context['registry']->css(
+            'themes/hello-theme',
+            'style.less',
+            $resolved,
+            \Laswitchtech\CoreWeb\Asset\Entry::PROVIDER_THEME,
+            300,
+            ['default' => true],
         );
-
-        $registry->register($entry);
     }
 }

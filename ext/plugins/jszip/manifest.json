@@ -1,0 +1,14 @@
+{
+    "type": "plugin",
+    "name": "jszip",
+    "version": "3.10.1",
+    "description": "First-party JSZip browser assets for client-side ZIP archive generation.",
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\JsZip\\": "src/"
+        }
+    },
+    "hooks": [
+        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\JsZip\\JsZipAssetProvider::registerAssets"
+    ]
+}

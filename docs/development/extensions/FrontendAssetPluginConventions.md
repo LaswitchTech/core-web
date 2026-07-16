@@ -32,30 +32,117 @@ Only the directories needed by a given plugin must exist; unused folders may be 
 
 A frontend asset plugin packages its client-side files (JavaScript, CSS, fonts) under `Assets/`. Core-Web does **not** scan the `Assets/` directory automatically; instead, the plugin supplies a provider callback that — given the current bootstrap mode (`$context['mode']`, lowercase `"web"` or `"cli"`) — resolves the concrete local paths and explicitly registers each asset to emit. Only CSS and JS are currently supported registry types. Registered files are later read by Core-Web when they are compiled or served on a page.
 
-### Registration API
+### Canonical Registration API
 
-Each provider call passes the provider name **explicitly** as the third argument:
+Assets are registered through the `Asset\Registry` methods `$registry->css()` and `$registry->js()`. Both signatures share the same first five parameters; optional metadata is passed as a sixth argument on JS only:
 
 ```php
 $registry->css(
-    string $name,       // Asset name (case-insensitive, must not contain '/')
-    string $path,       // Resolved absolute or relative file path
-    string $provider,   // Source identifier: 'core', 'theme', 'app', or 'plugin'
-    int $priority,      // Numeric precedence value
-    array $metadata = [],// Arbitrary associative metadata
+    string $scope,      // Extension directory slug (e.g. 'plugins/example')
+    string $filename,   // Public leaf filename (e.g. 'example.css')
+    string $path,       // Resolved absolute physical path
+    int    $provider,   // Entry::PROVIDER_* constant
+    int    $priority,   // Output ordering priority
 );
 
 $registry->js(
-    string $name,       // Asset name (case-insensitive, must not contain '/')
-    string $path,       // Resolved absolute or relative file path
-    string $provider,   // Source identifier: 'core', 'theme', 'app', or 'plugin'
-    int $priority,      // Numeric precedence value
-    array $metadata = [],// Arbitrary associative metadata
+    string $scope,      // Extension directory slug (e.g. 'plugins/example')
+    string $filename,   // Public leaf filename (e.g. 'example.js')
+    string $path,       // Resolved absolute physical path
+    int    $provider,   // Entry::PROVIDER_* constant
+    int    $priority,   // Output ordering priority
+    array  $defaults = [], // ['default' => true] for single-file JS entries
 );
 ```
 
-* `$name` — case-insensitive; names are normalised to lowercase internally. A name must not contain `/`. Uniqueness is scoped by both asset type and name.
-* `$path` — resolved at runtime by the provider callback (typically via `realpath(__DIR__ . '/../../Assets/...')`). First-party frontend plugins use `\Laswitchtech\CoreWeb\Asset\Entry::PROVIDER_PLUGIN` as `$provider` and **conventionally** use priority `400`, ensuring plugin assets are emitted after core (`100`), app (`200`), and theme (`300`) entries.
+**Plugin CSS:**
+
+```php
+$registry->css(
+    'plugins/example',
+    'example.css',
+    $absolutePath,
+    Entry::PROVIDER_PLUGIN,
+    400,
+);
+```
+
+**Plugin JS with explicit default:**
+
+```php
+$registry->js(
+    'plugins/example',
+    'example.js',
+    $absolutePath,
+    Entry::PROVIDER_PLUGIN,
+    400,
+    ['default' => true],
+);
+```
+
+**Theme CSS:**
+
+```php
+$registry->css(
+    'themes/example-theme',
+    'theme.css',
+    $absolutePath,
+    Entry::PROVIDER_THEME,
+    300,
+);
+```
+
+### Migrating a legacy registration
+
+The old unsupported registration form passed four positional arguments with the scope acting as a freeform name:
+
+```php
+$registry->js(
+    'example',
+    $absolutePath,
+    Entry::PROVIDER_PLUGIN,
+    400,
+);
+```
+
+This form is obsolete and must be migrated to:
+
+```php
+$registry->js(
+    'plugins/example',
+    'example.js',
+    $absolutePath,
+    Entry::PROVIDER_PLUGIN,
+    400,
+);
+```
+
+Migration steps:
+
+1. **Change the scope** from a freeform name to `plugins/{slug}` or `themes/{slug}`.
+2. **Pass the public leaf filename** as the second argument (e.g., `'example.js'`).
+3. **Keep the resolved physical path** as the third argument (`$absolutePath`), obtained via `realpath()` at provider-call time.
+4. **Keep provider and priority metadata** unchanged — `Entry::PROVIDER_PLUGIN` / `Entry::PROVIDER_THEME` and the numeric priority.
+5. **Mark at most one entry per type and scope as default** by adding `['default' => true]` to exactly one JS registration in that `(type, scope)` pair.
+6. **Remove extension-defined asset delivery routes.** All public asset delivery must flow through the framework's `/css` and `/js` aggregate routes; extensions must not define their own public paths for this purpose.
+
+### Validation and delivery security
+
+The registry validates extension scopes and filenames at registration time:
+
+* Extension scope must have exactly two path segments separated by a single `/`.
+* The first segment of the scope must be `plugins` or `themes`.
+* The second segment (extension slug) may contain only lowercase letters, digits, underscores (`_`), and hyphens (`-`).
+* The filename must be a leaf filename — no directory separators permitted.
+* The filename cannot contain `/`, `\`, null bytes, `.`, or `..`.
+
+Invalid registrations throw `InvalidArgumentException` before the entry is stored.
+
+### Guard rails in `url()`
+
+- Only `Entry::TYPE_CSS` (`'css'`) and `Entry::TYPE_JS` (`'js') are accepted; any other type yields `''`.
+- `$scope === 'kernel' || $scope === 'app'` → two-segment canonical: `/type/scope`.
+- Empty `$entry->file` (after trim) → `''` (the route has nothing to serve).
 
 ### Manifest declarations vs. runtime registration
 
@@ -200,7 +287,9 @@ This example declares:
 
 No additional manifest fields beyond those above are used — there is no synthetic `assets` or `optional-dependencies` key in the parser schema.
 
-## Example Asset Provider
+## Example Asset Providers
+
+### Plugin Provider
 
 ```php
 <?php declare(strict_types=1);
@@ -239,17 +328,20 @@ final class Provider
         }
 
         $registry->css(
-            'datatables-bootstrap',
+            'plugins/datatables-bootstrap', // scope: extension directory slug
+            'datatables-bootstrap.css',     // filename: public leaf name only
             realpath($cssFile),
             Entry::PROVIDER_PLUGIN,
             400,
         );
 
         $registry->js(
-            'datatables-bootstrap',
+            'plugins/datatables-bootstrap',
+            'datatables-bootstrap.js',
             realpath($jsFile),
             Entry::PROVIDER_PLUGIN,
             400,
+            ['default' => true],
         );
     }
 }
@@ -260,8 +352,56 @@ This example demonstrates:
 * **Registry validation** — returns early when `$context['registry']` is missing or not an `Asset\Registry` instance.
 * **Root resolution** — uses `realpath(__DIR__ . '/../../')` to locate the plugin directory from the provider file's position.
 * **Readability checks** — calls `is_file()` and `is_readable()` before registration; returns early if files are missing or unreadable.
-* **Flat-call API** — uses `$registry->css(name, path, provider, priority)` and `$registry->js(name, path, provider, priority)` instead of fluent-builder methods.
-* **Directory casing** — resolves assets from the capitalised `Assets/css/` and `Assets/js/` subdirectories under the plugin root.
-* **Two asset registrations** — one CSS and one JS, each with a valid name (`datatables-bootstrap`) that contains no `/`.
-* **`Entry::PROVIDER_PLUGIN`** — used as the provider for both entries so the registry can apply provider-rank tie-breaking correctly.
+* **Scope-based registration** — `$scope` is the extension directory slug (`'plugins/datatables-bootstrap'`), not a flat name. Uniqueness within CSS is keyed by `($scope, $filename)` pairs.
+* **Filename convention** — only the leaf filename (`datatables-bootstrap.css`) is supplied; no directory components are included in the `$filename` argument.
+* **Entry::PROVIDER_PLUGIN** — used as the provider constant so the registry can apply provider-rank tie-breaking correctly.
 * **Priority `400`** — matches the framework's bootstrap convention ensuring plugin assets load *after* core (100), application (200), and theme (300).
+
+### Theme Provider
+
+```php
+<?php declare(strict_types=1);
+
+namespace ExampleTheme\Asset;
+
+use Laswitchtech\CoreWeb\Asset\Entry;
+use Laswitchtech\CoreWeb\Asset\Registry;
+
+use function is_file;
+use function realpath;
+
+final class Provider
+{
+    public static function register(array $context): void
+    {
+        if (!($context['registry'] ?? null) instanceof Registry) {
+            return;
+        }
+
+        $registry = $context['registry'];
+        $themeRoot = realpath(__DIR__ . '/..');
+        if ($themeRoot === false) {
+            return;
+        }
+
+        $cssFile = $themeRoot . '/Assets/css/theme.css';
+
+        if (!is_file($cssFile)) {
+            return;
+        }
+
+        $registry->css(
+            'themes/example-theme', // scope: extension directory slug
+            'theme.css',            // filename: public leaf name only
+            realpath($cssFile),
+            Entry::PROVIDER_THEME,
+            300,
+        );
+    }
+}
+```
+
+This example shows:
+
+* **Priority `300`** — theme assets load after core (100) and application (200).
+* **Entry::PROVIDER_THEME** — the theme provider constant enables scope-specific conflict resolution.

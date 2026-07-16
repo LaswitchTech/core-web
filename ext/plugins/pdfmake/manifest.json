@@ -1,0 +1,14 @@
+{
+    "type": "plugin",
+    "name": "pdfmake",
+    "version": "0.2.7",
+    "description": "First-party pdfmake browser assets for client-side PDF generation.",
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\PdfMake\\": "src/"
+        }
+    },
+    "hooks": [
+        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\PdfMake\\PdfMakeAssetProvider::registerAssets"
+    ]
+}

@@ -157,47 +157,124 @@ private function bootCli(): void
 8. Dispatches the request: `$response = $router->dispatch(Cli::fromArgv($_SERVER['argv'] ?? []))`.
 9. Sends response: `$response->send()`.
 
-### Asset Lifecycle (`initAssets()` + `/css` Route)
+### Asset Lifecycle (`initAssets()` + Canonical Routes)
 
-#### `initAssets()` — Registry Creation and Population
+#### `initAssets()` — Registry Creation and Population Conventions
 
-Executed after `initExtensions()` but before mode-specific dispatch. Creates the asset registry with kernel/application conventions, stores it in the container, then triggers the `asset.register` hook for extension population:
+Executed after `initExtensions()` but before mode-specific dispatch. Creates the asset registry with kernel/application discovery conventions, stores it in the container, then triggers the `asset.register` hook for extension population:
 
 1. **Create fresh `$registry = new AssetRegistry()`**
-2. **Register kernel styles** — convention: `{$kernelRoot}/Assets/styles.less`. If file exists, calls `$registry->css('kernel/styles', realpath($kernelStyler), AssetEntry::PROVIDER_CORE, 100)`. Kernel root is determined by `CORE_WEB_ROOT` constant or `dirname(__DIR__)`.
-3. **Register application styles** — convention: `{$appRoot}/Assets/styles.less`. If file exists:
-    - Gets `$realpath = realpath($appStyler)`.
-    - **Dedup guard**: If kernel and app resolve to the same physical file (`realpath($kernelStyler) === $realpath`), skips registration entirely to prevent duplicate compilation.
-    - Otherwise: calls `$registry->css('app/styles', $realpath, AssetEntry::PROVIDER_APP, 200)`.
-4. **Store in container**: `$c->set('asset_registry', $registry)`
-5. **Trigger `asset.register` hook** — fires only if the registry instance is `\Laswitchtech\CoreWeb\Hook\Registry`, passing:
-    - `'registry'` → the populated AssetRegistry
-    - `'container'` → `static::$instance` (current bootstrap run)
-    - `'mode'` → lowercase string (`'web'` or `'cli'`)
+2. **Conventional kernel discovery** — checks for kernel assets using these paths (LESS is checked before CSS):
+
+   ```
+   {kernelRoot}/Assets/less/styles.less
+   {kernelRoot}/Assets/css/styles.css
+   {kernelRoot}/Assets/js/kernel.js
+   ```
+
+   Rules:
+   - LESS (`styles.less`) is checked before CSS (`styles.css`).
+   - Only the **first readable regular stylesheet** found at a given location is registered.
+   - Kernel JavaScript discovery is independent from kernel stylesheet discovery.
+   - When a file exists, it is resolved via `realpath()` and registered with:
+
+     ```php
+     // Kernel styles (stylesheet)
+     $registry->css(
+         'kernel',           // scope
+         'styles.less',      // file name (leaf)
+         realpath($resolvedKernelPath),  // physical path
+         AssetEntry::PROVIDER_CORE,      // provider
+         100,                            // priority
+     );
+
+     // Kernel JavaScript
+     $registry->js(
+         'kernel',                        // scope
+         'kernel.js',                     // file name (leaf)
+         realpath($resolvedKernelJs),     // physical path
+         AssetEntry::PROVIDER_CORE,       // provider
+         100,                             // priority
+     );
+     ```
+
+   Kernel assets use `scope = 'kernel'`, `provider = 'core'` (or `AssetEntry::PROVIDER_CORE`), and `priority = 100`.
+
+3. **Conventional application discovery** — checks for application assets using these paths (LESS is checked before CSS):
+
+   ```
+   {appRoot}/Assets/less/styles.less
+   {appRoot}/Assets/css/styles.css
+   {appRoot}/Assets/js/app.js
+   ```
+
+   Rules:
+   - LESS (`styles.less`) is checked before CSS (`styles.css`).
+   - Only the **first readable regular stylesheet** found at a given location is registered.
+   - Application JavaScript discovery is independent from application stylesheet discovery.
+   - When a file exists AND does not duplicate a kernel asset (duplicate suppression, see below), it is resolved via `realpath()` and registered with:
+
+     ```php
+     // Application styles (stylesheet)
+     $registry->css(
+         'app',                         // scope
+         'styles.less',                 // file name (leaf)
+         realpath($resolvedAppPath),    // physical path
+         AssetEntry::PROVIDER_APP,      // provider
+         200,                           // priority
+     );
+
+     // Application JavaScript
+     $registry->js(
+         'app',                          // scope
+         'app.js',                       // file name (leaf)
+         realpath($resolvedAppJs),       // physical path
+         AssetEntry::PROVIDER_APP,       // provider
+         200,                            // priority
+     );
+     ```
+
+   Application assets use `scope = 'app'`, `provider = 'app'` (or `AssetEntry::PROVIDER_APP`), and `priority = 200`.
+
+4. **Duplicate suppression** — at each discovery step (kernel → app):
+   - **Application CSS is skipped** when it resolves to the same physical file as kernel CSS (`realpath($appCss) === realpath($kernelCss)`).
+   - **Application JS is skipped** when it resolves to the same physical file as kernel JS (`realpath($appJs) === realpath($kernelJs)`).
+   Skipping prevents duplicate compilation of identical compiled output.
+
+5. **Store in container**: `$c->set('asset_registry', $registry)`
+6. **Trigger `asset.register` hook** — fires only if the registry instance is `\Laswitchtech\CoreWeb\Hook\Registry`, passing:
+     - `'registry'` → the populated AssetRegistry
+     - `'container'` → `static::$instance` (current bootstrap run)
+     - `'mode'` → lowercase string (`'web'` or `'cli'`)
 
 This is where enabled themes/plugins register their CSS/JS assets by calling `$registry->css('...', ...)` or `$registry->js('...', ...)`. Only **enabled** extensions have their hooks registered (in `initExtensions()`), so disabled extensions cannot populate the asset registry.
 
-#### `/css` Route — Per-Request Compilation (WEB-only)
+#### Canonical Routes — Request-Time Dispatch and Resolution
 
-Registered in `bootWeb()` after router creation but before dispatch. Serves compiled CSS by resolving all registry entries at request time and compiling `.less` files through `LessCompiler`. The route is only available in WEB mode:
+The following routes are registered at request time by `bootWeb()`. All extension-provided routes resolve their physical files from Asset Registry entries; route parameters are **never** directly converted into filesystem paths.
 
-**Path**: `GET /css`
-**Content-Type**: `text/css; charset=UTF-8`
-**Status**: 200 (success), 400 (invalid app root)
+| Route Pattern | Description / Behavior |
+|---|---|
+| `/css` | Compiled LESS output (all `.less` entries registered in the registry, merged and compiled). Returns 200 with `text/css`. |
+| `/css/kernel` | Kernel scoped CSS compilation (`scope = 'kernel'`). Returns 404 when no kernel entry exists. |
+| `/js/kernel` | Kernel scoped JS emission (`scope = 'kernel'`). Returns 404 when no kernel entry exists. |
+| `/css/app` | Application scoped CSS compilation (`scope = 'app'`). Returns 404 when no app entry exists. |
+| `/js/app` | Application scoped JS emission (`scope = 'app'`). Returns 404 when no app entry exists. |
+| `/{type}/themes/{extension}/{file}` / `/{type}/plugins/{extension}/{file}` | Single extension asset lookup by type (css/js), scope prefix, and file name. Extension aliases require exactly one explicit default; physical path is resolved from the Registry entry stored during init. Returns 403 for remote-registered paths, 404 for missing physical files or malformed identities. |
+| `/{type}/themes/{extension}` / `/{type}/plugins/{extension}` | Directory listing fallback — requires one explicit default asset to resolve; returns 404 when no matching entry exists. |
 
-The handler performs these steps at request time:
+**Resolution rules:**
+- Physical paths are resolved exclusively from Asset Registry entries populated at init time.
+- Route parameters are never directly converted into filesystem paths.
+- Malformed or unknown identities return **404**.
+- Remote-registered paths return **403**.
+- Missing physical files on disk return **404**.
 
-1. **Validate `app_root`** — resolved from container (`$c->resolve('app_root')`). If not a non-empty string, returns 400 with body `'Invalid app root'`.
-2. **Resolve cache directory** — reads `renderer.less.cache_dir` from config via `Config::get()`, defaulting to `'storage/cache/renderer/less'`. Prepends `$appRoot` for relative paths.
-3. **Ensure cache directory exists** — `@mkdir($cacheDir, 0755, true)` (best-effort, no throw).
-4. **Resolve debug mode and asset registry** at request time:
-    - `$debug = (bool) Config::get('app.debug', false)` — if `true`, compilation bypasses all cache for every `/css` request.
-    - `$assetRegistry = $c->resolve('asset_registry')` — the same registry instance created in `initAssets()`.
-5. **Create compiler**: `$compiler = new LessCompiler($appRoot, $cacheDir)`
-6. **Compile per-request**: `$css = $compiler->compile($assetRegistry, $debug)`
-7. **Return 200 response** with compiled CSS body and appropriate `Content-Type` header.
+#### Compile-time Caching (Production / Debug-Off)
 
-The `/css` route enables hot-reloading during development (when debug is on) because the full Less pipeline runs on every request. In production with debug disabled, caching via `LessCompiler` ensures minimal overhead by serving pre-compiled CSS from disk when source files haven't changed.
+When `app.debug` is `false`, compiled CSS for scope-scoped routes is persisted to the cache directory (`renderer.less.cache_dir`, defaulting to `{appRoot}/storage/cache/renderer/less`) keyed by a hash of resolved physical paths. Subsequent requests serve from disk when source files have not changed, avoiding re-compilation. The `/css` flat-route always compiles fresh in this mode unless a matching cache key exists.
+
+---
 
 ---
 

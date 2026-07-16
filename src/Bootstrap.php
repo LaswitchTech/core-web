@@ -649,36 +649,95 @@ class Bootstrap
         $registry = new AssetRegistry();
 
         // ── 1. Kernel asset (first compilation tier) -----------------------------
-        // Convention: {$kernelRoot}/Assets/styles.less
-        $kernelRoot = defined('CORE_WEB_ROOT') ? (string) CORE_WEB_ROOT : dirname(__DIR__);
-        $kernelStyler = "{$kernelRoot}/Assets/styles.less";
-        if (is_file($kernelStyler)) {
+        // Lookup order: {kernelRoot}/Assets/less/styles.less → {kernelRoot}/Assets/css/styles.css
+        $kernelRoot       = defined('CORE_WEB_ROOT') ? (string) CORE_WEB_ROOT : dirname(__DIR__);
+        // Always initialise before use — kernel CSS guard does not set it.
+        $kernelJsReal     = false;
+
+        $resolvedAbsolutePath   = false;
+        foreach (['less', 'css'] as $ext) {
+            $candidate = "{$kernelRoot}/Assets/{$ext}/styles.{$ext}";
+            if (is_file($candidate) && is_readable($candidate)) {
+                $real = realpath($candidate);
+                if ($real !== false) {
+                    $resolvedAbsolutePath = $real;
+                    break;       // first readable match wins
+                }
+            }
+        }
+
+        if ($resolvedAbsolutePath !== false) {
             $registry->css(
-                'kernel/styles',
-                realpath($kernelStyler),
+                'kernel',
+                basename($resolvedAbsolutePath),
+                $resolvedAbsolutePath,
                 AssetEntry::PROVIDER_CORE,
                 100,
             );
+        } // end if resolvedAbsolutePath !== false (kernel CSS guard)
+
+        // Kernel JavaScript registration — independent of kernel CSS availability
+        $kernelJsCandidate = "{$kernelRoot}/Assets/js/kernel.js";
+        if (is_file($kernelJsCandidate) && is_readable($kernelJsCandidate)) {
+            $realJs = realpath($kernelJsCandidate);
+            if ($realJs !== false) {
+                $kernelJsReal = $realJs;
+                $registry->js(
+                    'kernel',
+                    'kernel.js',
+                    $realJs,
+                    AssetEntry::PROVIDER_CORE,
+                    100,
+                );
+            }
+        }
+
+        // Application JavaScript registration
+        $appJsCandidate = "{$this->appRoot}/Assets/js/app.js";
+        if (is_file($appJsCandidate) && is_readable($appJsCandidate)) {
+            $realAppJs = realpath($appJsCandidate);
+            if ($realAppJs !== false) {
+                // Prevent duplicate physical registration: skip when app
+                // javascript resolves to the same physical file as kernel.
+                $noDuplicate = $kernelJsReal === false || $realAppJs !== $kernelJsReal;
+                if ($noDuplicate) {
+                    $registry->js(
+                        'app',
+                        'app.js',
+                        $realAppJs,
+                        AssetEntry::PROVIDER_APP,
+                        200,
+                    );
+                }
+            }
         }
 
         // ── 2. Application asset (second tier) -----------------------------------
-        // Convention: {$appRoot}/Assets/styles.less
-        $appStyler = "{$this->appRoot}/Assets/styles.less";
-        if (is_file($appStyler)) {
-            $realpath = realpath($appStyler);
-
-            // Prevent duplicate compilation: skip when app stylesheet resolves to
-            // the same physical file as the kernel stylesheet.
-            if ($kernelStyler !== null && realpath($kernelStyler) === $realpath) {
-                // fall through — do not register twice
-            } else {
-                $registry->css(
-                    'app/styles',
-                    $realpath,
-                    AssetEntry::PROVIDER_APP,
-                    200,
-                );
+        // Lookup order: {appRoot}/Assets/less/styles.less → {appRoot}/Assets/css/styles.css
+        $resolvedAppPath    = false;
+        foreach (['less', 'css'] as $ext) {
+            $candidate = "{$this->appRoot}/Assets/{$ext}/styles.{$ext}";
+            if (is_file($candidate) && is_readable($candidate)) {
+                $real = realpath($candidate);
+                if ($real !== false) {
+                    $resolvedAppPath = $real;
+                    break;       // first readable match wins
+                }
             }
+        }
+
+        // Prevent duplicate compilation: skip when app stylesheet resolves to
+        // the same physical file as the kernel stylesheet.
+        $hasDuplicate = $resolvedAbsolutePath !== false && $resolvedAppPath !== false && $resolvedAppPath === $resolvedAbsolutePath;
+
+        if ($resolvedAppPath !== false && ! $hasDuplicate) {
+            $registry->css(
+                'app',
+                basename($resolvedAppPath),
+                $resolvedAppPath,
+                AssetEntry::PROVIDER_APP,
+                200,
+            );
         }
 
         static::$instance->set('asset_registry', $registry);
@@ -1674,80 +1733,218 @@ class Bootstrap
             }
         }
 
-        // Register core /{type}/{name} route for served local assets (WEB only).
+        // Register core asset delivery routes (WEB only).
         $c = static::$instance;
         if ($c !== null) {
             $appRoot = $c->resolve('app_root');
             if (is_string($appRoot) && $appRoot !== '') {
-                $router->get('/{type}/{name}', static function (Web $request) use ($c, $appRoot): Response {
-                    // Validate app_root at request time.
-                    if (!is_string($appRoot) || $appRoot === '') {
-                        return (new Response(400))
-                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
-                            ->withBody('Invalid app root');
+
+                // -- Root-scope routes: /{type}/kernel and /{type}/app ------------------
+
+                foreach ([AssetEntry::TYPE_CSS, AssetEntry::TYPE_JS] as $scopeType) {
+                    foreach (['kernel', 'app'] as $scopeName) {
+                        $route = '/'. $scopeType .'/'. $scopeName;
+                        $router->get($route, static function (Web $request) use ($c, $appRoot, $scopeType, $scopeName): Response {
+                            if (!is_string($appRoot) || $appRoot === '') {
+                                return (new Response(400))
+                                    ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                    ->withBody('Invalid app root');
+                            }
+
+                            // Resolve asset registry at request time.
+                            /* @var \Laswitchtech\CoreWeb\Asset\Registry */
+                            $assetRegistry = $c->resolve('asset_registry');
+                            if (!($assetRegistry instanceof \Laswitchtech\CoreWeb\Asset\Registry)) {
+                                return (new Response(500))
+                                    ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                    ->withBody('Internal error');
+                            }
+
+                            // Resolve only through the scoped registry.
+                            /* @var \Laswitchtech\CoreWeb\Asset\Entry[] */
+                            $entries = $assetRegistry->getScope($scopeType, $scopeName);
+
+                            // Exactly one match is required.
+                            if (\count($entries) !== 1) {
+                                return (new Response(404))
+                                    ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                    ->withBody('Not found');
+                            }
+
+                            // Serve a single entry.
+                            $entry = array_shift($entries);
+
+                            // Reject http:// and https:// URLs.
+                            if (str_starts_with($entry->path, 'http://') || str_starts_with($entry->path, 'https://')) {
+                                return (new Response(403))
+                                    ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                    ->withBody('Forbidden');
+                            }
+
+                            $fullPath = str_starts_with($entry->path, '/') ? $entry->path : "{$appRoot}/{$entry->path}";
+
+                            if (!is_file($fullPath) || !is_readable($fullPath)) {
+                                return (new Response(404))
+                                    ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                    ->withBody('Not found');
+                            }
+
+                            $contentType = ($scopeType === AssetEntry::TYPE_CSS)
+                                ? 'text/css; charset=UTF-8'
+                                : 'application/javascript';
+
+                            return (new Response(200))
+                                ->setHeader('Content-Type', $contentType)
+                                ->withBody(file_get_contents($fullPath));
+                        });
+                    }
+                }
+
+                // -- Extension default alias routes: /{type}/themes/{extension} -----------
+                    //   and /{type}/plugins/{extension} (resolves via getDefault only) ----
+
+                    foreach ([AssetEntry::TYPE_CSS, AssetEntry::TYPE_JS] as $scopeType) {
+                        foreach (['themes', 'plugins'] as $extPrefix) {
+                            $route = '/' . $scopeType . '/' . $extPrefix . '/{extension}';
+                            $router->get($route, static function (Web $request) use ($c, $appRoot, $scopeType, $extPrefix): Response {
+                                if (!is_string($appRoot) || $appRoot === '') {
+                                    return (new Response(400))
+                                        ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                        ->withBody('Invalid app root');
+                                }
+
+                                // Resolve and validate the extension parameter.
+                                $extension = trim((string) $request->param('extension'));
+                                if ($extension === '' || str_contains($extension, '/') || str_contains($extension, '\\') || str_contains($extension, '..')) {
+                                    return (new Response(404))
+                                        ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                        ->withBody('Not found');
+                                }
+
+                                // Build the scope and resolve only through getDefault.
+                                $scope = strtolower(trim($extPrefix . '/' . $extension));
+                                if ($scope === '') {
+                                    return (new Response(404))
+                                        ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                        ->withBody('Not found');
+                                }
+
+                                /* @var \Laswitchtech\CoreWeb\Asset\Registry */
+                                $assetRegistry = $c->resolve('asset_registry');
+                                if (!($assetRegistry instanceof \Laswitchtech\CoreWeb\Asset\Registry)) {
+                                    return (new Response(500))
+                                        ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                        ->withBody('Internal error');
+                                }
+
+                                $entry = $assetRegistry->getDefault($scopeType, $scope);
+                                if (!($entry instanceof \Laswitchtech\CoreWeb\Asset\Entry)) {
+                                    return (new Response(404))
+                                        ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                        ->withBody('Not found');
+                                }
+
+                                // Reject http:// and https:// URLs.
+                                if (str_starts_with($entry->path, 'http://') || str_starts_with($entry->path, 'https://')) {
+                                    return (new Response(403))
+                                        ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                        ->withBody('Forbidden');
+                                }
+
+                                $fullPath = str_starts_with($entry->path, '/') ? $entry->path : "{$appRoot}/{$entry->path}";
+
+                                if (!is_file($fullPath) || !is_readable($fullPath)) {
+                                    return (new Response(404))
+                                        ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                        ->withBody('Not found');
+                                }
+
+                                $contentType = ($scopeType === AssetEntry::TYPE_CSS)
+                                    ? 'text/css; charset=UTF-8'
+                                    : 'application/javascript';
+
+                                return (new Response(200))
+                                    ->setHeader('Content-Type', $contentType)
+                                    ->withBody(file_get_contents($fullPath));
+                            });
+                        }
                     }
 
-                    // Resolve request parameters.
-                    $type    = strtolower(trim((string) $request->param('type')));
-                    $name    = trim((string) $request->param('name'));
+                    // -- Extension routes: /{type}/themes/{extension}/{file} ---------------
+                    //   and /{type}/plugins/{extension}/{file} -----------------------------
 
-                    // Only css and js are supported.
-                    if ($type !== \Laswitchtech\CoreWeb\Asset\Entry::TYPE_CSS && $type !== \Laswitchtech\CoreWeb\Asset\Entry::TYPE_JS) {
-                        return (new Response(404))
-                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
-                            ->withBody('Not found');
+                    foreach ([AssetEntry::TYPE_CSS, AssetEntry::TYPE_JS] as $scopeType) {
+                        foreach (['themes', 'plugins'] as $extPrefix) {
+                            $route = '/'. $scopeType .'/'. $extPrefix .'/{extension}/{file}';
+                            $router->get($route, static function (Web $request) use ($c, $appRoot, $scopeType, $extPrefix): Response {
+                                if (!is_string($appRoot) || $appRoot === '') {
+                                    return (new Response(400))
+                                        ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                        ->withBody('Invalid app root');
+                                }
+
+                                // Resolve request parameters.
+                                $extension = trim((string) $request->param('extension'));
+                                $file      = trim((string) $request->param('file'));
+
+                                // Reject path traversal characters in route parameters.
+                                if ($extension === '' || str_contains($extension, '/') || str_contains($extension, '\\') || str_contains($extension, '..')) {
+                                    return (new Response(404))
+                                        ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                        ->withBody('Not found');
+                                }
+
+                                if ($file === '' || str_contains($file, '/') || str_contains($file, '\\') || str_contains($file, '..')) {
+                                    return (new Response(404))
+                                        ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                        ->withBody('Not found');
+                                }
+
+                                // Build canonical scope.
+                                $scope = $extPrefix .'/'. $extension;
+
+                                // Resolve asset registry at request time.
+                                /* @var \Laswitchtech\CoreWeb\Asset\Registry */
+                                $assetRegistry = $c->resolve('asset_registry');
+                                if (!($assetRegistry instanceof \Laswitchtech\CoreWeb\Asset\Registry)) {
+                                    return (new Response(500))
+                                        ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                        ->withBody('Internal error');
+                                }
+
+                                // Look up the asset entry; reject unknown assets.
+                                $entry = $assetRegistry->get($scopeType, $scope, $file);
+                                if (!($entry instanceof \Laswitchtech\CoreWeb\Asset\Entry)) {
+                                    return (new Response(404))
+                                        ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                        ->withBody('Not found');
+                                }
+
+                                // Reject http:// and https:// URLs.
+                                if (str_starts_with($entry->path, 'http://') || str_starts_with($entry->path, 'https://')) {
+                                    return (new Response(403))
+                                        ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                        ->withBody('Forbidden');
+                                }
+
+                                $fullPath = str_starts_with($entry->path, '/') ? $entry->path : "{$appRoot}/{$entry->path}";
+
+                                if (!is_file($fullPath) || !is_readable($fullPath)) {
+                                    return (new Response(404))
+                                        ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                        ->withBody('Not found');
+                                }
+
+                                $contentType = ($scopeType === AssetEntry::TYPE_CSS)
+                                    ? 'text/css; charset=UTF-8'
+                                    : 'application/javascript';
+
+                                return (new Response(200))
+                                    ->setHeader('Content-Type', $contentType)
+                                    ->withBody(file_get_contents($fullPath));
+                            });
+                        }
                     }
-
-                    // Name must not be empty.
-                    if ($name === '') {
-                        return (new Response(404))
-                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
-                            ->withBody('Not found');
-                    }
-
-                    // Resolve asset registry at request time.
-                    /* @var \Laswitchtech\CoreWeb\Asset\Registry */
-                    $assetRegistry = $c->resolve('asset_registry');
-                    if (!($assetRegistry instanceof \Laswitchtech\CoreWeb\Asset\Registry)) {
-                        return (new Response(500))
-                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
-                            ->withBody('Internal error');
-                    }
-
-                    // Look up the asset entry; reject unknown assets.
-                    $entry = $assetRegistry->get($type, $name);
-                    if (!($entry instanceof \Laswitchtech\CoreWeb\Asset\Entry)) {
-                        return (new Response(404))
-                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
-                            ->withBody('Not found');
-                    }
-
-                    // Reject http:// and https:// URLs — never expose arbitrary filesystem paths.
-                    if (str_starts_with($entry->path, 'http://') || str_starts_with($entry->path, 'https://')) {
-                        return (new Response(403))
-                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
-                            ->withBody('Forbidden');
-                    }
-
-                    // Resolve the full path relative to app root.
-                    $fullPath = str_starts_with($entry->path, '/') ? $entry->path : "{$appRoot}/{$entry->path}";
-
-                    // Reject unreadable files.
-                    if (!is_file($fullPath) || !is_readable($fullPath)) {
-                        return (new Response(404))
-                            ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
-                            ->withBody('Not found');
-                    }
-
-                    // Serve the file with correct content type.
-                    $contentType = ($type === \Laswitchtech\CoreWeb\Asset\Entry::TYPE_CSS)
-                        ? 'text/css; charset=UTF-8'
-                        : 'application/javascript';
-
-                    return (new Response(200))
-                        ->setHeader('Content-Type', $contentType)
-                        ->withBody(file_get_contents($fullPath));
-                });
             }
         }
 

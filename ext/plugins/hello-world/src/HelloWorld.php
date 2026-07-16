@@ -58,6 +58,36 @@ final class HelloWorld
                 );
             });
 
+            // Web route: /hello-render-assets — same pipeline but wraps the output in an <html><head> shell
+            // that calls $helpers['asset']->css() and $helpers['asset']->js() so we can verify asset delivery.
+            $router->get('/hello-render-assets', function (Web $_req) use ($renderer, $layout, $tmpl, $view, $data): Response {
+                /** @var \Laswitchtech\CoreWeb\Bag */
+                $helpers = Bootstrap::container()->resolve('helpers');
+
+                $bodyContent = $renderer->render($layout, $tmpl, $view, $data);
+                $assetHelper = $helpers->resolve('asset');
+                $cssOutput   = $assetHelper->css(Bootstrap::container());
+                $jsOutput    = $assetHelper->js(Bootstrap::container());
+
+                $html = "<!DOCTYPE html>
+<html>
+<head>
+<meta charset=\"UTF-8\">
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+<title>Hello Render Assets</title>
+" . $cssOutput . "</head>
+<body>
+<div class=\"layout-site\">
+  <div class=\"layout-content\">
+    <div class=\"template-wrapper\">" . $bodyContent . "</div>
+  </div>
+</div>
+" . $jsOutput . "</body>
+</html>";
+
+                return Response::html($html);
+            });
+
             // CLI route: hello.render also exercises the pipeline.
             $router->command('hello.render', function (Cli $_req) use ($renderer, $layout, $tmpl, $view, $data): Response {
                 return Response::text(
@@ -635,32 +665,52 @@ final class HelloWorld
         $registry = $context['registry'];
         $dir      = self::getPluginDir();
 
-        // One CSS entry (priority 0 → plugin rank) — local LESS source file.
-        $name     = 'hello-world';
+        // One CSS entry (priority → plugin rank) — local LESS source file.
         if ($dir !== null) {
-            $cssSrc = "{$dir}/styles/style.less";
-        } else {
-            $cssSrc = "https://cdn.example.com/vendor/{$name}/style.css?v=1.0.0";
-        }
-        $cssEntry = new AssetEntry(
-            "{$name}/style.css",
-            $cssSrc,
-            AssetEntry::TYPE_CSS,
-            AssetEntry::PROVIDER_PLUGIN,
-            400,
-            ['integrity' => 'sha384-example-css', 'preload' => true],
-        );
-        $registry->register($cssEntry);
+            $cssPath = "{$dir}/styles/style.less";
 
-        // One JS entry (priority → plugin rank).
-        $jsEntry = new AssetEntry(
-            "{$name}/app.js",
-            "https://cdn.example.com/vendor/{$name}/app.js?v=1.0.0",
-            AssetEntry::TYPE_JS,
-            AssetEntry::PROVIDER_PLUGIN,
-            0,
-            ['integrity' => 'sha384-example-js', 'defer' => true],
-        );
-        $registry->register($jsEntry);
+            if (!is_file($cssPath) || !is_readable($cssPath)) {
+                return;
+            }
+
+            $resolvedCss = realpath($cssPath);
+            if ($resolvedCss === false) {
+                return;
+            }
+
+            // Explicit default: the CSS scope has exactly one principal asset.
+            $registry->css(
+                'plugins/hello-world',
+                'style.less',
+                $resolvedCss,
+                AssetEntry::PROVIDER_PLUGIN,
+                400,
+                ['integrity' => 'sha384-example-css', 'preload' => true, 'default' => true],
+            );
+        }
+
+        // One JS entry (priority → plugin rank) — local JS source file.
+        if ($dir !== null) {
+            $jsPath = "{$dir}/Assets/js/app.js";
+
+            if (!is_file($jsPath) || !is_readable($jsPath)) {
+                return;
+            }
+
+            $resolvedJs = realpath($jsPath);
+            if ($resolvedJs === false) {
+                return;
+            }
+
+            // Explicit default: the CSS scope has exactly one principal asset.
+            $registry->js(
+                'plugins/hello-world',
+                'app.js',
+                $resolvedJs,
+                AssetEntry::PROVIDER_PLUGIN,
+                400,
+                ['integrity' => 'sha384-example-js', 'defer' => true],
+            );
+        }
     }
 }

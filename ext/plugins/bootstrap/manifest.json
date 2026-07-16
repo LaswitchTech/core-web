@@ -3,6 +3,9 @@
     "name": "Bootstrap",
     "version": "5.3.3",
     "description": "First-party Bootstrap 5.3 framework assets.",
+    "depends": [
+        "jquery"
+    ],
     "autoload": {
         "psr-4": {
             "Laswitchtech\\CoreWeb\\Plugin\\Bootstrap\\": "src/Bootstrap/",
