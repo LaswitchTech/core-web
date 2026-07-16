@@ -1,0 +1,14 @@
+{
+    "type": "plugin",
+    "name": "chartjs",
+    "version": "4.5.1",
+    "description": "First-party Chart.js browser assets for responsive canvas-based charts and data visualizations.",
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\ChartJs\\": "src/"
+        }
+    },
+    "hooks": [
+        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\ChartJs\\ChartJsAssetProvider::registerAssets"
+    ]
+}
