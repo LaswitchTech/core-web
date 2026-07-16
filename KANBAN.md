@@ -166,7 +166,7 @@
       - Plugin should register JSZip assets for use by other plugins (e.g., DataTables export) without hardcoding JSZip into core layouts.
     - [x] Create pdfmake plugin for pdfmake asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T07:51:40-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Plugin should register pdfmake assets for use by other plugins (e.g., DataTables export) without hardcoding pdfmake into core layouts.
-    - [ ] Create DataTables plugin for DataTables asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] Create DataTables plugin for DataTables asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T16:02:05-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Plugin should register DataTables CSS/JS assets and document its dependency on jQuery and any Bootstrap integration assets.
       - [x] Add datatables-buttons to the datatables plugin <!-- created_at: 2026-07-13T12:33:25-04:00 completed_at: 2026-07-16T07:51:49-04:00 priority: normal -->
       - [x] Add datatables-columncontrol to the datatables plugin <!-- created_at: 2026-07-13T12:33:35-04:00 completed_at: 2026-07-16T14:30:00-04:00 priority: normal -->
