@@ -42,6 +42,10 @@ final class DatatablesAssetProvider
         $rowGroupBs5JsPath       = $pluginRoot . '/Assets/js/rowGroup.bootstrap5.min.js';
         $rowGroupBs5CssPath      = $pluginRoot . '/Assets/css/rowGroup.bootstrap5.min.css';
 
+        $scrollerJsPath = $pluginRoot . '/Assets/js/dataTables.scroller.min.js';
+        $scrollerBs5JsPath = $pluginRoot . '/Assets/js/scroller.bootstrap5.min.js';
+        $scrollerBs5CssPath = $pluginRoot . '/Assets/css/scroller.bootstrap5.min.css';
+
         if (!is_file($coreJsPath) || !is_readable($coreJsPath)) {
             return;
         }
@@ -106,6 +110,18 @@ final class DatatablesAssetProvider
             return;
         }
 
+        if (!is_file($scrollerJsPath) || !is_readable($scrollerJsPath)) {
+            return;
+        }
+
+        if (!is_file($scrollerBs5JsPath) || !is_readable($scrollerBs5JsPath)) {
+            return;
+        }
+
+        if (!is_file($scrollerBs5CssPath) || !is_readable($scrollerBs5CssPath)) {
+            return;
+        }
+
         $registry = $context['registry'];
 
         // All registrations use scope 'plugins/datatables' in the same order as before.
@@ -120,6 +136,14 @@ final class DatatablesAssetProvider
             ['default' => true],
         );
 
+        $registry->css(
+            'plugins/datatables',
+            'scroller.bootstrap5.min.css',
+            realpath($scrollerBs5CssPath),
+            Entry::PROVIDER_PLUGIN,
+            400,
+        );
+
         // 2. JS — datatables.min.js (the explicit JS default)
         $registry->js(
             'plugins/datatables',
@@ -128,6 +152,22 @@ final class DatatablesAssetProvider
             Entry::PROVIDER_PLUGIN,
             400,
             ['default' => true],
+        );
+
+        $registry->js(
+            'plugins/datatables',
+            'dataTables.scroller.min.js',
+            realpath($scrollerJsPath),
+            Entry::PROVIDER_PLUGIN,
+            400,
+        );
+
+        $registry->js(
+            'plugins/datatables',
+            'scroller.bootstrap5.min.js',
+            realpath($scrollerBs5JsPath),
+            Entry::PROVIDER_PLUGIN,
+            400,
         );
 
         // 3. JS — datatables.bootstrap5.min.js
