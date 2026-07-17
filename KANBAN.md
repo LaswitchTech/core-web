@@ -101,10 +101,22 @@
 - [ ] Presentation Layer <!-- created_at: 2026-06-18T11:48:12-04:00 priority: normal -->
   - Centralize renderer runtime settings so applications can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
   - Tags: framework, ui, renderer, config
-  - [ ] Component Library <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
-    - Renderable UI components with plugin extensibility.
-    - Tags: feature
-    - [ ] Implement base UIComponent interface and HTML sanitizer <!-- created_at: 2026-06-18T11:41:00-04:00 priority: normal -->
+  - [~] Builder Component Library <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
+    - JavaScript component runtime for registering, creating, configuring,
+        rendering, mounting, selecting, and destroying reusable UI components.
+    - Supports kernel, application, and plugin component providers.
+    - Tags: feature, ui, components, javascript, builder, extensions
+    - [ ] Implement Builder component registry and factory  <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
+    - [ ] Implement base Component class and lifecycle  <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
+    - [ ] Implement generated component identity and instance registry  <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
+    - [ ] Implement component configuration API  <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
+    - [ ] Implement DOM mounting and replacement APIs  <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
+    - [ ] Implement declarative component tag conversion  <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
+    - [ ] Observe dynamically inserted component tags  <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
+    - [ ] Implement safe HTML/text rendering utilities  <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
+    - [ ] Add provider metadata and deterministic override rules  <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
+    - [ ] Implement reference Card component  <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
+    - [ ] Document Builder component development conventions  <!-- created_at: 2026-06-18T11:40:00-04:00 priority: normal -->
   - [x] Scoped Asset Registration and Canonical Delivery <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T13:06:53-04:00 priority: high -->
     - Standardize asset ownership, registry identity, URL generation, and delivery around type, scope, and filename while preserving absolute-path serving and deterministic load order.
     - Tags: framework, renderer, assets, registry, router, extensions, migration, v.1.0
@@ -149,7 +161,7 @@
     - [x] Recompile LESS on every request when debug mode is enabled <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:32-04:00 priority: normal -->
       - Debug mode should bypass the cached compiled CSS so developers immediately see style changes.
     - [x] Document asset discovery and cache invalidation behavior <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-10T21:30:00-04:00 priority: normal -->
-  - [ ] Dedicated Frontend Asset Plugins <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+  - [x] Dedicated Frontend Asset Plugins <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T20:16:16-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
     - Move common frontend vendor assets out of the kernel and into dedicated first-party plugins so Bootstrap, Bootstrap Icons, DataTables, jQuery, and Chart.js can be installed, enabled, disabled, versioned, and overridden through the extension system.
     - Tags: framework, extensions, assets, frontend, bootstrap, datatables, jquery, chartjs, v.1.0
     - [x] Create jQuery plugin for jQuery asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T07:51:14-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
@@ -175,7 +187,7 @@
       - [x] Add datatables-scroller to the datatables plugin <!-- created_at: 2026-07-13T12:33:55-04:00 completed_at: 2026-07-16T19:00:00-04:00 priority: normal -->
       - [x] Add datatables-select to the datatables plugin <!-- created_at: 2026-07-13T12:34:01-04:00 completed_at: 2026-07-16T07:51:56-04:00 priority: normal -->
       - [x] Add datatables-staterestore to the datatables plugin <!-- created_at: 2026-07-13T12:34:12-04:00 completed_at: 2026-07-16T19:30:00-04:00 priority: normal -->
-    - [x] Create Chart.js plugin for Chart.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal completed_at: 2026-07-16T20:35:00-04:00 -->
+    - [x] Create Chart.js plugin for Chart.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T20:35:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Plugin should register Chart.js assets for dashboards, reporting, and visualization features without hardcoding Chart.js into core layouts.
     - [x] Create Select2.js plugin for Select2.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T21:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Plugin should register Select2.js assets for enhanced select boxes without hardcoding Select2.js into core layouts.
