@@ -177,7 +177,7 @@
       - [x] Add datatables-staterestore to the datatables plugin <!-- created_at: 2026-07-13T12:34:12-04:00 completed_at: 2026-07-16T19:30:00-04:00 priority: normal -->
     - [x] Create Chart.js plugin for Chart.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal completed_at: 2026-07-16T20:35:00-04:00 -->
       - Plugin should register Chart.js assets for dashboards, reporting, and visualization features without hardcoding Chart.js into core layouts.
-    - [ ] Create Select2.js plugin for Select2.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] Create Select2.js plugin for Select2.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T21:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
       - Plugin should register Select2.js assets for enhanced select boxes without hardcoding Select2.js into core layouts.
 
 ## Done

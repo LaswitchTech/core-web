@@ -1,0 +1,18 @@
+{
+    "type": "plugin",
+    "name": "select2",
+    "version": "4.1.0",
+    "description": "First-party Select2 assets with Bootstrap 5 theme integration.",
+    "depends": [
+        "jquery",
+        "Bootstrap"
+    ],
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\Select2\\": "src/"
+        }
+    },
+    "hooks": [
+        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\Select2\\Select2AssetProvider::registerAssets"
+    ]
+}
