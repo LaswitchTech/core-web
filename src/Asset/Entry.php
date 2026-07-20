@@ -106,31 +106,36 @@ final readonly class Entry
             throw new \InvalidArgumentException('Asset filename must not be empty.');
         }
 
-        if (
-            str_contains($normalizedFile, '/')
-            || str_contains($normalizedFile, '\\')
-        ) {
-            throw new \InvalidArgumentException(
-                'Asset filename must not contain path separators.'
-            );
-        }
-
-        if ($normalizedFile === '.' || $normalizedFile === '..') {
-            throw new \InvalidArgumentException(
-                'Asset filename must not be "." or "..".'
-            );
-        }
-
         if (str_contains($normalizedFile, "\0")) {
             throw new \InvalidArgumentException(
                 'Asset filename must not contain null bytes.'
             );
         }
 
-        if (basename($normalizedFile) !== $normalizedFile) {
+        if (str_contains($normalizedFile, '\\')) {
             throw new \InvalidArgumentException(
                 'Asset filename must be a leaf filename.'
             );
+        }
+
+        if (str_starts_with($normalizedFile, '/')) {
+            throw new \InvalidArgumentException(
+                'Asset filename must be a leaf filename.'
+            );
+        }
+
+        if (str_ends_with($normalizedFile, '/')) {
+            throw new \InvalidArgumentException(
+                'Asset filename must be a leaf filename.'
+            );
+        }
+
+        foreach (explode('/', $normalizedFile) as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                throw new \InvalidArgumentException(
+                    'Asset filename must be a leaf filename.'
+                );
+            }
         }
 
         if ($path === '') {

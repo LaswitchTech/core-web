@@ -231,59 +231,122 @@ final class Router
 
     /* ─── Param matching helper ────────────────────────────────────── */
 
-    /**
-     * Convert a route pattern (e.g. `/users/{id}/posts/{slug}`) into
-     * extracted parameters for the given URL path, or null on mismatch.
-     */
     private static function matchParams(string $pattern, string $path): ?array
     {
-        // Trailing-slash normalisation (route /users/42 matches /users/42 and /users/42/).
         $path = rtrim($path, '/');
+
         if ($path === '') {
             $path = '/';
         }
 
-        // Root route: '/' matches exactly '/'.
         if ($pattern === '/') {
             return $path === '/' ? [] : null;
         }
 
-        // Normalise both to the same form for comparison.
-        $segments  = explode('/', trim($pattern, '/'));
-        $parts     = explode('/', trim($path, '/'));
+        $segments = explode('/', trim($pattern, '/'));
+        $parts = explode('/', trim($path, '/'));
 
-        if (\count($parts) !== \count($segments)) {
+        $catchAllName = null;
+        $catchAllIndex = null;
+
+        foreach ($segments as $index => $segment) {
+            $isParameterSegment =
+                str_starts_with($segment, '{')
+                && str_ends_with($segment, '}');
+
+            if (!$isParameterSegment) {
+                continue;
+            }
+
+            if (
+                preg_match(
+                    '/^\{([A-Za-z_][A-Za-z0-9_]*)\.\.\.\}$/',
+                    $segment,
+                    $matches
+                ) === 1
+            ) {
+                if ($index !== count($segments) - 1) {
+                    return null;
+                }
+
+                $catchAllName = $matches[1];
+                $catchAllIndex = $index;
+
+                continue;
+            }
+
+            if (
+                preg_match(
+                    '/^\{[A-Za-z_][A-Za-z0-9_]*\}$/',
+                    $segment
+                ) !== 1
+            ) {
+                return null;
+            }
+        }
+
+        if ($catchAllIndex === null) {
+            if (count($parts) !== count($segments)) {
+                return null;
+            }
+        } elseif (count($parts) <= $catchAllIndex) {
             return null;
         }
 
-        /** @var array<string,int> */
-        $names = [];
-        $i     = 0;
-        foreach ($segments as $seg) {
-            if (str_contains($seg, '{') && str_contains($seg, '}')) {
-                // Dynamic segment — must align positionally.
-                $name   = substr($seg, 1, -1);
-                if ($parts[$i] === '') {
-                    return null;
-                }
-                $names[$i] = $name;
-            } else {
-                // Literal segment — exact match required.
-                if ($parts[$i] !== $seg) {
-                    return null;
-                }
+        $result = [];
+        $limit = $catchAllIndex ?? count($segments);
+
+        for ($index = 0; $index < $limit; $index++) {
+            if (!array_key_exists($index, $parts)) {
+                return null;
             }
-            $i++;
+
+            $segment = $segments[$index];
+            $value = $parts[$index];
+
+            if (
+                str_starts_with($segment, '{')
+                && str_ends_with($segment, '}')
+            ) {
+                $name = substr($segment, 1, -1);
+
+                if ($name === '' || $value === '') {
+                    return null;
+                }
+
+                if (is_numeric($value)) {
+                    $value = ctype_digit($value)
+                        ? (int) $value
+                        : (float) $value;
+                }
+
+                $result[$name] = $value;
+
+                continue;
+            }
+
+            if ($value !== $segment) {
+                return null;
+            }
         }
 
-        // Build the result array from captured names.
-        $result = [];
-        foreach ($names as $idx => $name) {
-            $value = $parts[$idx];
-            if (is_numeric($value)) {
-                $value = ctype_digit($value) ? (int)$value : (float)$value;
+        if ($catchAllIndex !== null) {
+            $remainingParts = array_slice(
+                $parts,
+                $catchAllIndex
+            );
+
+            if (
+                $remainingParts === []
+                || in_array('', $remainingParts, true)
+            ) {
+                return null;
             }
-            $result[$name] = $value;
+
+            $result[$catchAllName] = implode(
+                '/',
+                $remainingParts
+            );
         }
 
         return $result;

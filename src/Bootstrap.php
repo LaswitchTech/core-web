@@ -692,6 +692,151 @@ class Bootstrap
             }
         }
 
+        // Kernel component JavaScript registration — deterministic discovery of
+        // readable JavaScript files beneath Assets/js/components/.
+        //
+        // Components are registered only when kernel.js was registered because
+        // every built-in component depends on the Builder runtime.
+        if ($kernelJsReal !== false) {
+            $componentsDirectory =
+                "{$kernelRoot}/Assets/js/components";
+
+            $assetsJsDirectory =
+                "{$kernelRoot}/Assets/js";
+
+            $realComponentsDirectory =
+                realpath($componentsDirectory);
+
+            $realAssetsJsDirectory =
+                realpath($assetsJsDirectory);
+
+            if (
+                $realComponentsDirectory !== false
+                && $realAssetsJsDirectory !== false
+                && is_dir($realComponentsDirectory)
+            ) {
+                $componentAssets = [];
+
+                $iterator = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator(
+                        $realComponentsDirectory,
+                        \FilesystemIterator::SKIP_DOTS
+                    ),
+                    \RecursiveIteratorIterator::LEAVES_ONLY
+                );
+
+                foreach ($iterator as $fileInfo) {
+                    if (
+                        !$fileInfo instanceof \SplFileInfo
+                        || !$fileInfo->isFile()
+                        || !$fileInfo->isReadable()
+                        || strtolower(
+                            $fileInfo->getExtension()
+                        ) !== 'js'
+                    ) {
+                        continue;
+                    }
+
+                    $realFile =
+                        $fileInfo->getRealPath();
+
+                    if ($realFile === false) {
+                        continue;
+                    }
+
+                    $normalizedFile =
+                        str_replace('\\', '/', $realFile);
+
+                    $normalizedComponentsDirectory =
+                        rtrim(
+                            str_replace(
+                                '\\',
+                                '/',
+                                $realComponentsDirectory
+                            ),
+                            '/'
+                        );
+
+                    $normalizedAssetsJsDirectory =
+                        rtrim(
+                            str_replace(
+                                '\\',
+                                '/',
+                                $realAssetsJsDirectory
+                            ),
+                            '/'
+                        );
+
+                    if (
+                        !str_starts_with(
+                            $normalizedFile,
+                            $normalizedComponentsDirectory . '/'
+                        )
+                        || !str_starts_with(
+                            $normalizedFile,
+                            $normalizedAssetsJsDirectory . '/'
+                        )
+                    ) {
+                        continue;
+                    }
+
+                    $relativeFilename =
+                        substr(
+                            $normalizedFile,
+                            strlen(
+                                $normalizedAssetsJsDirectory
+                            ) + 1
+                        );
+
+                    if (
+                        $relativeFilename === ''
+                        || !str_starts_with(
+                            $relativeFilename,
+                            'components/'
+                        )
+                        || str_contains(
+                            $relativeFilename,
+                            '..'
+                        )
+                    ) {
+                        continue;
+                    }
+
+                    if (
+                        isset(
+                            $componentAssets[
+                                $relativeFilename
+                            ]
+                        )
+                    ) {
+                        continue;
+                    }
+
+                    $componentAssets[
+                        $relativeFilename
+                    ] = $realFile;
+                }
+
+                ksort(
+                    $componentAssets,
+                    SORT_STRING
+                );
+
+                foreach (
+                    $componentAssets
+                    as $relativeFilename => $realFile
+                ) {
+                    $registry->js(
+                        'kernel',
+                        $relativeFilename,
+                        $realFile,
+                        AssetEntry::PROVIDER_CORE,
+                        100,
+                    );
+                }
+            }
+        }
+
         // Application JavaScript registration
         $appJsCandidate = "{$this->appRoot}/Assets/js/app.js";
         if (is_file($appJsCandidate) && is_readable($appJsCandidate)) {
@@ -1760,19 +1905,41 @@ class Bootstrap
                                     ->withBody('Internal error');
                             }
 
-                            // Resolve only through the scoped registry.
-                            /* @var \Laswitchtech\CoreWeb\Asset\Entry[] */
-                            $entries = $assetRegistry->getScope($scopeType, $scopeName);
+                            $aliasFile = match ([$scopeType, $scopeName]) {
+                                [AssetEntry::TYPE_JS, 'kernel'] => 'kernel.js',
+                                [AssetEntry::TYPE_JS, 'app'] => 'app.js',
+                                default => null,
+                            };
 
-                            // Exactly one match is required.
-                            if (\count($entries) !== 1) {
+                            if ($aliasFile === null) {
                                 return (new Response(404))
-                                    ->setHeader('Content-Type', 'text/plain; charset=UTF-8')
+                                    ->setHeader(
+                                        'Content-Type',
+                                        'text/plain; charset=UTF-8'
+                                    )
                                     ->withBody('Not found');
                             }
 
-                            // Serve a single entry.
-                            $entry = array_shift($entries);
+                            $entry = $assetRegistry->get(
+                                $scopeType,
+                                $scopeName,
+                                $aliasFile
+                            );
+
+                            if (
+                                !(
+                                    $entry
+                                    instanceof
+                                    \Laswitchtech\CoreWeb\Asset\Entry
+                                )
+                            ) {
+                                return (new Response(404))
+                                    ->setHeader(
+                                        'Content-Type',
+                                        'text/plain; charset=UTF-8'
+                                    )
+                                    ->withBody('Not found');
+                            }
 
                             // Reject http:// and https:// URLs.
                             if (str_starts_with($entry->path, 'http://') || str_starts_with($entry->path, 'https://')) {
@@ -1797,6 +1964,153 @@ class Bootstrap
                                 ->setHeader('Content-Type', $contentType)
                                 ->withBody(file_get_contents($fullPath));
                         });
+                    }
+                }
+
+                // -- Filename-aware root-scope routes: /{type}/kernel/{file...} and /{type}/app/{file..} -----
+
+                foreach ([AssetEntry::TYPE_CSS, AssetEntry::TYPE_JS] as $scopeType) {
+                    foreach (['kernel', 'app'] as $scopeName) {
+                        $route =
+                            '/'
+                            . $scopeType
+                            . '/'
+                            . $scopeName
+                            . '/{file...}';
+
+                        $router->get(
+                            $route,
+                            static function (Web $request) use (
+                                $c,
+                                $appRoot,
+                                $scopeType,
+                                $scopeName
+                            ): Response {
+                                if (!is_string($appRoot) || $appRoot === '') {
+                                    return (new Response(400))
+                                        ->setHeader(
+                                            'Content-Type',
+                                            'text/plain; charset=UTF-8'
+                                        )
+                                        ->withBody('Invalid app root');
+                                }
+
+                                $file =
+                                    trim(
+                                        (string) $request->param(
+                                            'file'
+                                        )
+                                    );
+
+                                if (
+                                    $file === ''
+                                    || str_contains($file, '\\')
+                                    || str_contains($file, '..')
+                                ) {
+                                    return (new Response(404))
+                                        ->setHeader(
+                                            'Content-Type',
+                                            'text/plain; charset=UTF-8'
+                                        )
+                                        ->withBody('Not found');
+                                }
+
+                                $assetRegistry =
+                                    $c->resolve('asset_registry');
+
+                                if (
+                                    !(
+                                        $assetRegistry
+                                        instanceof
+                                        \Laswitchtech\CoreWeb\Asset\Registry
+                                    )
+                                ) {
+                                    return (new Response(500))
+                                        ->setHeader(
+                                            'Content-Type',
+                                            'text/plain; charset=UTF-8'
+                                        )
+                                        ->withBody('Internal error');
+                                }
+
+                                $entry =
+                                    $assetRegistry->get(
+                                        $scopeType,
+                                        $scopeName,
+                                        $file
+                                    );
+
+                                if (
+                                    !(
+                                        $entry
+                                        instanceof
+                                        \Laswitchtech\CoreWeb\Asset\Entry
+                                    )
+                                ) {
+                                    return (new Response(404))
+                                        ->setHeader(
+                                            'Content-Type',
+                                            'text/plain; charset=UTF-8'
+                                        )
+                                        ->withBody('Not found');
+                                }
+
+                                if (
+                                    str_starts_with(
+                                        $entry->path,
+                                        'http://'
+                                    )
+                                    || str_starts_with(
+                                        $entry->path,
+                                        'https://'
+                                    )
+                                ) {
+                                    return (new Response(403))
+                                        ->setHeader(
+                                            'Content-Type',
+                                            'text/plain; charset=UTF-8'
+                                        )
+                                        ->withBody('Forbidden');
+                                }
+
+                                $fullPath =
+                                    str_starts_with(
+                                        $entry->path,
+                                        '/'
+                                    )
+                                        ? $entry->path
+                                        : "{$appRoot}/{$entry->path}";
+
+                                if (
+                                    !is_file($fullPath)
+                                    || !is_readable($fullPath)
+                                ) {
+                                    return (new Response(404))
+                                        ->setHeader(
+                                            'Content-Type',
+                                            'text/plain; charset=UTF-8'
+                                        )
+                                        ->withBody('Not found');
+                                }
+
+                                $contentType =
+                                    $scopeType
+                                    === AssetEntry::TYPE_CSS
+                                        ? 'text/css; charset=UTF-8'
+                                        : 'application/javascript';
+
+                                return (new Response(200))
+                                    ->setHeader(
+                                        'Content-Type',
+                                        $contentType
+                                    )
+                                    ->withBody(
+                                        file_get_contents(
+                                            $fullPath
+                                        )
+                                    );
+                            }
+                        );
                     }
                 }
 

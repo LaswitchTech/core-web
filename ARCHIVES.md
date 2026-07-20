@@ -1,6 +1,205 @@
 # Archives
 
 ## Archive
+- [x] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-09T12:40:06-04:00 priority: normal -->
+  - Tags: testing
+  - [x] Full cross-platform routing validation <!-- created_at: 2026-06-18T13:00:00-04:00 completed_at: 2026-07-09T12:40:05-04:00 priority: high -->
+    - Future enhancement: test routing across Apache, Nginx, and IIS in CI with the skeleton application on localhost.
+    - Tags: testing
+  - [x] Add Bootstrap smoke tests <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-07-09T12:40:03-04:00 priority: normal -->
+    - Validate `php cli` boots successfully and triggers the Hello World plugin.
+    - Validate browser load triggers the Hello World plugin in WEB mode.
+- [x] CLI System <!-- created_at: 2026-06-18T13:00:00-04:00 completed_at: 2026-07-09T11:14:39-04:00 priority: normal -->
+  - Tags: framework, cli, v.1.0
+  - [x] CLI Command Framework <!-- created_at: 2026-06-18T13:00:00-04:00 completed_at: 2026-07-08T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+    - Command infrastructure built on top of the unified Router. Responsible for command discovery, argument parsing, command metadata, help output, and extension command registration.
+    - Current implementation registers CLI commands through the `router.register` hook during extension bootstrap. Manifest-declared command metadata and richer help generation are future enhancements and are not required for Version 1.0.
+    - Tags: feature
+    - [x] Support argument parsing with positional params, quoted strings, and optional flags <!-- created_at: 2026-06-18T13:02:00-04:00 completed_at: 2026-07-08T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Positional arguments are implemented.
+      - Quoted strings are supported by the shell before reaching PHP's argv and are handled correctly by the current parser.
+      - Optional flags (--flag and --key=value) are implemented.
+    - [x] Implement plugin discovery for CLI commands alongside core kernel commands <!-- created_at: 2026-06-18T13:03:00-04:00 completed_at: 2026-07-08T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+      - Extensions are discovered during bootstrap.
+      - The `router.register` hook allows extensions to register CLI commands automatically during initialization.
+      - This satisfies the V1.0 requirement.
+      - Manifest-declared command metadata is considered future enhancement, not required for this task.
+  - [x] Core CLI Commands <!-- created_at: 2026-06-18T13:05:00-04:00 completed_at: 2026-07-09T11:14:34-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - Bootstrap commands for testing, configuring, and managing the framework.
+    - note: Implemented as `php cli core.init <target-path> [--force]`. Generates a minimal application skeleton with WEB and CLI entry points, config files, storage directories, template directories, and extension directories. Existing files are never overwritten; `--force` only creates missing files/directories in a non-empty target.
+    - Tags: feature
+    - [x] `core.init` — scaffold a new application (index.php boilerplate, config directory setup) <!-- created_at: 2026-06-18T13:06:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] `core.db connect` — test configured database connectivity <!-- created_at: 2026-06-30T14:52:13-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
+      - Implemented in temporary Core plugin as `php cli core.db connect`. It validates the active configured driver using the Database facade and `SELECT 1 AS ok`. Driver reconfiguration flags (`--path`, `--dsn`) remain deferred to the permanent CLI command framework. <!-- created_at: 2026-06-18T13:08:00-04:00 completed_at: 2026-06-30T14:41:55-04:00 priority: normal -->
+    - [x] `core.db read/create/update/delete` — temporary database CRUD CLI commands <!-- created_at: 2026-06-30T00:00:00-04:00 completed_at: 2026-06-30T14:42:00-04:00 priority: normal -->
+      - Implemented in temporary Core plugin as a single `core.db` dispatcher with subcommands: `read`, `create`, `update`, `delete`, and `smoke`. CRUD commands use the Database facade and query builders, validate table/column names, support a single quoted WHERE expression for read/update/delete, require WHERE for update/delete safety, and output JSON for reads.
+      - Validation: `php cli core.db connect` returns `Database OK: <driver>` and `php cli core.db smoke` returns `Core DB Smoke OK`.
+    - [x] `core.config show [key]` — display the resolved merged config for a given key or all config <!-- created_at: 2026-06-18T13:09:00-04:00 completed_at: 2026-07-08T19:35:46-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] `core.config unset <key>` — remove a value from local.cfg and restore inheritance from core.cfg <!-- created_at: 2026-07-08T22:14:59-04:00 completed_at: 2026-07-08T22:14:59-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] `core.config set <key> <value>` — write a value to local.cfg (never core.cfg) <!-- created_at: 2026-06-18T13:10:00-04:00 completed_at: 2026-07-08T19:35:48-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] `core.install` — run framework bootstrap (create default config, validate paths, verify server compatibility) <!-- created_at: 2026-06-18T13:11:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Implemented as `php cli core.install`, with optional `check` and `run` subcommands. Validates PHP/runtime requirements, required application directories, database connectivity, and generates router config files under `config/router/` without overwriting existing files.
+      - Generates Apache, Nginx, and IIS router configuration files during installation so users can deploy on any supported web server without manual routing setup.
+    - [x] `core.info` — display system info (PHP version, loaded extensions, database status, config paths, available plugins) <!-- created_at: 2026-06-18T13:12:00-04:00 completed_at: 2026-06-30T14:52:13-04:00 priority: normal -->
+- [x] Messaging System <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+  - Extensible outbound messaging subsystem for email and SMS providers. Email configuration should be loaded from `config/smtp.cfg`; SMS configuration should be loaded from `config/sms.cfg`.
+  - Tags: framework, messaging, email, sms, providers, v.1.0
+  - [x] Message Provider Interface <!-- created_at: 2026-06-18T11:30:00-04:00 completed_at: 2026-07-03T17:30:00-04:00 priority: normal -->
+    - Contract for extensible email and SMS messaging providers.
+    - Tags: feature, messaging, providers
+    - [x] Define shared message provider contract <!-- created_at: 2026-07-02T19:15:00-04:00 completed_at: 2026-07-03T07:31:47-04:00 priority: high -->
+      - Contract should be generic enough for both SMTP email providers and SMS providers while keeping provider-specific options extensible.
+      - Tags: messaging, providers, interface
+    - [x] Define plugin interface for additional providers <!-- created_at: 2026-06-18T11:32:00-04:00 completed_at: 2026-07-03T17:30:00-04:00 priority: high -->
+      - Plugins should be able to register additional message providers such as SMTP alternatives, Twilio, Telico, or future services.
+      - Implemented through the messaging bootstrap wiring and `sms.provider.register` hook, allowing enabled plugins to register SMS providers into the shared SMS registry before `sms_service` is resolved.
+      - Tags: messaging, plugins, providers, extensions
+  - [x] SMTP Email Provider <!-- created_at: 2026-06-18T11:31:00-04:00 completed_at: 2026-07-08T08:44:00-04:00 priority: high -->
+    - SMTP provider should reuse the existing SMTP implementation patterns from `/Users/louis/Projects/LaswitchTech/core/src/SMTP.php` where appropriate.
+    - SMTP should support reusable templates for consistent email communications.
+    - Tags: email, smtp, providers, config, templates
+    - [x] Load SMTP configuration from `config/smtp.cfg` <!-- created_at: 2026-07-02T19:16:00-04:00 completed_at: 2026-07-03T07:32:07-04:00 priority: high -->
+    - [x] Implement SMTP mailer driver <!-- created_at: 2026-06-18T11:31:00-04:00 completed_at: 2026-07-08T08:43:58-04:00 priority: high -->
+      - SMTP provider, config DTO, mailer service, message envelope, address value object, attachment value objects, and Bootstrap container wiring are implemented.
+      - Remaining work: final end-to-end SMTP validation, smoke coverage for attachments/options, documentation, and any production hardening discovered during SMTP testing.
+    - [x] Support plain text and HTML email bodies <!-- created_at: 2026-07-02T19:17:00-04:00 completed_at: 2026-07-06T12:38:48-04:00 priority: high -->
+      - Implemented in the SMTP body builder for plain text, HTML-only multipart alternative, and mixed messages with attachments; still pending live SMTP validation.
+    - [x] Support reusable SMTP/email templates <!-- created_at: 2026-07-02T19:35:00-04:00 completed_at: 2026-07-03T07:32:18-04:00 priority: high -->
+      - Templates should support consistent email communications with variable substitution for subject, plain text body, and HTML body.
+      - Tags: email, smtp, templates
+    - [x] Add default SMTP/email test template <!-- created_at: 2026-07-03T17:00:00-04:00 completed_at: 2026-07-03T18:00:00-04:00 priority: normal -->
+      - Provide a core-shipped default email template that can be used by smoke tests and `core.smtp send` validation. Template should include subject, plain text body, and HTML body with variable substitution.
+      - Created `Templates/mail/Default.json` at namespace `mail` with `{AppName}`, `{Subject}`, `{RecipientName}`, `{Body}`, `{Greetings}`, `{AppUrl}`, `{CurrentYear}` placeholders covering plainBody and htmlBody.
+      - Tags: email, smtp, templates, testing
+    - [x] Support email attachments <!-- created_at: 2026-07-02T19:18:00-04:00 completed_at: 2026-07-06T12:38:50-04:00 priority: normal -->
+      - File and byte-array attachment value objects plus multipart attachment serialization are implemented; still pending smoke coverage and live validation.
+  - [x] Support CC, BCC, Reply-To, From address, and From name options <!-- created_at: 2026-07-02T19:19:00-04:00 completed_at: 2026-07-06T15:00:00-04:00 priority: normal -->
+    - Envelope model and SMTP serialization support From, To, Cc, Bcc, Reply-To, and subject handling; end-to-end validation complete.
+    - [x] Document SMTP configuration, templates, and message options <!-- created_at: 2026-07-02T19:20:00-04:00 completed_at: 2026-07-06T10:02:59-04:00 priority: normal -->
+    - [x] Add `core.smtp send {EMAIL_ADDRESS} {SUBJECT}` CLI smoke command <!-- created_at: 2026-07-03T17:01:00-04:00 completed_at: 2026-07-06T15:00:00-04:00 priority: high -->
+      - Add a temporary Core plugin CLI command for testing the SMTP service end-to-end using the configured SMTP provider and default email template. The command should accept a recipient email address and subject, then send a simple test email.
+      - Implemented closure-based CLI handler registered via `$router->command('core.smtp', ...)` in `ext/plugins/core/src/Core.php`; validates recipient (`@`) and subject; resolves `'mailer'` from container; loads `test` template from `mail` namespace and sends; returns clear success/failure/error text.
+      - Tags: email, smtp, cli, testing
+  - [x] SMS Provider System <!-- created_at: 2026-07-02T19:21:00-04:00 completed_at: 2026-07-06T10:03:15-04:00 priority: high -->
+    - SMS provider system should mirror the SMTP provider pattern while loading SMS-specific settings from `config/sms.cfg`.
+    - SMS should support reusable templates for consistent text-message communications.
+    - Tags: sms, providers, config, plugins, templates
+    - [x] Load SMS configuration from `config/sms.cfg` <!-- created_at: 2026-07-02T19:22:00-04:00 completed_at: 2026-07-03T07:32:30-04:00 priority: high -->
+    - [x] Implement SMS provider registry and resolver <!-- created_at: 2026-07-02T19:23:00-04:00 completed_at: 2026-07-03T07:55:52-04:00 priority: high -->
+    - [x] Support reusable SMS templates <!-- created_at: 2026-07-02T19:36:00-04:00 completed_at: 2026-07-03T07:32:40-04:00 priority: normal -->
+      - Templates should support consistent SMS communications with variable substitution for message bodies.
+      - Tags: sms, templates
+    - [x] Add default SMS test template <!-- created_at: 2026-07-03T17:02:00-04:00 completed_at: 2026-07-03T18:00:00-04:00 priority: normal -->
+      - Provide a core-shipped default SMS template that can be used by smoke tests and `core.sms send` validation. Template should include a body with variable substitution.
+      - Created `Templates/sms/Default.json` at namespace `sms` with `{subject}`, `{app_name}`, `{sent_at}` placeholders covering body text.
+      - Tags: sms, templates, testing
+    - [x] Document SMS provider configuration, templates, and plugin conventions <!-- created_at: 2026-07-02T19:24:00-04:00 completed_at: 2026-07-06T10:03:07-04:00 priority: normal -->
+    - [x] Keep core `config/sms.cfg` provider-agnostic <!-- created_at: 2026-07-03T17:03:00-04:00 completed_at: 2026-07-03T17:30:00-04:00 priority: high -->
+      - Core `config/sms.cfg` should not include Twilio or Telico credential blocks by default. Provider-specific configuration should be supplied by dedicated provider plugins or documented plugin-local defaults.
+      - Current core SMS config only keeps the default provider selector and SMS template namespace; Twilio and Telico credentials are no longer stored in core defaults.
+      - Tags: sms, config, plugins, providers
+    - [x] Add `core.sms send {PHONE} {SUBJECT}` CLI smoke command <!-- created_at: 2026-07-03T17:04:00-04:00 completed_at: 2026-07-03T18:00:00-04:00 priority: high -->
+      - Add a temporary Core plugin CLI command for testing the SMS service end-to-end using the configured default SMS provider and default SMS template. The command should accept a destination phone number and subject/test label, then send a simple test SMS.
+      - Implemented closure-based CLI handler registered via `$router->command('core.sms', ...)` in `ext/plugins/core/src/Core.php`; validates phone and subject; resolves `'sms_service'` from container; loads `test` template from `sms` namespace and sends; returns clear success/failure/error text.
+      - Tags: sms, cli, testing
+    - [x] Implement Twilio SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:03:54-04:00 completed_at: 2026-07-06T09:06:48-04:00 priority: normal -->
+      - Twilio-specific config defaults and credential keys should live with the Twilio plugin, not in core `config/sms.cfg`.
+      - Implemented dedicated provider plugin with manifest, `sms.provider.register` hook, provider class, credential validation, cURL delivery, timeout handling, and provider-specific error reporting.
+      - Tags: sms, twilio, plugins, providers, config
+    - [x] Implement Telico SMS provider in a dedicated plugin <!-- created_at: 2026-07-02T19:04:27-04:00 completed_at: 2026-07-06T09:06:49-04:00 priority: normal -->
+      - Review `/Users/louis/Projects/LaswitchTech/core/lib/plugins/Helper.php` to find out about the Telico API.
+      - Telico-specific config defaults and credential keys should live with the Telico plugin, not in core `config/sms.cfg`.
+      - Implemented using the legacy Telico SMS endpoint pattern from the old helper: `https://sms.telico.cloud/api/send_sms`, Basic Auth, `source_did`, `destination`, and `message` query parameters.
+      - Tags: sms, telico, plugins, providers, config
+- [x] Extension System <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-02T15:32:46-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+  - Tags: framework, extensions, v.1.0
+  - [x] Directory Walker / Extension Loader <!-- created_at: 2026-06-18T11:21:00-04:00 completed_at: 2026-07-01T15:19:16-04:00 priority: high -->
+    - Phase 2E — Extension Discovery Improvements
+    - [x] Support multi-base extension discovery <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Discover both framework-shipped extensions from the package core `ext/` directory and application extensions from the application `ext/` directory during the same bootstrap pass.
+      - Tags: framework, extensions, discovery, v.1.0
+    - [x] Add app-over-core extension override precedence <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - If an application extension in `ext/plugins` or `ext/themes` has the same extension identity as a framework-shipped extension in `vendor/laswitchtech/core-web/ext`, the application extension should override the framework copy deterministically.
+      - Tags: framework, extensions, precedence, overrides, v.1.0
+    - [x] Preserve package-shipped plugins when application extensions exist <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
+      - Current discovery uses the first existing `ext/` base only. Replace this fallback behavior with additive discovery so core/vendor plugins remain available when an application also defines its own `ext/` directory.
+      - Tags: framework, extensions, plugins, v.1.0
+    - [x] Document extension discovery roots and override rules <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Document the discovery order, extension identity rules, app-over-core override behavior, and expected Composer package layout.
+      - Tags: documentation, extensions, v.1.0
+  - [x] Manifest Parser <!-- created_at: 2026-06-18T11:20:00-04:00 completed_at: 2026-07-01T15:19:32-04:00 priority: high -->
+    - Receives discovered extension paths from the Directory Walker.
+    - Manifest Parser parses and validates extension manifests (`manifest.json` and `extension.json`).
+    - Manifest Parser extracts metadata (type, name, version, hooks, layouts, dependencies).
+    - Manifest Parser registers autoloaders for each discovered extension.
+    - Manifest Parser registers hooks into the Hook Registry.
+    - Supports required `type`, `name`, `version` fields, version normalization (`X.Y.Z`), hook format validation, layout declarations, and dependency declarations.
+    - Discovery is tolerant: malformed manifests are logged to `STDERR` and skipped so one broken extension does not block valid extensions.
+    - Bootstrap still fails fast on unresolved dependencies between successfully parsed manifests.
+    - Current status: app-root and Composer package-root extension discovery works; missing `ext/` directory is non-fatal; `app_root` and `extension_base` diagnostic bindings are registered; `plugin.started` is triggered in both WEB and CLI modes; Hello World test plugin works in both modes.
+    - Tags: feature
+    - [x] Implement manifest schema validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Support `manifest.json` and `extension.json` discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Add kernel compatibility metadata to extension manifests <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T15:19:32-04:00 priority: high -->
+      - Extension manifests should declare compatible Core-Web/kernel versions so discovery, installation, updates, and future marketplace tooling can determine whether an extension is compatible with the running framework version. V1.0 should validate and expose the metadata; install/update enforcement can build on it later.
+      - Tags: framework, extensions, manifest, compatibility, v.1.0
+    - [x] Validate kernel compatibility during extension discovery <!-- created_at: 2026-07-01T11:52:25-04:00 completed_at: 2026-07-01T15:19:32-04:00 priority: normal -->
+      - Implemented tolerant kernel compatibility validation during extension discovery. Extensions may declare `kernel-compat`; compatible status is exposed through `extension_index` as `compatStatus` (`unconstrained`, `compatible`, or `incompatible`). Incompatible extensions emit a warning to `STDERR` but do not block discovery.
+    - [x] Document tolerant discovery behavior <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Implement directory walker manifest discovery <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Add app-root extension base detection <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Add package-root extension base fallback for Composer installs <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Register extension autoloader before hook callback validation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Trigger `plugin.started` in WEB and CLI boot paths <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+    - [x] Validate with Hello World plugin in WEB and CLI modes <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] PSR-4 Extension Autoloading <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Support arbitrary extension namespaces instead of only `Laswitchtech\CoreWeb\Plugin\` and `Laswitchtech\CoreWeb\Theme\` prefixes.
+    - Tags: enhancement
+    - [x] Add namespace mapping support in manifest <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Implemented optional `autoload.psr-4` manifest mappings and stored valid mappings on `Extension::psr4Mappings`.
+    - [x] Register Composer-style namespace mappings for extension `src/` directories <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Bootstrap now registers declared PSR-4 mappings before the legacy `Laswitchtech\CoreWeb\Plugin\` and `Laswitchtech\CoreWeb\Theme\` fallback autoloader.
+    - [x] Validate class hook callbacks using declared namespace mappings <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+      - Class-based hooks may now reference extension-declared PSR-4 namespaces before `Hook\Registry::addClassCall()` validates the callback.
+  - [x] Extension Lifecycle <!-- created_at: 2026-06-19T00:00:00-04:00 completed_at: 2026-07-02T15:32:40-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - Docs: lifecycle documented in docs/development/extensions/Lifecycle.md (placeholder — no implementation yet)
+    - Tags: feature
+    - [x] Enable extension <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-02T15:31:07-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] Disable extension <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-02T15:31:09-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] Persist enabled/disabled state <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-02T15:31:11-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] Enforce dependencies before activation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-02T15:31:14-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] Add lifecycle hooks for activation/deactivation <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-07-02T15:31:16-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - [x] Add `core.extension status` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-02T15:31:20-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+      - Display discovered extensions, enabled/disabled state, origin, type, version, compatibility status, and dependency readiness.
+    - [x] Add `core.extension list` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-02T15:31:24-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+      - List installed plugins and themes using selectors such as `plugins`, `themes`, or a specific `{plugins,themes}.{slug}` target.
+    - [x] Add `core.extension enable {plugins,themes}.{slug}` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-02T15:31:30-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+      - Enable an installed extension by persisted lifecycle state after validating dependencies and compatibility warnings.
+    - [x] Add `core.extension disable {plugins,themes}.{slug}` CLI command <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-02T15:31:35-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+      - Disable an installed extension by persisted lifecycle state without deleting its files.
+    - [x] Document extension lifecycle CLI usage <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-02T15:31:40-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Document `php cli core.extension {status,list,enable,disable} {plugins,themes}.{slug}` usage, selector rules, examples, and lifecycle persistence behavior.
+- [x] Helper System <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T14:46:06-04:00 priority: normal -->
+  - Centralized helper registry providing injectable helper objects to controllers, the renderer, layouts, templates, views, and extensions. Helpers are registered services rather than global functions and may be provided by the framework, the application, or plugins.
+  - Tags: framework, helpers, renderer, extensions, v.1.0
+  - [x] Implement `Helper\Registry` for registering named helper objects <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - Support deterministic registration by name with provider metadata for core, application, and plugin helpers.
+  - [x] Define `Helper\HelperInterface` contract <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Provide a common interface for all helper implementations. Initial V1.0 scope should expose a `name(): string` method while allowing future metadata and capabilities to be added without changing the registry API.
+  - [x] Implement helper container/bag for runtime access <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - Expose helpers through a single object (for example `$helpers`) using property and/or method access.
+  - [x] Organize helper subsystem structure <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Standardize the subsystem around `Helper\Registry`, `Helper\Bag`, `Helper\HelperInterface`, and helper-specific exceptions to keep registration, lookup, and helper implementations clearly separated.
+  - [x] Register core helper services during Bootstrap <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: normal -->
+    - Bind the helper registry and helper bag into the container as lazy services.
+  - [x] Inject helper bag into renderer context <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T00:00:00-04:00 priority: high -->
+    - Make the helper bag available to layouts, templates, and views without requiring controllers to pass it explicitly.
+  - [x] Add `helper.register` hook for extension helper registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T14:28:59-04:00 priority: high -->
+    - Allow plugins and applications to register helper objects during bootstrap.
+  - [x] Implement core helper set <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T14:46:03-04:00 priority: normal -->
+    - Initial helpers should include URL, HTML, String, Date, Config, and Asset helpers.
+  - [x] Document helper conventions and extension guidelines <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-01T14:46:04-04:00 priority: normal -->
+    - Document registration, naming conventions, dependency injection, renderer availability, and best practices.
 - [x] Database <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-01T08:14:59-04:00 archived_at: 2026-07-01T08:17:23-04:00 archived_from: "Done" priority: normal -->
   - Tags: framework, database, config, v.1.0
   - [x] SQLite Driver <!-- created_at: 2026-06-18T10:52:22-04:00 completed_at: 2026-06-23 priority: high -->

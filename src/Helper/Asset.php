@@ -41,9 +41,20 @@ final class Asset implements HelperInterface
 
         $scope = $entry->scope;
 
-        // Kernel and application scopes: no physical filename in the URL.
-        if ($scope === 'kernel' || $scope === 'app') {
-            return '/' . $entry->type . '/' . $scope;
+        if (
+            $entry->type === Entry::TYPE_JS
+            && $scope === 'kernel'
+            && $entry->file === 'kernel.js'
+        ) {
+            return '/js/kernel';
+        }
+
+        if (
+            $entry->type === Entry::TYPE_JS
+            && $scope === 'app'
+            && $entry->file === 'app.js'
+        ) {
+            return '/js/app';
         }
 
         // Extension scopes: preserve full scope + filename.
