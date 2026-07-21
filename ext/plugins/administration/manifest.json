@@ -1,0 +1,20 @@
+{
+    "type": "plugin",
+    "name": "Administration",
+    "version": "1.0.0",
+    "description": "First-party extensible administration panel for Core-Web.",
+    "kernel-compat": "^1.0",
+    "locked": true,
+    "depends": [],
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\Administration\\": "src/"
+        }
+    },
+    "hooks": [
+        "admin.menu.register::Laswitchtech\\CoreWeb\\Plugin\\Administration\\DashboardMenuProvider::register",
+        "renderer.register::Laswitchtech\\CoreWeb\\Plugin\\Administration\\RendererProvider::registerResources",
+        "router.register::Laswitchtech\\CoreWeb\\Plugin\\Administration\\MenuProvider::initialize",
+        "router.register::Laswitchtech\\CoreWeb\\Plugin\\Administration\\Administration::registerRoutes"
+    ]
+}

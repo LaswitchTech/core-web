@@ -109,14 +109,27 @@
 
 ## In Progress <!-- hide: archive -->
 - [ ] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
-  - `/admin` panel with all required sub-systems.
-  - Tags: feature, admin
+  - The `/admin` panel is implemented as a first-party plugin.
+  - The plugin owns the Administration layout and dashboard route.
+  - Other plugins can extend Administration routes, menus, and features.
+  - V1 Administration routes are intentionally unrestricted.
+  - Authentication and authorization are deferred to Version 2.0.
+  - Tags: feature, admin, plugin, extensions, v.1.0
+  - [x] Create first-party Administration plugin foundation <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-20T18:00:00-04:00 priority: normal -->
+  - [x] Define Administration menu entry contract <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-20T19:00:00-04:00 priority: normal -->
+  - [x] Implement Administration menu registry <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-20T20:00:00-04:00 priority: normal -->
+  - [x] Expose `admin.menu` service and `admin.menu.register` hook <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-20T21:00:00-04:00 priority: normal -->
+  - [x] Register Administration renderer resources <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-21T09:58:35-04:00 priority: normal -->
+  - [~] Implement Administration layout and navigation shell <!-- created_at: 2026-07-20T15:00:00-04:00 priority: normal -->
+  - [ ] Register unrestricted `/admin` dashboard route <!-- created_at: 2026-07-20T15:00:00-04:00 priority: normal -->
+  - [ ] Register Dashboard administration menu entry <!-- created_at: 2026-07-20T15:00:00-04:00 priority: normal -->
   - [ ] Dashboard (system status overview) <!-- created_at: 2026-06-18T12:11:00-04:00 priority: normal -->
   - [ ] Update Manager UI <!-- created_at: 2026-06-18T12:12:00-04:00 priority: normal -->
     - Provides the administration interface for the existing update subsystem; does not implement update logic.
   - [ ] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 priority: normal -->
   - [ ] Developer Console (variable introspection) <!-- created_at: 2026-06-18T12:14:00-04:00 priority: normal -->
   - [ ] Theme Preview (test against all UI components) <!-- created_at: 2026-06-18T12:15:00-04:00 priority: normal -->
+  - [ ] Document Administration plugin extension conventions <!-- created_at: 2026-07-20T15:00:00-04:00 priority: normal -->
 
 ## Done
 - [x] Presentation Layer <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-20T14:31:32-04:00 priority: normal -->
