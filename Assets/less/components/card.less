@@ -1,0 +1,33 @@
+.app-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--app-body-color);
+    background: var(--app-panel);
+    border: var(--app-border-width) var(--app-border-style) var(--app-border-color);
+    border-radius: var(--app-border-radius);
+    box-shadow: var(--app-box-shadow-sm);
+}
+
+.app-card-header {
+    padding: 0.75rem 1rem;
+    color: var(--app-body-color);
+    font-size: 0.875rem;
+    font-weight: 600;
+    background: var(--app-panel-2);
+    border-bottom: var(--app-border-width) var(--app-border-style) var(--app-border-color);
+}
+
+.app-card-body {
+    flex: 1 1 auto;
+    padding: 1rem;
+}
+
+.app-card-footer {
+    padding: 0.75rem 1rem;
+    color: var(--app-secondary-color);
+    font-size: 0.8rem;
+    background: var(--app-panel-2);
+    border-top: var(--app-border-width) var(--app-border-style) var(--app-border-color);
+}

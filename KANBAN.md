@@ -125,8 +125,8 @@
   - [x] Implement Administration layout and navigation shell <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-22T11:20:31-04:00 priority: normal -->
   - [ ] Register unrestricted `/admin` dashboard route <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-21T10:36:45-04:00 priority: normal -->
   - [x] Register Dashboard administration menu entry <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-21T10:37:21-04:00 priority: normal -->
-  - [~] Audit and normalize kernel Card Builder component <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
-  - [ ] Dashboard / Overview widgets <!-- created_at: 2026-06-18T12:11:00-04:00 priority: normal -->
+  - [x] Audit and normalize kernel Card Builder component <!-- created_at: 2026-07-22T07:00:00-04:00 completed_at: 2026-07-22T12:00:00-04:00 priority: normal -->
+  - [x] Dashboard / Overview widgets <!-- created_at: 2026-06-18T12:11:00-04:00 completed_at: 2026-07-22T13:00:00-04:00 priority: normal -->
   - [ ] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 priority: normal -->
   - [ ] Log Viewer <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
   - [ ] Plugin Management <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->

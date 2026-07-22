@@ -44,10 +44,9 @@
             const footer =
                 document.createElement("div");
 
-            card.classList.add("card");
-            header.classList.add("card-header");
-            body.classList.add("card-body");
-            footer.classList.add("card-footer");
+            card.classList.add("app-card");
+            header.classList.add("app-card-header");
+            body.classList.add("app-card-body");            footer.classList.add("app-card-footer");
 
             header.setAttribute(
                 "data-card-region",

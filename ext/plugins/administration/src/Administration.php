@@ -43,6 +43,64 @@ final class Administration
 
             $currentEntry = $menu->resolve('dashboard');
 
+            $container = Bootstrap::container();
+
+            $enabledExtensions = get_object_vars(
+                $container->resolve('extension_index'),
+            );
+
+            $disabledExtensions = get_object_vars(
+                $container->resolve('extension_index_disabled'),
+            );
+
+            $countExtensions = static function (
+                array $extensions,
+                string $type,
+            ): int {
+                return count(array_filter(
+                    $extensions,
+                    static function (mixed $extension) use ($type): bool {
+                        return is_array($extension)
+                            && ($extension['type'] ?? null) === $type;
+                    },
+                ));
+            };
+
+            $databaseDriver = $container->resolve('db_driver');
+
+            $overviewWidgets = [
+                [
+                    'title' => 'Core-Web',
+                    'value' => \Laswitchtech\CoreWeb\Manifest\Parser::KERNEL_VERSION,
+                    'footer' => 'Framework version',
+                ],
+                [
+                    'title' => 'PHP',
+                    'value' => PHP_VERSION,
+                    'footer' => 'Runtime version',
+                ],
+                [
+                    'title' => 'Mode',
+                    'value' => (string) $container->resolve('mode'),
+                    'footer' => 'Bootstrap mode',
+                ],
+                [
+                    'title' => 'Database',
+                    'value' => basename(str_replace('\\', '/', get_class($databaseDriver))),
+                    'footer' => 'Configured driver',
+                ],
+                [
+                    'title' => 'Plugins',
+                    'value' => (string) $countExtensions($enabledExtensions, 'plugin'),
+                    'footer' => (string) $countExtensions($disabledExtensions, 'plugin') . ' disabled',
+                ],
+                [
+                    'title' => 'Themes',
+                    'value' => (string) $countExtensions($enabledExtensions, 'theme'),
+                    'footer' => (string) $countExtensions($disabledExtensions, 'theme') . ' disabled',
+                ],
+            ];
+
             $output = $renderer->render(
                 'panel.layout',
                 'admin.template',
@@ -50,6 +108,7 @@ final class Administration
                 [
                     'pageTitle'         => 'Overview',
                     'pageDescription'   => 'Administration system status overview.',
+                    'overviewWidgets'   => $overviewWidgets,
                     'menu'              => $menu,
                     'cssOutput'         => $cssOutput,
                     'jsOutput'          => $jsOutput,
