@@ -36,6 +36,7 @@ use Laswitchtech\CoreWeb\Helper\Registry as HelperRegistry;
 use Laswitchtech\CoreWeb\Helper\Bag;
 use Laswitchtech\CoreWeb\Manifest\Parser as ManifestParser;
 use Laswitchtech\CoreWeb\Asset\Entry as AssetEntry;
+use Laswitchtech\CoreWeb\Renderer\Resource\Entry as RendererResourceEntry;
 use Laswitchtech\CoreWeb\Asset\Registry as AssetRegistry;
 use Laswitchtech\CoreWeb\Asset\LessCompiler;
 use Laswitchtech\CoreWeb\Message\Template\TemplateRegistry;
@@ -686,6 +687,21 @@ class Bootstrap
                     'kernel',
                     'kernel.js',
                     $realJs,
+                    AssetEntry::PROVIDER_CORE,
+                    100,
+                );
+            }
+        }
+
+        // Panel kernel JavaScript registration — independent of kernel JS availability
+        $panelJsCandidate = "{$kernelRoot}/Assets/js/panel.js";
+        if (is_file($panelJsCandidate) && is_readable($panelJsCandidate)) {
+            $realPanelJs = realpath($panelJsCandidate);
+            if ($realPanelJs !== false) {
+                $registry->js(
+                    'kernel',
+                    'panel.js',
+                    $realPanelJs,
                     AssetEntry::PROVIDER_CORE,
                     100,
                 );
@@ -1778,8 +1794,18 @@ class Bootstrap
             ]);
         }
 
-        // 3. Create renderer registry and renderer pipeline.
+        // 3. Create renderer registry and register kernel layout entries.
         $rendererRegistry = new RendererRegistry();
+        $rendererRegistry->register(new RendererResourceEntry(
+            'panel.layout',
+            RendererResourceEntry::TYPE_LAYOUT,
+            __DIR__ . '/../Assets/layouts/panel.latte',
+            RendererResourceEntry::PROVIDER_CORE,
+            0,
+            ['engine' => 'latte'],
+        ));
+
+        // 4. Create renderer pipeline and return it.
         $renderer         = new Renderer($rendererRegistry, $engineRegistry);
 
         // Store both registries in container for extensions and downstream code.

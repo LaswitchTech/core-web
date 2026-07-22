@@ -1,0 +1,75 @@
+// ============================================================
+// Core-Web — Base / reset styles
+// Applies global defaults after theme tokens are defined.
+// ============================================================
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    background-color: var(--app-body-bg);
+    color: var(--app-body-color);
+    font-family: var(--app-body-font-family);
+    font-size: var(--app-body-font-size);
+    font-weight: var(--app-body-font-weight);
+    line-height: var(--app-body-line-height);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+// Scrollbar styling (Chromium / Edge)
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: var(--app-panel);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--app-border-color);
+    border-radius: 3px;
+
+    &:hover {
+        background: var(--app-secondary-color);
+    }
+}
+
+// Text utilities using app tokens
+.text-app-muted {
+    color: var(--app-secondary-color) !important;
+}
+
+// Code / pre
+code,
+pre {
+    color: var(--app-code-color);
+    background-color: var(--app-panel-3);
+    border-radius: var(--app-border-radius-sm);
+}
+
+code {
+    padding: 0.15em 0.35em;
+    font-size: 0.85em;
+}
+
+pre code {
+    padding: 0;
+    background: none;
+}
+
+// Horizontal rule
+hr {
+    border-color: var(--app-border-color);
+    opacity: 1;
+}
+
+// Focus ring uses primary color
+:focus-visible {
+    outline: 2px solid var(--app-primary);
+    outline-offset: 2px;
+}

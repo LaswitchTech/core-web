@@ -20,15 +20,6 @@ final class RendererProvider
         $pluginRoot = dirname(__DIR__);
 
         $registry->add(
-            'admin.layout',
-            Entry::TYPE_LAYOUT,
-            $pluginRoot . '/layouts/admin.php',
-            Entry::PROVIDER_PLUGIN,
-            0,
-            [],
-        );
-
-        $registry->add(
             'admin.template',
             Entry::TYPE_TEMPLATE,
             $pluginRoot . '/templates/admin.php',

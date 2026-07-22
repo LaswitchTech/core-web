@@ -1,0 +1,541 @@
+// ============================================================
+// Core-Web — Panel shell layout
+// Three-region layout: fixed sidebar + fixed topbar + scrollable content
+// ============================================================
+
+// ── App shell wrapper ────────────────────────────────────────
+.panel-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+// ── Sidebar ──────────────────────────────────────────────────
+.panel-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: @app-sidebar-width;
+    z-index: @app-z-sidebar;
+    display: flex;
+    flex-direction: column;
+    transition: @app-transition-sidebar;
+    overflow: hidden;
+    background: var(--app-sidebar-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-right: 1px solid var(--app-border-color);
+
+    // Collapsed state (mobile/toggled)
+    &.collapsed {
+        transform: translateX(-@app-sidebar-width);
+    }
+}
+
+// ── Sidebar brand ────────────────────────────────────────────
+.panel-sidebar-brand {
+    display: flex;
+    align-items: center;
+    height: @app-topbar-height;
+    padding: 0 1.25rem;
+    border-bottom: 1px solid var(--app-border-color);
+    flex-shrink: 0;
+    text-decoration: none;
+}
+
+// ── Sidebar brand icon ──────────────────────────────────────
+.panel-sidebar-brand-icon {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: var(--app-border-radius);
+    background: var(--app-primary);
+    color: var(--app-white);
+}
+
+// ── Sidebar brand text ───────────────────────────────────────
+.panel-sidebar-brand-text {
+    margin-left: 0.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--app-body-color);
+    letter-spacing: 0.01em;
+}
+
+// ── Sidebar toggle button ────────────────────────────────────
+.panel-sidebar-toggle-button {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+}
+
+// ── Generic icon ─────────────────────────────────────────────
+.app-icon {
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    fill: currentColor;
+}
+
+// ── Sidebar navigation container ─────────────────────────────
+.panel-sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 0.75rem;
+}
+
+// ── Sidebar menu links ───────────────────────────────────────
+.panel-sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.panel-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--app-border-radius-sm);
+    color: var(--app-secondary-color);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition:
+        background var(--app-transition-speed) var(--app-transition-ease),
+        color var(--app-transition-speed) var(--app-transition-ease);
+
+    &:hover {
+        background: var(--app-nav-hover-bg);
+        color: var(--app-body-color);
+    }
+
+    &.active {
+        background: var(--app-nav-active-bg);
+        color: var(--app-nav-active-text);
+        font-weight: 600;
+    }
+}
+
+.panel-sidebar-link-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    flex-shrink: 0;
+}
+
+.panel-sidebar-link-icon > svg {
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    fill: currentColor;
+}
+
+.panel-sidebar-link-label {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// ── Sidebar section wrapper ───────────────────────────────────
+.panel-sidebar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+// Spacing between consecutive sections
+.panel-sidebar-section + .panel-sidebar-section {
+    margin-top: 1rem;
+}
+
+// ── Sidebar section label ─────────────────────────────────────
+.panel-sidebar-section-label {
+    padding: 0 0.5rem 0.375rem;
+    color: var(--app-secondary-color);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+// ── Sidebar children container ────────────────────────────────
+.panel-sidebar-children {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    margin-left: 1rem;
+    padding-left: 0.625rem;
+    border-left: 1px solid var(--app-border-color);
+
+    .panel-sidebar-link {
+        font-size: 0.8125rem;
+        padding-top: 0.375rem;
+        padding-bottom: 0.375rem;
+
+        &::before {
+            content: "";
+            width: 0.3rem;
+            height: 0.3rem;
+            flex-shrink: 0;
+            border-radius: var(--app-border-radius-pill);
+            background: currentColor;
+            opacity: 0.45;
+        }
+    }
+}
+
+// Mobile overlay behind open sidebar
+.panel-sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: @app-z-overlay;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+
+    &.visible {
+        display: block;
+    }
+}
+
+// ── Main column ──────────────────────────────────────────────
+.panel-main {
+    flex: 1;
+    min-width: 0;
+    margin-left: @app-sidebar-width;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    transition: margin-left @app-transition-speed @app-transition-ease;
+
+    &.expanded {
+        margin-left: 0;
+    }
+}
+
+// ── Topbar ───────────────────────────────────────────────────
+.panel-topbar {
+    position: sticky;
+    top: 0;
+    z-index: @app-z-topbar;
+    height: @app-topbar-height;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    background: var(--app-topbar-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--app-border-color);
+    padding: 0 1.5rem;
+    gap: 1rem;
+}
+
+// ── Topbar information block ─────────────────────────────────
+.panel-topbar-information {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.panel-topbar-history {
+    min-height: 1rem;
+    font-size: 0.75rem;
+    color: var(--app-secondary-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.panel-topbar-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--app-body-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.panel-topbar-description {
+    font-size: 0.8rem;
+    color: var(--app-secondary-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// ── Topbar toggle button ─────────────────────────────────────
+.panel-topbar-toggle {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: var(--app-border-radius-sm);
+    background: transparent;
+    color: var(--app-secondary-color);
+    cursor: pointer;
+    transition:
+        background var(--app-transition-speed) var(--app-transition-ease),
+        color var(--app-transition-speed) var(--app-transition-ease);
+}
+
+// ── Topbar toggle hover ───────────────────────────────────────
+.panel-topbar-toggle:hover {
+    background: var(--app-nav-hover-bg);
+    color: var(--app-body-color);
+}
+
+.panel-topbar-toggle:active {
+    background: var(--app-nav-active-bg);
+    color: var(--app-nav-active-text);
+}
+
+// ── Topbar action group (pushes items to the right) ───────────
+.panel-topbar-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+// ── History breadcrumb — content area ─────────────────────────
+.panel-history-breadcrumbs {
+    margin-bottom: 0;
+}
+
+.panel-history-breadcrumbs ol {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.8rem;
+    color: var(--app-secondary-color);
+}
+
+.panel-history-breadcrumbs li {
+    font-size: 0.8rem;
+    color: var(--app-secondary-color);
+    display: inline-flex;
+    align-items: center;
+}
+
+.panel-history-breadcrumbs li + li::before {
+    content: "/";
+    padding: 0 0.5rem;
+    color: var(--app-secondary-color);
+}
+
+.panel-history-breadcrumbs a {
+    color: var(--app-link-color);
+    text-decoration: none;
+}
+
+.panel-history-breadcrumb-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.375rem;
+    vertical-align: middle;
+    color: currentColor;
+}
+
+.panel-history-breadcrumb-icon > svg {
+    display: block;
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+    fill: currentColor;
+}
+
+// ── Theme button ──────────────────────────────────────────────
+.panel-topbar-icon-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: var(--app-border-radius-sm);
+    background: transparent;
+    color: var(--app-secondary-color);
+    cursor: pointer;
+    transition:
+        background var(--app-transition-speed) var(--app-transition-ease),
+        color var(--app-transition-speed) var(--app-transition-ease);
+}
+
+.panel-topbar-icon-btn:hover {
+    background: var(--app-nav-hover-bg);
+    color: var(--app-body-color);
+}
+
+.panel-topbar-icon-btn:active {
+    background: var(--app-nav-active-bg);
+    color: var(--app-nav-active-text);
+}
+
+// ── Theme selector wrapper ───────────────────────────────────
+.panel-theme-selector {
+    position: relative;
+}
+
+// ── Theme menu panel ─────────────────────────────────────────
+.panel-theme-menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    z-index: var(--app-z-dropdown);
+    min-width: 8.5rem;
+    margin: 0;
+    padding: 0.375rem;
+    list-style: none;
+    border: 1px solid var(--app-border-color);
+    border-radius: var(--app-border-radius);
+    background: var(--app-panel);
+    box-shadow: var(--app-box-shadow);
+}
+
+.panel-theme-menu[hidden] {
+    display: none;
+}
+
+// ── Theme option button ───────────────────────────────────────
+.panel-theme-option {
+    width: 100%;
+    padding: 0.5rem 0.625rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 0;
+    border-radius: var(--app-border-radius-sm);
+    background: transparent;
+    color: var(--app-body-color);
+    font: inherit;
+    font-size: 0.875rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.panel-theme-option:hover {
+    background: var(--app-nav-hover-bg);
+}
+
+.panel-theme-option:active {
+    background: var(--app-nav-active-bg);
+    color: var(--app-nav-active-text);
+}
+
+// ── Active theme option ─────────────────────────────────────
+.panel-theme-option.active {
+    background: var(--app-primary);
+    color: var(--app-white);
+}
+
+.panel-theme-option.active:hover {
+    background: var(--app-primary);
+    color: var(--app-white);
+}
+
+// ── Content area ─────────────────────────────────────────────
+.panel-content {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-x: hidden;
+}
+
+// ── Route breadcrumb — content area ──────────────────────────
+.panel-route-breadcrumbs {
+    margin-bottom: 1.25rem;
+}
+
+.panel-route-breadcrumbs ol {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.8rem;
+    color: var(--app-secondary-color);
+}
+
+.panel-route-breadcrumbs li {
+    font-size: 0.8rem;
+    color: var(--app-secondary-color);
+    display: inline-flex;
+    align-items: center;
+}
+
+.panel-route-breadcrumbs li + li::before {
+    content: "/";
+    padding: 0 0.5rem;
+    color: var(--app-secondary-color);
+}
+
+.panel-route-breadcrumbs a {
+    color: var(--app-link-color);
+    text-decoration: none;
+}
+
+.panel-route-breadcrumb-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.375rem;
+    vertical-align: middle;
+    color: currentColor;
+}
+
+.panel-route-breadcrumb-icon > svg,
+.panel-route-breadcrumb-icon > i {
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+}
+
+// ── Footer ───────────────────────────────────────────────────
+.panel-footer {
+    flex-shrink: 0;
+    height: @app-footer-height;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid var(--app-border-color);
+    padding: 0 1.5rem;
+    font-size: 0.8rem;
+    color: var(--app-secondary-color);
+}
+
+// ── Responsive: collapse sidebar below lg ────────────────────
+@media (max-width: (@app-sidebar-collapse-breakpoint - 1px)) {
+    .panel-sidebar {
+        transform: translateX(-@app-sidebar-width);
+
+        &.open {
+            transform: translateX(0);
+        }
+    }
+
+    .panel-sidebar-overlay.visible {
+        display: block;
+    }
+
+    .panel-main {
+        margin-left: 0;
+    }
+}

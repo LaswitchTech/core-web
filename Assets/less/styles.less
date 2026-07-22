@@ -1,3 +1,38 @@
-.asset-order-test {
-    --kernel-order: 100;
-}
+// ============================================================
+// Core-Web — LESS entry point
+//
+// Import order matters:
+// ============================================================
+
+// 1. Compile-time constants
+@import "variables";
+@import "root";
+
+// 2. Theme tokens
+@import "themes/dark";
+@import "themes/light";
+
+// 3. Base / reset
+@import "base";
+
+// 4. Shell layout
+@import "layout";
+
+// // 5. Bootstrap component overrides
+// @import "bootstrap-overrides";
+
+// // 6. Components
+// @import "components/sidebar";
+// @import "components/topbar";
+// @import "components/cards";
+// @import "components/datatables";
+// @import "components/tables";
+// @import "components/forms";
+// @import "components/footer";
+// @import "components/user-menu";
+// @import "components/profile-modal";
+// @import "components/dev";
+
+// // 7. Module-specific styles
+// @import "modules/chat";
+// @import "modules/file-manager";

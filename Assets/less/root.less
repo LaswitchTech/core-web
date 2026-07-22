@@ -1,0 +1,155 @@
+// ============================================================
+// Core-Web — theme definitions
+// Applied to :root (default theme).
+// All component LESS files consume these via var(--app-*)
+// ============================================================
+
+// CSS App Variables
+:root {
+
+    // Colors
+    --app-blue:                         @app-blue;
+    --app-indigo:                       @app-indigo;
+    --app-purple:                       @app-purple;
+    --app-pink:                         @app-pink;
+    --app-red:                          @app-red;
+    --app-orange:                       @app-orange;
+    --app-yellow:                       @app-yellow;
+    --app-green:                        @app-green;
+    --app-teal:                         @app-teal;
+    --app-cyan:                         @app-cyan;
+    --app-black:                        @app-black;
+    --app-white:                        @app-white;
+    --app-gray-100:                     @app-gray-100;
+    --app-gray-200:                     @app-gray-200;
+    --app-gray-300:                     @app-gray-300;
+    --app-gray-400:                     @app-gray-400;
+    --app-gray-500:                     @app-gray-500;
+    --app-gray-600:                     @app-gray-600;
+    --app-gray-700:                     @app-gray-700;
+    --app-gray-800:                     @app-gray-800;
+    --app-gray-900:                     @app-gray-900;
+    --app-gray:                         @app-gray;
+    --app-gray-dark:                    @app-gray-dark;
+    --app-primary:                      @app-primary;
+    --app-primary-border:               @app-primary-border;
+    --app-primary-subtle:               @app-primary-subtle;
+    --app-primary-emphasis:             @app-primary-emphasis;
+    --app-secondary:                    @app-secondary;
+    --app-secondary-border:             @app-secondary-border;
+    --app-secondary-subtle:             @app-secondary-subtle;
+    --app-secondary-emphasis:           @app-secondary-emphasis;
+    --app-success:                      @app-success;
+    --app-success-border:               @app-success-border;
+    --app-success-subtle:               @app-success-subtle;
+    --app-success-emphasis:             @app-success-emphasis;
+    --app-danger:                       @app-danger;
+    --app-danger-border:                @app-danger-border;
+    --app-danger-subtle:                @app-danger-subtle;
+    --app-danger-emphasis:              @app-danger-emphasis;
+    --app-warning:                      @app-warning;
+    --app-warning-border:               @app-warning-border;
+    --app-warning-subtle:               @app-warning-subtle;
+    --app-warning-emphasis:             @app-warning-emphasis;
+    --app-info:                         @app-info;
+    --app-info-border:                  @app-info-border;
+    --app-info-subtle:                  @app-info-subtle;
+    --app-info-emphasis:                @app-info-emphasis;
+    --app-light:                        @app-light;
+    --app-light-border:                 @app-light-border;
+    --app-light-subtle:                 @app-light-subtle;
+    --app-light-emphasis:               @app-light-emphasis;
+    --app-dark:                         @app-dark;
+    --app-dark-border:                  @app-dark-border;
+    --app-dark-subtle:                  @app-dark-subtle;
+    --app-dark-emphasis:                @app-dark-emphasis;
+
+    // Text
+    --app-font-sans-serif:              @app-font-sans-serif;
+    --app-font-monospace:               @app-font-monospace;
+
+    // Body
+    --app-body-bg:                      @app-body-bg;
+    --app-body-color:                   @app-body-color;
+    --app-body-font-family:             @app-font-sans-serif;
+    --app-body-font-size:               @app-body-font-size;
+    --app-body-font-weight:             @app-body-font-weight;
+    --app-body-line-height:             @app-body-line-height;
+
+    // Utilities
+    --app-gradient:                     @app-gradient;
+    --app-secondary-color:              @app-secondary-color;
+    --app-secondary-bg:                 @app-secondary-bg;
+    --app-tertiary-color:               @app-tertiary-color;
+    --app-tertiary-bg:                  @app-tertiary-bg;
+    --app-emphasis-color:               @app-emphasis-color;
+    --app-heading-color:                @app-heading-color;
+    --app-code-color:                   @app-code-color;
+    --app-highlight-color:              @app-highlight-color;
+    --app-highlight-bg:                 @app-highlight-bg;
+
+    // Links
+    --app-link-color:                   @app-link-color;
+    --app-link-decoration:              @app-link-decoration;
+    --app-link-hover-color:             @app-link-hover-color;
+
+    // Borders
+    --app-body-border:                  @app-body-border;
+    --app-border-color:                 @app-border-color;
+    --app-border-width:                 @app-border-width;
+    --app-border-style:                 @app-border-style;
+    --app-border-color-translucent:     @app-border-color-translucent;
+    --app-border-radius:                @app-border-radius;
+    --app-border-radius-sm:             @app-border-radius-sm;
+    --app-border-radius-lg:             @app-border-radius-lg;
+    --app-border-radius-xl:             @app-border-radius-xl;
+    --app-border-radius-xxl:            @app-border-radius-xxl;
+    --app-border-radius-2xl:            @app-border-radius-2xl;
+    --app-border-radius-pill:           @app-border-radius-pill;
+
+    // Shadows
+    --app-box-shadow:                   @app-box-shadow;
+    --app-box-shadow-sm:                @app-box-shadow-sm;
+    --app-box-shadow-lg:                @app-box-shadow-lg;
+    --app-box-shadow-inset:             @app-box-shadow-inset;
+
+    // Forms
+    --app-focus-ring-width:             @app-focus-ring-width;
+    --app-focus-ring-opacity:           @app-focus-ring-opacity;
+    --app-focus-ring-color:             @app-focus-ring-color;
+    --app-form-valid-color:             @app-form-valid-color;
+    --app-form-valid-border-color:      @app-form-valid-border-color;
+    --app-form-invalid-color:           @app-form-invalid-color;
+    --app-form-invalid-border-color:    @app-form-invalid-border-color;
+
+    // Transitions
+    --app-transition-speed:             @app-transition-speed;
+    --app-transition-ease:              @app-transition-ease;
+    --app-transition-sidebar:           @app-transition-sidebar;
+
+    // Breakpoints
+    --app-breakpoint-sm:                @app-breakpoint-sm;
+    --app-breakpoint-md:                @app-breakpoint-md;
+    --app-breakpoint-lg:                @app-breakpoint-lg;
+    --app-breakpoint-xl:                @app-breakpoint-xl;
+    --app-breakpoint-xxl:               @app-breakpoint-xxl;
+
+    // Layout dimensions
+    --app-sidebar-width:                @app-sidebar-width;
+    --app-topbar-height:                @app-topbar-height;
+    --app-footer-height:                @app-footer-height;
+
+    // Z-index ladder
+    --app-z-sidebar:                    @app-z-sidebar;
+    --app-z-topbar:                     @app-z-topbar;
+    --app-z-overlay:                    @app-z-overlay;
+    --app-z-dropdown:                   @app-z-dropdown;
+
+    // Sidebar mobile breakpoint
+    --app-sidebar-collapse-breakpoint:  @app-sidebar-collapse-breakpoint;
+
+    // Panel
+    --app-panel:                         @app-panel;
+    --app-panel-2:                       @app-panel-2;
+    --app-panel-3:                       @app-panel-3;
+}

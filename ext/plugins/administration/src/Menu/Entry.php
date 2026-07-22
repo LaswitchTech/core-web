@@ -26,7 +26,10 @@ final class Entry
     /** @var array<string, mixed> */
     private readonly array $metadata;
 
-    /** @param array<string, mixed> $metadata */
+    /**
+     * @param string|null $icon CSS icon class or trusted inline SVG markup.
+     * @param array<string, mixed> $metadata
+     */
     public function __construct(
         string $id,
         string $label,
