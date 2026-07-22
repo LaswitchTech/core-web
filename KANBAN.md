@@ -123,9 +123,9 @@
   - [x] Expose `admin.menu` service and `admin.menu.register` hook <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-20T21:00:00-04:00 priority: normal -->
   - [x] Register Administration renderer resources <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-21T09:58:35-04:00 priority: normal -->
   - [x] Implement Administration layout and navigation shell <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-22T11:20:31-04:00 priority: normal -->
-  - - [ ] Register unrestricted `/admin` dashboard route <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-21T10:36:45-04:00 priority: normal -->
+  - [ ] Register unrestricted `/admin` dashboard route <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-21T10:36:45-04:00 priority: normal -->
   - [x] Register Dashboard administration menu entry <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-21T10:37:21-04:00 priority: normal -->
-  - [ ] Audit and normalize kernel Card Builder component <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
+  - [~] Audit and normalize kernel Card Builder component <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
   - [ ] Dashboard / Overview widgets <!-- created_at: 2026-06-18T12:11:00-04:00 priority: normal -->
   - [ ] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 priority: normal -->
   - [ ] Log Viewer <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
