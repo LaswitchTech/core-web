@@ -39,5 +39,23 @@ final class DashboardMenuProvider
             priority: 100,
             provider: Entry::PROVIDER_PLUGIN,
         ));
+
+        $registry->register(new Entry(
+            id: 'settings',
+            label: 'System Settings',
+            url: '/admin/settings',
+            icon: <<<'SVG'
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="app-icon" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
+                </svg>
+                SVG,
+            description: 'Administration system settings.',
+            tooltip: 'Administration system settings.',
+            color: 'secondary',
+            section: 'general',
+            parent: null,
+            priority: 100,
+            provider: Entry::PROVIDER_PLUGIN,
+        ));
     }
 }

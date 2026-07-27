@@ -1,7 +1,7 @@
 /vendor/
 /config/local.cfg
 /data/
-list.sh
+snapshot.sh
 .htaccess
 /storage/cache/
 /log/*.log

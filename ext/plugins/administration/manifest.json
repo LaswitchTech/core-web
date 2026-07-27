@@ -13,6 +13,8 @@
     },
     "hooks": [
         "admin.menu.register::Laswitchtech\\CoreWeb\\Plugin\\Administration\\DashboardMenuProvider::register",
+        "admin.overview.register::Laswitchtech\\CoreWeb\\Plugin\\Administration\\DashboardOverviewProvider::register",
+        "admin.settings.register::Laswitchtech\\CoreWeb\\Plugin\\Administration\\SystemSettingsProvider::register",
         "asset.register::Laswitchtech\\CoreWeb\\Plugin\\Administration\\AssetProvider::registerAssets",
         "renderer.register::Laswitchtech\\CoreWeb\\Plugin\\Administration\\RendererProvider::registerResources",
         "router.register::Laswitchtech\\CoreWeb\\Plugin\\Administration\\MenuProvider::initialize",

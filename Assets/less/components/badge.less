@@ -1,0 +1,61 @@
+.app-badge {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+    padding: 1rem;
+    color: var(--app-body-color);
+    background: var(--app-panel);
+    border: var(--app-border-width) var(--app-border-style) var(--app-border-color);
+    border-radius: var(--app-border-radius);
+    box-shadow: var(--app-box-shadow-sm);
+    text-decoration: none;
+    transition:
+        background var(--app-transition-speed) var(--app-transition-ease),
+        border-color var(--app-transition-speed) var(--app-transition-ease),
+        transform var(--app-transition-speed) var(--app-transition-ease);
+}
+
+.app-badge[href]:hover {
+    background: var(--app-panel-2);
+    border-color: var(--app-primary);
+    transform: translateY(-1px);
+}
+
+.app-badge-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--app-primary);
+    background: var(--app-primary-subtle);
+    border-radius: var(--app-border-radius);
+}
+
+.app-badge-icon .app-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.app-badge-content {
+    min-width: 0;
+}
+
+.app-badge-value {
+    display: block;
+    color: var(--app-body-color);
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.app-badge-label {
+    display: block;
+    margin-top: 0.2rem;
+    color: var(--app-secondary-color);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.2;
+}

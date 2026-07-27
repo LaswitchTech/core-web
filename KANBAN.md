@@ -1,14 +1,6 @@
 # Kanban
 
 ## Todo <!-- hide: archive -->
-- [ ] Configuration Manager <!-- created_at: 2026-06-18T11:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
-  - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
-  - Tags: feature, config, v.1.0
-  - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
 - [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
   - Future enhancement: before/after hooks per route and global middleware support.
   - [ ] Authentication middleware <!-- created_at: 2026-07-01T11:52:25-04:00 priority: normal -->
@@ -32,6 +24,257 @@
   - [ ] Design plugin authentication provider interface <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
   - [ ] `core.auth create-user <username> <password>` — create admin users from CLI <!-- created_at: 2026-06-18T13:07:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
   - [ ] Document authorization assignment rules for roles and groups <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
+- [ ] Extension Manifest Slug Standardization <!-- created_at: 2026-07-24T10:00:00-04:00 priority: high -->
+  - Extension manifests must use extension slugs as stable identifiers wherever extensions reference one another.
+  - Human-readable extension names must remain presentation metadata only.
+  - Tags: framework, extensions, manifests, dependencies, slugs, v.1.0
+  - [ ] Add explicit extension slug to manifest contract <!-- created_at: 2026-07-24T10:00:00-04:00 priority: high -->
+    - Define and validate a canonical lowercase extension slug.
+    - Slugs should support deterministic lookup and remain stable when the display name changes.
+  - [ ] Resolve manifest dependencies by slug <!-- created_at: 2026-07-24T10:01:00-04:00 priority: high -->
+    - Update the `depends` manifest field to contain extension slugs rather than extension names.
+    - Dependency discovery, validation, ordering, installation, and error reporting must resolve against slugs.
+  - [ ] Migrate existing manifest dependencies to slugs <!-- created_at: 2026-07-24T10:02:00-04:00 priority: high -->
+    - Audit kernel, application, plugin, and theme manifests.
+    - Replace dependency names with canonical slugs.
+    - Detect duplicate, missing, invalid, and ambiguous slugs.
+  - [ ] Preserve extension display names separately <!-- created_at: 2026-07-24T10:03:00-04:00 priority: normal -->
+    - Continue using `name` for human-readable labels in logs, Administration, CLI output, and documentation.
+  - [ ] Document extension slug and dependency conventions <!-- created_at: 2026-07-24T10:04:00-04:00 priority: normal -->
+- [ ] Additional Frontend Asset Plugins <!-- created_at: 2026-07-24T08:00:00-04:00 priority: normal -->
+  - Package additional third-party frontend libraries as dedicated Core-Web plugins.
+  - Each library must be isolated in its own plugin and registered through the existing asset registry.
+  - Assets must use canonical scoped URLs and deterministic provider/priority ordering.
+  - Builder components must detect optional libraries by capability rather than assuming that their plugins are installed.
+  - Tags: framework, assets, plugins, javascript, frontend, v.1.0
+  - [ ] SortableJS Plugin <!-- created_at: 2026-07-24T08:00:00-04:00 priority: high -->
+    - Provide SortableJS through a dedicated optional plugin.
+    - Register the SortableJS asset through the asset registry.
+    - Expose a stable runtime capability that Builder components can detect.
+    - Do not make SortableJS a mandatory dependency of the Builder runtime.
+    - Badge and Card move handles must remain hidden and inactive when this capability is unavailable.
+  - [ ] TimeagoJS Plugin <!-- created_at: 2026-07-24T08:01:00-04:00 priority: normal -->
+    - Provide relative-time formatting for timestamps such as “5 minutes ago.”
+    - Package and register TimeagoJS as an optional frontend asset plugin.
+  - [ ] LeafletJS Plugin <!-- created_at: 2026-07-24T08:02:00-04:00 priority: normal -->
+    - Provide Leaflet JavaScript, stylesheet, and required image assets.
+    - Support future Builder map components without making Leaflet a kernel dependency.
+  - [ ] PrismJS Plugin <!-- created_at: 2026-07-24T08:03:00-04:00 priority: normal -->
+    - Provide syntax highlighting for the Code Block component and Developer Tools source displays.
+    - Register PrismJS core assets and define a strategy for optional language extensions.
+- [ ] File Management Plugin <!-- created_at: 2026-07-24T10:20:00-04:00 priority: normal -->
+  - First-party plugin providing a file-management API and web interface.
+  - Reserved routes: `/files`, `/files/-`, `/{locale}/files`, and `/{locale}/files/-`.
+  - Route registration must yield to higher-precedence application routes.
+  - Tags: feature, files, storage, upload, plugin, builder, v.1.0
+  - [ ] Create File Management plugin foundation <!-- created_at: 2026-07-24T10:20:00-04:00 priority: high -->
+  - [ ] Define file-storage service contract <!-- created_at: 2026-07-24T10:21:00-04:00 priority: high -->
+    - Support scoped and configurable storage roots.
+    - Prevent traversal outside permitted roots.
+    - Normalize paths consistently across supported operating systems.
+  - [ ] Implement file operations API <!-- created_at: 2026-07-24T10:22:00-04:00 priority: high -->
+    - Upload files.
+    - Delete files.
+    - Move files.
+    - Copy files.
+    - Overwrite files through an explicit opt-in operation.
+    - Return structured operation results and errors.
+  - [ ] Implement directory operations API <!-- created_at: 2026-07-24T10:23:00-04:00 priority: high -->
+    - Create directories.
+    - Copy directories.
+    - Move directories.
+    - Delete empty or recursive directory trees through explicit operations.
+  - [ ] Add upload validation and limits <!-- created_at: 2026-07-24T10:24:00-04:00 priority: high -->
+    - Validate size, filename, extension, MIME type, destination, overwrite policy, and available storage.
+    - Prevent executable or unsafe uploads where the configured storage scope disallows them.
+  - [ ] Create file manager UI <!-- created_at: 2026-07-24T10:25:00-04:00 priority: normal -->
+    - Support list and grid views.
+    - Support search, filtering, sorting, breadcrumbs, upload, rename, copy, move, overwrite, download, and delete actions.
+    - Use Builder components.
+  - [ ] Create reusable file-management Builder components <!-- created_at: 2026-07-24T10:26:00-04:00 priority: normal -->
+    - File picker.
+    - File list or grid.
+    - Upload queue.
+    - Directory breadcrumb.
+    - File operation dialogs.
+  - [ ] Add file-operation hooks and events <!-- created_at: 2026-07-24T10:27:00-04:00 priority: normal -->
+    - Allow validation, auditing, metadata extraction, and post-operation processing.
+  - [ ] Prepare file permissions for V2 authorization <!-- created_at: 2026-07-24T10:28:00-04:00 priority: normal -->
+  - [ ] Document File Management API and routes <!-- created_at: 2026-07-24T10:29:00-04:00 priority: normal -->
+- [ ] Document Management Plugin <!-- created_at: 2026-07-24T10:30:00-04:00 priority: normal -->
+  - First-party plugin for generating, storing, inspecting, securing, signing, and managing PDF documents.
+  - Reserved routes: `/documents`, `/documents/-`, `/{locale}/documents`, and `/{locale}/documents/-`.
+  - Route registration must yield to higher-precedence application routes.
+  - Tags: feature, documents, pdf, templates, signatures, plugin, builder, v.1.0
+  - [ ] Create Document Management plugin foundation <!-- created_at: 2026-07-24T10:30:00-04:00 priority: high -->
+  - [ ] Define document-generation service contract <!-- created_at: 2026-07-24T10:31:00-04:00 priority: high -->
+    - Generate PDF documents from HTML templates and structured template data.
+    - Support interchangeable PDF-generation providers.
+  - [ ] Integrate mPDF generation provider <!-- created_at: 2026-07-24T10:32:00-04:00 priority: high -->
+    - Depend on the mPDF plugin by slug.
+    - Preserve provider abstraction for future PDF engines.
+  - [ ] Add PDF template resources <!-- created_at: 2026-07-24T10:33:00-04:00 priority: high -->
+    - Load templates from kernel, application, plugin, and theme scopes.
+    - Support deterministic override precedence.
+  - [ ] Add letterhead support <!-- created_at: 2026-07-24T10:34:00-04:00 priority: normal -->
+    - Support a first-page letterhead.
+    - Support an all-page letterhead.
+    - Support configurable headers, footers, backgrounds, margins, and page numbering.
+  - [ ] Add PDF import and composition <!-- created_at: 2026-07-24T10:35:00-04:00 priority: normal -->
+    - Depend on the FPDI PDF Parser plugin by slug.
+    - Support importing, merging, overlaying, and reusing pages from existing PDFs.
+  - [ ] Add PDF password protection <!-- created_at: 2026-07-24T10:36:00-04:00 priority: normal -->
+    - Support user and owner passwords.
+    - Support configurable document permissions where supported by the provider.
+  - [ ] Add digital signature support <!-- created_at: 2026-07-24T10:37:00-04:00 priority: normal -->
+    - Support certificate-based PDF signing.
+    - Keep private keys and certificate passwords outside document templates.
+    - Record signature metadata and validation status.
+  - [ ] Add optional advanced SetaSign support <!-- created_at: 2026-07-24T10:38:00-04:00 priority: normal -->
+    - Detect the SetaSign plugin and expose licensed FPDI features when available.
+  - [ ] Create document manager UI <!-- created_at: 2026-07-24T10:39:00-04:00 priority: normal -->
+    - Support search, filtering, previews, metadata, generation, regeneration, download, archive, delete, password configuration, and signature status.
+    - Use Builder components.
+  - [ ] Create reusable document Builder components <!-- created_at: 2026-07-24T10:40:00-04:00 priority: normal -->
+    - PDF preview.
+    - Document list.
+    - Document metadata panel.
+    - Template selector.
+    - Signature-status display.
+  - [ ] Document Document Management API and routes <!-- created_at: 2026-07-24T10:41:00-04:00 priority: normal -->
+- [ ] Documentation Plugin <!-- created_at: 2026-07-24T10:50:00-04:00 priority: normal -->
+  - First-party plugin for browsing and editing documentation stored in `docs/` directories.
+  - Supported scopes: kernel, application, plugins, and themes.
+  - Reserved routes: `/docs`, `/docs/-`, `/{locale}/docs`, and `/{locale}/docs/-`.
+  - Route registration must yield to higher-precedence application routes.
+  - Tags: feature, documentation, markdown, editor, plugin, builder, v.1.0
+  - [ ] Create Documentation plugin foundation <!-- created_at: 2026-07-24T10:50:00-04:00 priority: high -->
+  - [ ] Discover documentation resources by scope <!-- created_at: 2026-07-24T10:51:00-04:00 priority: high -->
+    - Discover `docs/` in kernel, application, enabled plugins, and enabled themes.
+    - Preserve source-scope metadata and deterministic ordering.
+  - [ ] Define documentation path and precedence rules <!-- created_at: 2026-07-24T10:52:00-04:00 priority: high -->
+    - Prevent traversal outside registered documentation roots.
+    - Define behavior for duplicate documentation paths across scopes.
+  - [ ] Render Markdown documentation <!-- created_at: 2026-07-24T10:53:00-04:00 priority: high -->
+    - Depend on the Parsedown Markdown plugin by slug.
+    - Sanitize rendered HTML.
+    - Support headings, links, lists, tables, code, images, and internal documentation links.
+  - [ ] Create documentation browser UI <!-- created_at: 2026-07-24T10:54:00-04:00 priority: normal -->
+    - Include navigation tree, breadcrumbs, search, scope filter, Markdown rendering, and source information.
+  - [ ] Create documentation editor UI <!-- created_at: 2026-07-24T10:55:00-04:00 priority: normal -->
+    - Edit documentation files in permitted scopes.
+    - Include preview, save, validation, dirty-state warning, and conflict handling.
+    - Reuse the File Management API for safe writes where appropriate.
+  - [ ] Add documentation search index <!-- created_at: 2026-07-24T10:56:00-04:00 priority: normal -->
+  - [ ] Add locale-aware documentation resolution <!-- created_at: 2026-07-24T10:57:00-04:00 priority: normal -->
+    - Integrate with the future Locale system while preserving non-localized fallback.
+  - [ ] Prepare documentation editing permissions for V2 authorization <!-- created_at: 2026-07-24T10:58:00-04:00 priority: normal -->
+  - [ ] Document Documentation plugin conventions <!-- created_at: 2026-07-24T10:59:00-04:00 priority: normal -->
+- [ ] Knowledge Base Plugin <!-- created_at: 2026-07-24T11:00:00-04:00 priority: normal -->
+  - First-party knowledge-base article management using standard GitHub-style Markdown as the canonical article format.
+  - Reserved routes: `/kb`, `/kb/-`, `/{locale}/kb`, and `/{locale}/kb/-`.
+  - Route registration must yield to higher-precedence application routes.
+  - Tags: feature, knowledge-base, markdown, articles, plugin, builder, v.1.0
+  - [ ] Create Knowledge Base plugin foundation <!-- created_at: 2026-07-24T11:00:00-04:00 priority: high -->
+  - [ ] Define Knowledge Base article contract <!-- created_at: 2026-07-24T11:01:00-04:00 priority: high -->
+    - Support slug, title, summary, Markdown body, category, tags, status, author, timestamps, locale, metadata, and revision information.
+  - [ ] Define article storage strategy <!-- created_at: 2026-07-24T11:02:00-04:00 priority: high -->
+    - Keep GitHub-style Markdown as canonical content.
+    - Determine whether metadata is stored in front matter, database records, companion files, or a documented combination.
+  - [ ] Render Knowledge Base Markdown <!-- created_at: 2026-07-24T11:03:00-04:00 priority: high -->
+    - Depend on the Parsedown Markdown plugin by slug.
+    - Sanitize rendered HTML.
+  - [ ] Create article management API <!-- created_at: 2026-07-24T11:04:00-04:00 priority: high -->
+    - Create, read, update, archive, restore, and delete articles.
+    - Support draft and published states.
+  - [ ] Create Knowledge Base UI <!-- created_at: 2026-07-24T11:05:00-04:00 priority: normal -->
+    - Include article listing, search, category and tag filters, editor, preview, revision information, publication controls, and article rendering.
+    - Use Builder components.
+  - [ ] Add article revision history <!-- created_at: 2026-07-24T11:06:00-04:00 priority: normal -->
+  - [ ] Add locale-aware article resolution <!-- created_at: 2026-07-24T11:07:00-04:00 priority: normal -->
+  - [ ] Prepare article permissions for V2 authorization <!-- created_at: 2026-07-24T11:08:00-04:00 priority: normal -->
+  - [ ] Document Knowledge Base formats and routes <!-- created_at: 2026-07-24T11:09:00-04:00 priority: normal -->
+- [ ] Getting Started Plugin <!-- created_at: 2026-07-24T11:10:00-04:00 priority: normal -->
+  - First-party fallback landing page for fresh Core-Web installations.
+  - Registers `/` only when no higher-precedence application route owns `/`.
+  - Tags: feature, onboarding, landing-page, plugin, builder, v.1.0
+  - [ ] Create Getting Started plugin foundation <!-- created_at: 2026-07-24T11:10:00-04:00 priority: normal -->
+  - [ ] Register fallback `/` route <!-- created_at: 2026-07-24T11:11:00-04:00 priority: high -->
+    - Application routes must override the fallback route deterministically.
+  - [ ] Create Getting Started page <!-- created_at: 2026-07-24T11:12:00-04:00 priority: normal -->
+    - Show installation status, environment summary, documentation links, Administration link, application scaffolding guidance, and next steps.
+    - Use Builder components.
+  - [ ] Hide or disable the fallback page after application onboarding <!-- created_at: 2026-07-24T11:13:00-04:00 priority: normal -->
+  - [ ] Document fallback-route behavior <!-- created_at: 2026-07-24T11:14:00-04:00 priority: normal -->
+- [ ] Web Installer Plugin <!-- created_at: 2026-07-24T11:20:00-04:00 priority: high -->
+  - First-party kernel/application web installer.
+  - Installs required application dependencies using manifest dependency slugs.
+  - Supports new and shared-database installations.
+  - Tags: feature, installer, setup, database, dependencies, plugin, v.1.0
+  - [ ] Create Installer plugin foundation <!-- created_at: 2026-07-24T11:20:00-04:00 priority: high -->
+  - [ ] Define installer state machine <!-- created_at: 2026-07-24T11:21:00-04:00 priority: high -->
+    - Environment validation.
+    - Application selection and manifest inspection.
+    - Dependency resolution.
+    - Configuration.
+    - Database analysis.
+    - Migration or attachment decision.
+    - Administrator setup when authentication becomes available.
+    - Final verification and installer lockout.
+  - [ ] Install application manifest dependencies <!-- created_at: 2026-07-24T11:22:00-04:00 priority: high -->
+    - Resolve dependencies exclusively by canonical extension slug.
+    - Validate dependency versions, compatibility, availability, and installation order.
+    - Report missing or conflicting dependencies before making changes.
+  - [ ] Support fresh database installation <!-- created_at: 2026-07-24T11:23:00-04:00 priority: high -->
+  - [ ] Support shared database inspection <!-- created_at: 2026-07-24T11:24:00-04:00 priority: high -->
+    - Inspect existing tables, columns, indexes, constraints, migration records, and application ownership metadata.
+    - Determine whether the existing schema is compatible with the application.
+  - [ ] Support shared database attachment <!-- created_at: 2026-07-24T11:25:00-04:00 priority: high -->
+    - When compatible, allow the user to attach the application without recreating compatible structures.
+    - Record the application’s installation and migration state independently.
+  - [ ] Handle shared database conflicts <!-- created_at: 2026-07-24T11:26:00-04:00 priority: high -->
+    - Clearly identify incompatible structures.
+    - Offer only safe choices such as abort, use another database or prefix, migrate supported differences, or explicitly overwrite affected application structures.
+    - Never silently overwrite unrelated application data.
+  - [ ] Add configurable table namespace or prefix strategy <!-- created_at: 2026-07-24T11:27:00-04:00 priority: normal -->
+    - Support multiple Core-Web applications sharing one database without table-name collisions.
+  - [ ] Add resumable installation state <!-- created_at: 2026-07-24T11:28:00-04:00 priority: normal -->
+  - [ ] Lock or remove installer access after completion <!-- created_at: 2026-07-24T11:29:00-04:00 priority: high -->
+  - [ ] Document web installation and shared-database behavior <!-- created_at: 2026-07-24T11:30:00-04:00 priority: normal -->
+- [ ] Web Updater Plugin <!-- created_at: 2026-07-24T11:40:00-04:00 priority: normal -->
+  - First-party web updater for the kernel and installed application.
+  - Tags: feature, updater, kernel, application, migrations, plugin, v.1.0
+  - [ ] Create Updater plugin foundation <!-- created_at: 2026-07-24T11:40:00-04:00 priority: high -->
+  - [ ] Define update source and package verification <!-- created_at: 2026-07-24T11:41:00-04:00 priority: high -->
+    - Verify package integrity, compatibility, version metadata, and signatures where available.
+  - [ ] Add kernel update workflow <!-- created_at: 2026-07-24T11:42:00-04:00 priority: high -->
+  - [ ] Add application update workflow <!-- created_at: 2026-07-24T11:43:00-04:00 priority: high -->
+  - [ ] Resolve update dependencies by extension slug <!-- created_at: 2026-07-24T11:44:00-04:00 priority: high -->
+  - [ ] Add maintenance mode and preflight checks <!-- created_at: 2026-07-24T11:45:00-04:00 priority: high -->
+  - [ ] Add backup and rollback strategy <!-- created_at: 2026-07-24T11:46:00-04:00 priority: high -->
+    - Back up affected code, configuration, and migration state before applying an update.
+    - Do not claim rollback support until every updated resource has a defined restoration path.
+  - [ ] Run migrations and post-update checks <!-- created_at: 2026-07-24T11:47:00-04:00 priority: high -->
+  - [ ] Add update history and audit log <!-- created_at: 2026-07-24T11:48:00-04:00 priority: normal -->
+  - [ ] Document kernel and application update workflows <!-- created_at: 2026-07-24T11:49:00-04:00 priority: normal -->
+- [ ] Parsedown Markdown Plugin <!-- created_at: 2026-07-24T10:10:00-04:00 priority: normal -->
+  - Package `erusev/parsedown` as the standard Markdown parsing plugin.
+  - Expose a stable service or helper for converting GitHub-style Markdown to sanitized HTML.
+  - Support Documentation and Knowledge Base rendering.
+  - Markdown source must remain the canonical stored representation.
+- [ ] FPDI PDF Parser Plugin <!-- created_at: 2026-07-24T10:11:00-04:00 priority: normal -->
+  - Package the free FPDI PDF parsing and import capabilities as a dedicated plugin.
+  - Expose a stable PDF import/parser service for Document Management.
+  - Keep advanced or licensed features isolated behind the SetaSign plugin.
+- [ ] mPDF Plugin <!-- created_at: 2026-07-24T10:12:00-04:00 priority: normal -->
+  - Package mPDF as a dedicated optional PDF generation plugin.
+  - Expose a stable HTML-to-PDF generation service.
+  - Support fonts, stylesheets, page formats, margins, headers, footers, metadata, encryption, and passwords.
+- [ ] SetaSign Plugin <!-- created_at: 2026-07-24T10:13:00-04:00 priority: normal -->
+  - Provide SetaSign authentication and licensed feature configuration.
+  - Enable advanced FPDI PDF Parser capabilities when valid credentials and licenses are configured.
+  - Depend on the FPDI PDF Parser plugin by slug.
+  - Degrade safely when credentials, licenses, or advanced packages are unavailable.
 - [ ] PostgreSQL Driver <!-- created_at: 2026-06-30T00:00:00-04:00 priority: normal -->
   - PostgreSQL database driver built on the existing database abstraction layer. Extends the query compiler and connection system to support PostgreSQL while preserving the database-agnostic developer API.
   - Tags: feature, database, postgresql, v.2.0
@@ -65,7 +308,7 @@
   - Future architectural work to standardize registry-style subsystems around common contracts, naming conventions, metadata handling, and deterministic resolution behavior. This is not an implementation task; it belongs in Version 2.0 planning.
   - Tags: architecture, registry, refactor, v.2.0
   - [ ] Design common registry contracts <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
-    - Evaluate whether `Hook\Registry`, `Renderer\Registry`, future `Helper\Registry`, and future `Extension\Registry` should share a small common interface or base abstractions for named entries, metadata, provider ownership, and deterministic resolution.
+    - Evaluate whether `Hook\Registry`, `Renderer\Registry`, `Helper\Registry`, Administration registries, and extension registries should share small common contracts for named entries, metadata, provider ownership, and deterministic resolution.
   - [ ] Reorganize registry namespaces by subsystem <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
     - Consider a grouped namespace layout such as `src/Registry/Hook`, `src/Registry/Renderer`, `src/Registry/Helper`, and `src/Registry/Extension` while preserving backward compatibility or providing a clear migration path.
   - [ ] Standardize registry entry metadata <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
@@ -75,18 +318,16 @@
   - [ ] Review broader namespace grouping opportunities <!-- created_at: 2026-07-01T00:00:00-04:00 priority: normal -->
     - Evaluate whether other related classes should also be grouped by domain or subsystem in Version 2.0 without disrupting the V1.0 public API.
 - [ ] MCP Integration <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
-  - Description: Add Model Context Protocol support for exposing Core-Web tools, resources, prompts, and application actions to AI agents.
-  - priority: normal
-  - Subtasks:
+  - Add Model Context Protocol support for exposing Core-Web tools, resources, prompts, and application actions to AI agents.
   - Tags: framework, mcp, ai-agents, integrations, v.2.0
   - [ ] Research MCP server architecture for PHP/Core-Web <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
-    - [ ] Define MCP transport strategy <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
-    - [ ] Design MCP tool registry <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
-    - [ ] Expose selected CLI commands as MCP tools <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
-    - [ ] Expose safe application resources through MCP <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
-    - [ ] Add permission and authentication model for MCP access <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
-    - [ ] Add MCP configuration keys <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
-    - [ ] Add MCP smoke tests and documentation <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+  - [ ] Define MCP transport strategy <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+  - [ ] Design MCP tool registry <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+  - [ ] Expose selected CLI commands as MCP tools <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+  - [ ] Expose safe application resources through MCP <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+  - [ ] Add permission and authentication model for MCP access <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+  - [ ] Add MCP configuration keys <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
+  - [ ] Add MCP smoke tests and documentation <!-- created_at: 2026-07-08T17:00:14-04:00 priority: normal -->
 - [ ] ECMAScript Module Asset Pipeline <!-- created_at: 2026-07-20T00:00:00-04:00 priority: normal -->
   - Migrate the frontend runtime from classic JavaScript assets to ECMAScript modules while preserving deterministic asset ordering, scoped asset identity, and extension overrides.
   - Tags: framework, renderer, assets, javascript, esm, modules, builder, frontend, v.2.0
@@ -97,7 +338,7 @@
   - [ ] Add module dependency resolution <!-- created_at: 2026-07-20T00:00:00-04:00 priority: high -->
     - Resolve and validate static import dependencies between kernel, application, theme, and plugin modules.
   - [ ] Split the Builder runtime into ECMAScript modules <!-- created_at: 2026-07-20T00:00:00-04:00 priority: normal -->
-    - Separate the runtime into cohesive modules (Component, Builder, sanitizer, internal helpers, reference components) while preserving existing behavior.
+    - Separate the runtime into cohesive modules (Component, Builder, sanitizer, internal helpers, and reference components) while preserving existing behavior.
   - [ ] Make `kernel.js` the Builder module entry point <!-- created_at: 2026-07-20T00:00:00-04:00 priority: normal -->
     - Load the Builder runtime through a single module entry point that imports the internal runtime modules and first-party reference components.
   - [ ] Migrate first-party Builder components to module imports <!-- created_at: 2026-07-20T00:00:00-04:00 priority: normal -->
@@ -108,10 +349,49 @@
     - Document module organization, entry points, import conventions, extension authoring, dependency rules, and migration guidance.
 
 ## In Progress <!-- hide: archive -->
-- [ ] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
+- [ ] Configuration Manager <!-- created_at: 2026-06-18T11:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+  - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
+  - Tags: feature, config, v.1.0
+  - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
+- [~] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 priority: normal -->
+  - Provide a settings route and Administration menu entry.
+  - Use the writable Configuration Manager rather than modifying `core.cfg`.
+  - Initial settings should include application name, Administration brand, logo, and related presentation values.
+  - UI must use Builder components.
+  - [x] Audit existing writable configuration behavior <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+    - Review `core.config set` and `core.config unset`.
+    - Identify reusable persistence logic and avoid duplicating it in Administration.
+  - [x] Expose reusable writable configuration service <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:41-04:00 priority: normal -->
+    - Write only to `config/local.cfg`.
+    - Preserve inherited values from `core.cfg`.
+    - Support nested keys.
+    - Support set and unset operations.
+    - Use atomic file replacement where practical.
+  - [x] Define Administration presentation settings <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:44-04:00 priority: normal -->
+    - Application name.
+    - Administration brand label.
+    - Administration logo.
+    - Footer content or related presentation metadata.
+    - Define validation and default/inherited behavior for each key.
+  - [x] Register unrestricted `/admin/settings` route <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:49-04:00 priority: normal -->
+  - [x] Register System Settings Administration menu entry <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:55-04:00 priority: normal -->
+  - [x] Register System Settings renderer resources <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:58-04:00 priority: normal -->
+  - [~] Register System Settings plugin assets <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [ ] Render System Settings UI through Builder <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [ ] Load resolved and locally overridden values <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [ ] Persist validated settings through the writable configuration service <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [ ] Support resetting settings to inherited defaults <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [ ] Display deterministic success and validation feedback <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [ ] Apply configured branding to the Administration layout <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [ ] Verify settings persistence and inherited fallback behavior <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+- [~] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
   - The `/admin` panel is implemented as a first-party plugin.
   - The plugin owns the Administration layout and Overview route.
-  - Other plugins can extend Administration routes, menus, and features.
+  - Other plugins can extend Administration routes, menus, Overview entries, and features.
   - Administration UI components must use the Builder runtime.
   - Reusable UI components belong to the kernel; Administration-specific components belong to this plugin.
   - V1 Administration routes are intentionally unrestricted.
@@ -123,116 +403,328 @@
   - [x] Expose `admin.menu` service and `admin.menu.register` hook <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-20T21:00:00-04:00 priority: normal -->
   - [x] Register Administration renderer resources <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-21T09:58:35-04:00 priority: normal -->
   - [x] Implement Administration layout and navigation shell <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-22T11:20:31-04:00 priority: normal -->
-  - [ ] Register unrestricted `/admin` dashboard route <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-21T10:36:45-04:00 priority: normal -->
+    - Includes responsive sidebar behavior.
+    - Includes sectioned and nested menu rendering.
+    - Includes active-route and active-descendant handling.
+    - Includes route breadcrumbs and session-history breadcrumbs.
+    - Includes SVG icon support.
+    - Includes light, dark, and automatic theme selection.
+  - [x] Register unrestricted `/admin` dashboard route <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-21T10:36:45-04:00 priority: normal -->
   - [x] Register Dashboard administration menu entry <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-21T10:37:21-04:00 priority: normal -->
-  - [x] Audit and normalize kernel Card Builder component <!-- created_at: 2026-07-22T07:00:00-04:00 completed_at: 2026-07-22T12:00:00-04:00 priority: normal -->
-  - [x] Dashboard / Overview widgets <!-- created_at: 2026-06-18T12:11:00-04:00 completed_at: 2026-07-22T13:00:00-04:00 priority: normal -->
+  - [~] Dashboard / Overview <!-- created_at: 2026-06-18T12:11:00-04:00 priority: high -->
+    - [x] Render six built-in system-status badges <!-- created_at: 2026-06-18T12:11:00-04:00 completed_at: 2026-07-23T10:00:00-04:00 priority: normal -->
+      - Core-Web version.
+      - PHP version.
+      - application mode.
+      - database driver.
+      - enabled plugin count with disabled count tooltip.
+      - enabled theme count with disabled count tooltip.
+    - [x] Create Administration Overview entry contract <!-- created_at: 2026-07-23T20:00:00-04:00 completed_at: 2026-07-23T21:00:00-04:00 priority: high -->
+      - Supports ID, Builder component slug, component configuration, column span, priority, provider, and registration order.
+    - [x] Implement Administration Overview registry <!-- created_at: 2026-07-23T20:00:00-04:00 completed_at: 2026-07-23T21:30:00-04:00 priority: high -->
+      - Supports deterministic resolution and export to client-safe arrays.
+    - [x] Expose `admin.overview.register` hook <!-- created_at: 2026-07-23T20:00:00-04:00 completed_at: 2026-07-23T22:00:00-04:00 priority: high -->
+      - Allows Administration, application, and other plugins to contribute Overview entries.
+    - [x] Register built-in Overview entries through the public hook <!-- created_at: 2026-07-23T20:00:00-04:00 completed_at: 2026-07-23T22:30:00-04:00 priority: high -->
+    - [x] Render Overview entries dynamically through Builder <!-- created_at: 2026-07-23T20:00:00-04:00 completed_at: 2026-07-23T23:00:00-04:00 priority: high -->
+      - Client renderer verifies that the requested Builder component exists.
+      - Entries are created through `Builder.create(component, config)`.
+    - [x] Add responsive one-to-four-column Overview layout <!-- created_at: 2026-07-23T20:00:00-04:00 completed_at: 2026-07-23T23:30:00-04:00 priority: normal -->
+      - Entries can span one through four grid columns.
+      - Entries fall back to one column on mobile.
+    - [x] Remove obsolete pre-registry Overview widget construction <!-- created_at: 2026-07-24T08:50:00-04:00 completed_at: 2026-07-24T13:37:55-04:00 priority: high -->
+      - Remove the unused `$overviewWidgets` array from `Administration.php`.
+      - Remove duplicate extension counting and database-driver resolution that now belongs to `DashboardOverviewProvider`.
+      - Preserve the Overview registry, hook trigger, export, and renderer arguments.
+    - [x] Remove unused Dashboard Overview provider declarations <!-- created_at: 2026-07-24T08:51:00-04:00 completed_at: 2026-07-24T13:38:03-04:00 priority: normal -->
+      - Remove unused imports and variables such as an unused `$priority` declaration.
+    - [ ] Add optional customizable Overview ordering <!-- created_at: 2026-07-24T08:52:00-04:00 priority: normal -->
+      - Enable dashboard rearrangement only when the SortableJS plugin is installed and enabled.
+      - Use component-provided move handles.
+      - The Overview container owns SortableJS initialization.
+      - Define a persistence strategy for user-specific or application-level ordering.
+      - Preserve registry priority/order as the default when no saved customization exists.
+    - [ ] Add Overview customization mode <!-- created_at: 2026-07-24T08:53:00-04:00 priority: normal -->
+      - Provide an explicit mode for enabling widget movement and future visibility controls.
+      - Avoid showing move handles during normal read-only dashboard use.
+      - Expose clear save, reset, and cancel behavior when persistence is implemented.
+    - [x] Document `admin.overview.register` extension contract <!-- created_at: 2026-07-24T08:54:00-04:00 completed_at: 2026-07-24T14:44:19-04:00 priority: normal -->
+      - Include examples for badges, cards, charts, system monitors, and third-party Builder components.
+      - Document component availability, column spans, priorities, providers, IDs, and safe configuration values.
+      - Explain that a future monitoring plugin may register CPU, RAM, disk usage, disk health, network, and service widgets.
   - [ ] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 priority: normal -->
+    - Provide a settings route and Administration menu entry.
+    - Use the future writable Configuration Manager rather than modifying `core.cfg`.
+    - Initial settings should include application name, Administration brand, logo, and related presentation values.
+    - UI must use Builder components.
   - [ ] Log Viewer <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
+    - Provide an Administration route and menu entry.
+    - Use Builder Table/List/Card components as they become available.
+    - Include filtering, searching, level selection, date selection, and safe long-entry inspection.
+    - Do not expose sensitive values without masking.
   - [ ] Plugin Management <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
+    - Provide enabled and disabled plugin listings.
+    - Support plugin detail inspection.
+    - Define safe enable/disable workflows.
+    - Clearly distinguish locked first-party plugins from optional plugins.
+    - Use Builder components.
   - [ ] Theme Management <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
+    - Provide enabled and disabled theme listings.
+    - Support theme detail inspection and application-theme selection.
+    - Distinguish runtime light/dark mode from extension-level theme selection.
+    - Use Builder components.
   - [ ] Document Administration plugin extension conventions <!-- created_at: 2026-07-20T15:00:00-04:00 priority: normal -->
-
+    - Document Administration menu registration.
+    - Document route and renderer registration.
+    - Document Overview registration.
+    - Document plugin-owned Administration assets.
+    - Document reusable-kernel versus Administration-specific component placement.
+    - Document current unrestricted V1 routes and planned V2 authorization integration.
+- [~] Builder Component Library <!-- created_at: 2026-07-22T07:00:00-04:00 priority: high -->
+  - Reusable first-party UI components implemented through the Builder runtime.
+  - Kernel components must not depend directly on Administration or any application.
+  - Components may integrate with optional asset plugins through runtime capability detection.
+  - Optional integrations must degrade safely when the corresponding plugin is unavailable.
+  - Component configuration must be refreshable without replacing the component root element.
+  - Interactive Boolean options should expose explicit component methods in addition to generic `config()` access.
+  - Toggle methods should update configuration, call `refresh()`, and return the component instance unless a different return type is explicitly documented.
+  - Components should use Builder-safe text or sanitized HTML rendering and must not introduce direct unsafe `innerHTML` assignments.
+  - Components will be implemented incrementally as required by Administration and future application features.
+  - Tags: framework, builder, components, frontend, ui, v.1.0
+  - [~] Badge component <!-- created_at: 2026-07-22T07:00:00-04:00 priority: high -->
+    - [x] Create kernel Badge Builder component <!-- created_at: 2026-07-22T07:00:00-04:00 completed_at: 2026-07-23T09:00:00-04:00 priority: high -->
+      - Supports `href`, `icon`, `value`, `label`, and `tooltip`.
+      - Registered as Builder slug `badge`, provider `kernel`, priority `0`.
+    - [x] Correct Badge value and label region rendering <!-- created_at: 2026-07-23T09:00:00-04:00 completed_at: 2026-07-23T10:00:00-04:00 priority: high -->
+      - `value` renders into the large value region.
+      - `label` renders into the smaller label region.
+    - [x] Add Badge theme-aware styling <!-- created_at: 2026-07-23T09:00:00-04:00 completed_at: 2026-07-23T11:00:00-04:00 priority: normal -->
+    - [ ] Add Badge color option <!-- created_at: 2026-07-24T08:10:00-04:00 priority: normal -->
+      - Add a validated `color` configuration option.
+      - The option controls the icon foreground and icon-area background.
+      - Support the Core-Web semantic color set such as primary, secondary, success, danger, warning, info, light, and dark.
+      - Use theme tokens rather than hardcoded component colors.
+      - Define a deterministic fallback for missing or invalid color values.
+    - [ ] Add optional Badge move handle <!-- created_at: 2026-07-24T08:11:00-04:00 priority: normal -->
+      - Add a `moveHandleVisible` configuration option.
+      - Render the structural move-handle region as part of the Badge component.
+      - The handle must appear only when `moveHandleVisible` is true and the SortableJS capability is available.
+      - The handle must remain hidden when the SortableJS plugin is absent, disabled, or failed to load.
+      - Do not bundle SortableJS into the Badge component.
+    - [ ] Add explicit Badge option methods <!-- created_at: 2026-07-24T08:12:00-04:00 priority: normal -->
+      - Add methods for enabling, disabling, and toggling the move handle.
+      - Add a method for changing the semantic color.
+      - Add suitable setters or toggle methods for other interactive Badge options introduced later.
+      - Methods must update configuration and refresh the existing element.
+    - [ ] Validate Badge drag integration with SortableJS <!-- created_at: 2026-07-24T08:13:00-04:00 priority: normal -->
+      - Verify that the Badge handle can be used by a sortable dashboard container.
+      - Badge itself should expose the handle; the parent dashboard owns ordering and persistence.
+  - [~] Card component <!-- created_at: 2026-07-22T07:00:00-04:00 priority: high -->
+    - [x] Audit and normalize kernel Card Builder component <!-- created_at: 2026-07-22T07:00:00-04:00 completed_at: 2026-07-22T12:00:00-04:00 priority: normal -->
+    - [x] Add theme-aware Card structure and styling <!-- created_at: 2026-07-22T12:00:00-04:00 completed_at: 2026-07-23T12:00:00-04:00 priority: normal -->
+    - [x] Add configurable header, body, and footer regions <!-- created_at: 2026-07-22T12:00:00-04:00 completed_at: 2026-07-23T12:30:00-04:00 priority: normal -->
+    - [x] Add header icon support <!-- created_at: 2026-07-22T12:00:00-04:00 completed_at: 2026-07-23T13:00:00-04:00 priority: normal -->
+    - [x] Add three-dot control menu structure and behavior <!-- created_at: 2026-07-23T13:00:00-04:00 completed_at: 2026-07-23T15:00:00-04:00 priority: normal -->
+    - [x] Add collapse control and collapsed state <!-- created_at: 2026-07-23T13:00:00-04:00 completed_at: 2026-07-23T15:30:00-04:00 priority: normal -->
+    - [x] Add fullscreen control and fullscreen state <!-- created_at: 2026-07-23T13:00:00-04:00 completed_at: 2026-07-23T16:00:00-04:00 priority: normal -->
+    - [x] Add close control and component destruction behavior <!-- created_at: 2026-07-23T13:00:00-04:00 completed_at: 2026-07-23T16:30:00-04:00 priority: normal -->
+    - [x] Add root event delegation and destroy-time listener cleanup <!-- created_at: 2026-07-23T13:00:00-04:00 completed_at: 2026-07-23T17:00:00-04:00 priority: normal -->
+    - [x] Account for overlay controls in Card header spacing <!-- created_at: 2026-07-23T17:00:00-04:00 completed_at: 2026-07-23T18:00:00-04:00 priority: normal -->
+      - Header padding accommodates the move handle and three-dot menu independently.
+    - [x] Validate Card controls through temporary Administration test harness <!-- created_at: 2026-07-23T17:00:00-04:00 completed_at: 2026-07-23T19:00:00-04:00 priority: normal -->
+      - Collapse, fullscreen, close, control menu, and visible-state options were manually verified.
+      - Temporary test markup was removed after validation.
+    - [ ] Make Card move handle conditional on SortableJS <!-- created_at: 2026-07-24T08:20:00-04:00 priority: high -->
+      - Preserve the existing `moveHandleVisible` component option.
+      - Show the move handle only when the option is true and the SortableJS capability is available.
+      - Hide the move handle when SortableJS is absent or disabled.
+      - Do not add SortableJS as a mandatory kernel dependency.
+    - [ ] Integrate Card handle with sortable containers <!-- created_at: 2026-07-24T08:21:00-04:00 priority: normal -->
+      - Card exposes the move handle.
+      - The containing dashboard or collection owns SortableJS initialization, ordering, and persistence.
+    - [ ] Add explicit Card option and state methods <!-- created_at: 2026-07-24T08:22:00-04:00 priority: high -->
+      - Add explicit methods for showing, hiding, and toggling the header, body, and footer.
+      - Add explicit methods for showing, hiding, and toggling the move handle.
+      - Add explicit methods for enabling, disabling, opening, closing, and toggling the control menu.
+      - Add explicit methods for showing, hiding, and toggling collapse, fullscreen, and close controls.
+      - Add explicit `collapse()`, `expand()`, and `toggleCollapsed()` methods.
+      - Add explicit `enterFullscreen()`, `exitFullscreen()`, and `toggleFullscreen()` methods.
+      - Preserve `destroy()` as the canonical close/destruction operation.
+      - Methods must refresh the existing component rather than replacing its root.
+    - [ ] Document Card configuration and method API <!-- created_at: 2026-07-24T08:23:00-04:00 priority: normal -->
+  - [ ] Table component <!-- created_at: 2026-07-24T08:30:00-04:00 priority: normal -->
+    - Create a generic Builder Table component for structured row and column data.
+    - Include a built-in client-side search filter.
+    - Support configurable columns, headings, empty-state content, row identifiers, and optional row actions.
+    - Keep DataTables integration optional and separate from the base component.
+    - Consider pagination, sorting, selection, and responsive behavior when required by an actual feature.
+  - [ ] List component <!-- created_at: 2026-07-24T08:31:00-04:00 priority: normal -->
+    - Create a generic Builder List component.
+    - Include a built-in search filter.
+    - Support icons, titles, descriptions, metadata, links, empty states, and optional item actions.
+    - Consider optional sortable-item support through the SortableJS plugin.
+  - [ ] vCard component <!-- created_at: 2026-07-24T08:32:00-04:00 priority: normal -->
+    - Create a contact/identity card component for people and organizations.
+    - Include a built-in search filter when rendering collections of vCards.
+    - Support name, organization, title, avatar, email, phone, address, links, metadata, and optional actions.
+    - Avoid coupling the component to a particular contacts provider.
+  - [ ] Progress Bar component <!-- created_at: 2026-07-24T08:33:00-04:00 priority: normal -->
+    - Support minimum, maximum, current value, label, percentage display, semantic colors, and indeterminate state.
+    - Provide explicit methods for setting and incrementing progress.
+    - Ensure accessible progress semantics.
+  - [ ] Tabs component <!-- created_at: 2026-07-24T08:34:00-04:00 priority: normal -->
+    - Create a tabbed content area using Builder components.
+    - Support programmatic tab selection.
+    - Support disabled tabs and optional icons.
+    - Expose explicit methods for selecting, enabling, disabling, adding, and removing tabs.
+    - Provide appropriate keyboard and ARIA behavior.
+    - Allow plugins to register or append tabs where the owning feature exposes an extension registry.
+  - [ ] Feed component <!-- created_at: 2026-07-24T08:35:00-04:00 priority: normal -->
+    - Create a social-feed-style component suitable for posts, notes, updates, and announcements.
+    - Include a built-in search filter.
+    - Support author information, timestamps, content, attachments, categories, and status.
+    - Support optional controls for edit, delete, archive, like, share, and comments.
+    - Controls must be individually configurable and expose explicit show/hide/toggle methods.
+    - Keep persistence and authorization outside the component.
+  - [ ] Timeline component <!-- created_at: 2026-07-24T08:36:00-04:00 priority: normal -->
+    - Create a timeline suitable for activity logs, history, events, and audit information.
+    - Support vertical and horizontal layouts.
+    - Include a built-in search filter.
+    - Include a category filter with a “Show all” option.
+    - Support categories, icons, timestamps, headings, descriptions, links, metadata, and semantic colors.
+    - Expose an explicit method for changing orientation.
+    - Consider optional TimeagoJS formatting when its asset plugin is available.
+  - [ ] Stepper component <!-- created_at: 2026-07-24T08:37:00-04:00 priority: normal -->
+    - Create a multi-step workflow/navigation component.
+    - Support vertical and horizontal layouts.
+    - Support current, complete, incomplete, disabled, and error states.
+    - Include configurable Previous and Next buttons.
+    - Expose explicit methods for showing, hiding, and toggling Previous and Next controls.
+    - Expose methods for navigating to the previous, next, or a specific step.
+    - Allow validation callbacks to prevent invalid step transitions.
+  - [ ] Modal component <!-- created_at: 2026-07-24T08:38:00-04:00 priority: normal -->
+    - Create a modal/dialog component implemented through Builder.
+    - Support semantic colors.
+    - Support multiple sizes.
+    - Support configurable header, body, footer, icon, title, and controls.
+    - Include options similar to Card where applicable, including close, collapse, fullscreen, and control-menu behavior when appropriate.
+    - Expose explicit `open()`, `close()`, and `toggle()` methods.
+    - Define focus trapping, Escape behavior, backdrop behavior, and ARIA semantics.
+    - Support displaying complete long-form values from Developer Tools.
+  - [ ] Collapsible component <!-- created_at: 2026-07-24T08:39:00-04:00 priority: normal -->
+    - Create a generic expandable/collapsible content region.
+    - Expose explicit `expand()`, `collapse()`, and `toggle()` methods.
+    - Support optional title, icon, initial state, and animation.
+    - Include accessible expanded-state semantics.
+  - [ ] OffCanvas component <!-- created_at: 2026-07-24T08:40:00-04:00 priority: normal -->
+    - Create a slide-in panel component.
+    - Support left, right, top, and bottom placement where practical.
+    - Support configurable size, semantic color, backdrop, header, body, footer, and close behavior.
+    - Expose explicit `open()`, `close()`, and `toggle()` methods.
+    - Define focus, keyboard, backdrop, and accessibility behavior.
+    - Must support the Developer Tools panel use case.
+  - [ ] Code Block component <!-- created_at: 2026-07-24T08:41:00-04:00 priority: normal -->
+    - Create a safe source-code display component.
+    - Support language, title, filename, line numbers, wrapping, copy action, and optional collapse.
+    - Integrate with PrismJS only when the PrismJS plugin is installed and enabled.
+    - Fall back to escaped plain-text rendering when PrismJS is unavailable.
+    - Support displaying Builder component examples on the Theme Preview page.
+  - [ ] Document Builder component conventions <!-- created_at: 2026-07-24T08:45:00-04:00 priority: normal -->
+    - Document component file placement and stylesheet import conventions.
+    - Document Builder registration provider and priority rules.
+    - Document configuration defaults, validation, rendering, refresh, mounting, and destruction behavior.
+    - Document explicit option/state method conventions.
+    - Document optional asset-plugin capability detection.
+    - Document safe text, sanitized HTML, trusted SVG, and accessibility requirements.
+    - Document how container components own sorting and persistence while child components expose handles.
 - [ ] Developer Tools Plugin <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
-  - First-party `dev` plugin for development-only Administration features.
-  - The plugin extends the Administration panel through its public menu, route, and renderer integration points.
+  - First-party `dev` plugin for development-only Administration and page-inspection features.
+  - The plugin extends the Administration panel through public menu, route, renderer, asset, and component integration points.
+  - The plugin must only expose development tooling when it is installed and enabled.
   - UI components must use the Builder runtime.
-  - Tags: feature, dev, admin, plugin, extensions, builder, v.1.0
-  - [ ] Create first-party Dev plugin foundation <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
-  - [ ] Developer Console (variable introspection) <!-- created_at: 2026-06-18T12:14:00-04:00 priority: normal -->
-  - [ ] Theme Preview (test against all UI components) <!-- created_at: 2026-06-18T12:15:00-04:00 priority: normal -->
+  - Developer Tools tab contributions must be extensible by other plugins.
+  - Tags: feature, dev, admin, plugin, extensions, builder, debugging, v.1.0
+  - [ ] Create first-party Dev plugin foundation <!-- created_at: 2026-07-22T07:00:00-04:00 priority: high -->
+    - Add plugin manifest, namespace, asset provider, renderer resources, and route provider.
+    - Register the plugin through normal extension discovery.
+    - Do not make the Dev plugin a mandatory Administration dependency.
+  - [ ] Add Developer Tools floating trigger <!-- created_at: 2026-07-24T09:00:00-04:00 priority: high -->
+    - Display a small fixed button on the right edge of the screen.
+    - Position it approximately `200px` from the top of the viewport.
+    - Show it only while the Dev plugin is enabled.
+    - The button opens the Developer Tools OffCanvas component.
+    - Provide an accessible label, keyboard focus, tooltip, and suitable icon.
+    - Avoid obstructing primary application controls on small viewports.
+  - [ ] Add Developer Tools OffCanvas shell <!-- created_at: 2026-07-24T09:01:00-04:00 priority: high -->
+    - Use the kernel OffCanvas Builder component when it becomes available.
+    - Provide sufficient width for debugging tables and source displays.
+    - Include a Tabs component for switching tools.
+    - Preserve the currently selected tab while the OffCanvas remains open.
+    - Define close, Escape, backdrop, focus, and responsive behavior.
+  - [ ] Create Developer Tools tab registry <!-- created_at: 2026-07-24T09:02:00-04:00 priority: high -->
+    - Allow the Dev plugin and other plugins to register tabs.
+    - Define tab ID, label, icon, Builder component, configuration, priority, provider, and registration order.
+    - Expose a hook such as `dev.tools.register`.
+    - Apply deterministic provider/priority/order resolution.
+  - [ ] Variable Inspector tab <!-- created_at: 2026-06-18T12:14:00-04:00 priority: high -->
+    - Display all renderer variables made available to the current page.
+    - Identify each variable’s scope:
+    - Render the inspector using the Builder Table component.
+    - Required columns:
+    - Include a built-in search filter.
+    - Mask sensitive values and credentials.
+    - Safely summarize arrays, objects, resources, binary data, and long strings.
+    - Do not invoke unsafe object methods during inspection.
+    - Provide a way to inspect nested values.
+    - Preserve deterministic handling when the same variable name exists in multiple scopes.
+  - [ ] Add full-value inspection modal <!-- created_at: 2026-07-24T09:04:00-04:00 priority: normal -->
+    - Add a “Show more” action for truncated or complex values.
+    - Open the complete value in a Builder Modal component.
+    - Use a Code Block component for textual or serialized content where appropriate.
+    - Allow scrolling, copying, and safe wrapping.
+    - Continue masking sensitive values in the complete view.
+    - Prevent active HTML or executable content from being rendered.
+  - [ ] Scaffold Generator tab <!-- created_at: 2026-07-24T09:05:00-04:00 priority: normal -->
+    - Provide an extensible scaffold-generation interface.
+    - Initial targets may include plugins, themes, routes, commands, migrations, providers, and Builder components.
+    - Present generated file plans before writing.
+    - Require explicit confirmation before creating or replacing files.
+    - Reuse established Core-Web naming and directory conventions.
+    - Define whether generation is performed directly, through CLI commands, or through a shared scaffold service.
+  - [ ] Add Theme Preview shortcut <!-- created_at: 2026-07-24T09:06:00-04:00 priority: normal -->
+    - Provide a link or action inside Developer Tools that opens the Theme Preview page.
+    - The shortcut may appear in a dedicated tab, in the OffCanvas header/footer, or in an extensible tools-navigation area.
+    - Avoid embedding the entire Theme Preview page inside the OffCanvas.
+  - [ ] Theme Preview page <!-- created_at: 2026-06-18T12:15:00-04:00 priority: normal -->
+    - Create a dedicated Dev plugin route and Administration menu entry.
+    - Render representative examples of every built-in Builder component.
+    - Use Builder itself to create the component demonstrations.
+    - Organize components by category.
+    - Include light and dark theme validation.
+    - Include interactive state and option controls where practical.
+    - Include examples for empty, normal, long-content, error, disabled, collapsed, fullscreen, and responsive states.
+    - Display the source code required to create each example.
+    - Use the Code Block component for source display.
+    - Use PrismJS syntax highlighting only when the PrismJS plugin is enabled.
+    - Fall back to escaped plain source when PrismJS is unavailable.
+    - Include component configuration and public-method documentation.
+    - Allow plugins to contribute previews for their own Builder components.
+  - [ ] Define Builder component preview registry <!-- created_at: 2026-07-24T09:08:00-04:00 priority: normal -->
+    - Allow the kernel, application, and plugins to register component preview examples.
+    - Define component slug, category, title, description, configurations, source examples, priority, and provider.
+    - Use deterministic resolution and ordering.
+    - Allow more than one example state per component.
+  - [ ] Restrict Developer Tools to safe development contexts <!-- created_at: 2026-07-24T09:09:00-04:00 priority: high -->
+    - Define configuration or mode rules controlling when Dev tools may render.
+    - Avoid exposing debugging values in production by default.
+    - Prepare the plugin for V2 authorization checks.
+    - Ensure disabled Dev tooling contributes no trigger, assets, routes, or rendered values.
   - [ ] Document Dev plugin extension conventions <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
+    - Document Developer Tools tab registration.
+    - Document Theme Preview example registration.
+    - Document variable masking and safe inspection rules.
+    - Document scaffold-provider integration.
+    - Document asset and Builder component requirements.
+    - Document development-mode and future authorization expectations.
 
 ## Done
-- [x] Presentation Layer <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-20T14:31:32-04:00 priority: normal -->
-  - Centralize renderer runtime settings so applications can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
-  - Tags: framework, ui, renderer, config
-  - [x] Builder Component Library <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T14:31:31-04:00 priority: normal -->
-    - JavaScript component runtime for registering, creating, configuring,
-    - Supports kernel, application, and plugin component providers.
-    - Tags: feature, ui, components, javascript, builder, extensions
-    - [x] Implement Builder component registry and factory <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:20:56-04:00 priority: normal -->
-    - [x] Implement base Component class and lifecycle <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:21:09-04:00 priority: normal -->
-    - [x] Implement generated component identity and instance registry <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:21:10-04:00 priority: normal -->
-    - [x] Implement component configuration API <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:21:15-04:00 priority: normal -->
-    - [x] Implement DOM mounting and replacement APIs <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:21:18-04:00 priority: normal -->
-    - [x] Implement declarative component tag conversion <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:21:21-04:00 priority: normal -->
-    - [x] Observe dynamically inserted component tags <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:21:25-04:00 priority: normal -->
-    - [x] Implement safe HTML/text rendering utilities <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:44:15-04:00 priority: normal -->
-    - [x] Add provider metadata and deterministic override rules <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:21:30-04:00 priority: normal -->
-    - [x] Implement reference Card component <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T13:48:59-04:00 priority: normal -->
-    - [x] Document Builder component development conventions <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T14:31:29-04:00 priority: normal -->
-  - [x] Scoped Asset Registration and Canonical Delivery <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T13:06:53-04:00 priority: high -->
-    - Standardize asset ownership, registry identity, URL generation, and delivery around type, scope, and filename while preserving absolute-path serving and deterministic load order.
-    - Tags: framework, renderer, assets, registry, router, extensions, migration, v.1.0
-    - [x] Define scoped asset identity as type + scope + filename <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-14T21:13:05-04:00 priority: high -->
-      - Preserve provider as separate precedence metadata and preserve the resolved absolute physical path independently from the public asset identity.
-    - [x] Replace flat asset registration with scoped registration API <!-- created_at: 2026-07-14T15:46:24-04:00 completed_at: 2026-07-14T21:13:22-04:00 priority: normal -->
-      - Replace the current name-based CSS/JS registration model with the canonical type + scope + filename model. No legacy flat-name compatibility layer is required because the current asset subsystem has not yet been released as a supported public API.
-    - [x] Add canonical scoped asset URL generation <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T07:49:30-04:00 priority: high -->
-      - Generate kernel, application, theme, and plugin URLs using the documented canonical patterns.
-    - [x] Add canonical scoped asset delivery routes <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T07:49:35-04:00 priority: high -->
-      - Serve only registry-resolved absolute files and reject unregistered or malformed paths.
-    - [x] Add kernel and application conventional asset registration <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-14T21:13:30-04:00 priority: normal -->
-      - Resolve LESS before CSS for styles and register conventional kernel.js and app.js assets when readable.
-    - [x] Add scoped asset registry and router regression tests <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T11:34:24-04:00 priority: high -->
-      - Cover coexistence, lookup, ordering, URL generation, routing, content types, malformed requests, and traversal rejection.
-    - [x] Migrate enabled themes to scoped asset registration <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T07:49:45-04:00 priority: normal -->
-    - [x] Migrate enabled plugins to scoped asset registration <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T07:49:47-04:00 priority: high -->
-      - Review and migrate every existing asset provider, including jQuery, Bootstrap, JSZip, pdfmake, DataTables, Hello World, and other enabled plugins.
-    - [x] Add explicit default asset alias support <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T07:49:55-04:00 priority: normal -->
-      - Allow an extension-level shorthand URL only when exactly one asset is explicitly marked as the default for that type.
-    - [x] Remove flat asset URL and lookup behavior <!-- created_at: 2026-07-14T15:46:24-04:00 completed_at: 2026-07-16T07:49:54-04:00 priority: normal -->
-      - Remove the existing `/{type}/{name}` asset identity and delivery behavior after canonical scoped routing is implemented and all first-party asset providers are migrated.
-    - [x] Update asset architecture and extension documentation <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T13:06:49-04:00 priority: normal -->
-  - [x] Configure default rendering engine through Config <!-- created_at: 2026-06-23T00:00:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 priority: normal -->
-    - Implemented via renderer.default with metadata first, file extension fallback second, configured default third, and php fallback last.
-  - [x] Configure Latte cache path through Config <!-- created_at: 2026-06-23T00:00:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 priority: normal -->
-    - Implemented via renderer.latte.cache_path. Empty value preserves default storage/cache/renderer/latte behavior; relative paths resolve against app_root.
-  - [x] Configure Latte strict mode / debug mode <!-- created_at: 2026-06-23T00:00:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 priority: normal -->
-    - Implemented via renderer.latte.strict_mode and renderer.latte.debug_mode. strict_mode is applied to supported Latte strict APIs; debug_mode is reserved/documented because the installed Latte Engine exposes no direct debug API.
-  - [x] Allow application-level engine registration overrides <!-- created_at: 2026-06-23T00:00:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 priority: normal -->
-    - Implemented via renderer.engine.register hook after built-in php and latte engines are registered. Hook listeners receive the engine registry and may call register() or replace().
-  - [x] LESS / CSS Asset Pipeline <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-10T21:30:00-04:00 priority: high -->
-    - Compile kernel, application, enabled theme, and enabled plugin LESS/CSS assets into a generated stylesheet served by the framework.
-    - Tags: framework, renderer, assets, less, css
-    - [x] Add `wikimedia/less.php` dependency for LESS compilation <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:42-04:00 priority: high -->
-    - [x] Implement static `/css` route for generated stylesheet output <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:18-04:00 priority: high -->
-      - Route should serve compiled CSS generated from kernel assets, application assets, the enabled theme, and all enabled plugins.
-    - [x] Compile kernel + application + enabled extension styles in deterministic order <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-10T21:30:00-04:00 priority: high -->
-      - Order should be explicit and documented: kernel first, application overrides second, enabled theme next, enabled plugins last unless a stronger precedence rule is defined later.
-    - [x] Cache compiled CSS under `/storage/cache/renderer/less/` <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:28-04:00 priority: normal -->
-      - Cache should avoid recompilation in production when source files are unchanged.
-    - [x] Recompile LESS on every request when debug mode is enabled <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:32-04:00 priority: normal -->
-      - Debug mode should bypass the cached compiled CSS so developers immediately see style changes.
-    - [x] Document asset discovery and cache invalidation behavior <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-10T21:30:00-04:00 priority: normal -->
-  - [x] Dedicated Frontend Asset Plugins <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T20:16:16-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
-    - Move common frontend vendor assets out of the kernel and into dedicated first-party plugins so Bootstrap, Bootstrap Icons, DataTables, jQuery, and Chart.js can be installed, enabled, disabled, versioned, and overridden through the extension system.
-    - Tags: framework, extensions, assets, frontend, bootstrap, datatables, jquery, chartjs, v.1.0
-    - [x] Create jQuery plugin for jQuery asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T07:51:14-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Plugin should expose jQuery as an optional dependency for plugins that still require it without forcing it into the kernel baseline.
-    - [x] Define frontend asset dependency rules between plugins <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-14T15:46:32-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
-      - Support deterministic load order and dependency declarations such as DataTables depending on jQuery and optional Bootstrap integration depending on the Bootstrap plugin.
-    - [x] Document frontend asset plugin conventions <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-13T13:13:53-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Document plugin manifest asset declarations, dependency examples, load order, override behavior, and how application layouts request assets from enabled plugins.
-    - [x] Create Bootstrap plugin for Bootstrap CSS/JS asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T07:51:36-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
-      - Plugin should provide Bootstrap assets through the framework asset pipeline instead of hardcoded kernel/layout references.
-    - [x] Include Bootstrap Icons support in the Bootstrap plugin <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T07:51:37-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
-      - Bootstrap Icons should be bundled or registered by the Bootstrap plugin so icon availability follows the plugin lifecycle.
-    - [x] Create JSZip plugin for JSZip asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T07:51:39-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Plugin should register JSZip assets for use by other plugins (e.g., DataTables export) without hardcoding JSZip into core layouts.
-    - [x] Create pdfmake plugin for pdfmake asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T07:51:40-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Plugin should register pdfmake assets for use by other plugins (e.g., DataTables export) without hardcoding pdfmake into core layouts.
-    - [x] Create DataTables plugin for DataTables asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T16:02:05-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Plugin should register DataTables CSS/JS assets and document its dependency on jQuery and any Bootstrap integration assets.
-      - [x] Add datatables-buttons to the datatables plugin <!-- created_at: 2026-07-13T12:33:25-04:00 completed_at: 2026-07-16T07:51:49-04:00 priority: normal -->
-      - [x] Add datatables-columncontrol to the datatables plugin <!-- created_at: 2026-07-13T12:33:35-04:00 completed_at: 2026-07-16T14:30:00-04:00 priority: normal -->
-      - [x] Add datatables-responsive to the datatables plugin <!-- created_at: 2026-07-13T12:33:42-04:00 completed_at: 2026-07-16T07:51:53-04:00 priority: normal -->
-      - [x] Add datatables-rowgroup to the datatables plugin <!-- created_at: 2026-07-13T12:33:50-04:00 completed_at: 2026-07-16T18:30:00-04:00 priority: normal -->
-      - [x] Add datatables-scroller to the datatables plugin <!-- created_at: 2026-07-13T12:33:55-04:00 completed_at: 2026-07-16T19:00:00-04:00 priority: normal -->
-      - [x] Add datatables-select to the datatables plugin <!-- created_at: 2026-07-13T12:34:01-04:00 completed_at: 2026-07-16T07:51:56-04:00 priority: normal -->
-      - [x] Add datatables-staterestore to the datatables plugin <!-- created_at: 2026-07-13T12:34:12-04:00 completed_at: 2026-07-16T19:30:00-04:00 priority: normal -->
-    - [x] Create Chart.js plugin for Chart.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T20:35:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Plugin should register Chart.js assets for dashboards, reporting, and visualization features without hardcoding Chart.js into core layouts.
-    - [x] Create Select2.js plugin for Select2.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T21:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-      - Plugin should register Select2.js assets for enhanced select boxes without hardcoding Select2.js into core layouts.

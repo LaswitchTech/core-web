@@ -94,12 +94,31 @@ class Bootstrap
      /  Boot Chain                                                          */
     /* ------------------------------------------------------------------ */
 
+    private function initConfigManager(): ConfigManager {
+        // Create the writable config manager from resolved paths.
+        // Uses empty list when no paths exist (bootstrap-time read-only).
+        return $this->configPaths === []
+            ? new ConfigManager()
+            : ConfigManager::loadPaths($this->configPaths);
+    }
+
     private function run(): void
     {
         try {
             $this->initConfig();
             $this->initContainer();
             $c = static::$instance;
+
+            // ── writable config manager (singleton) ────────────────
+            $manager      = $this->initConfigManager();
+            $configPaths  = Config::get('core-web.config-paths', []);
+            if (\is_array($configPaths) && $configPaths !== []) {
+                $manager->setConfigPaths($configPaths);
+            }
+
+            $c->registerSingleton('config_manager', fn () => $manager);
+            $c = static::$instance;
+
             $this->registerCoreServices($c);
             $this->registerLoggerServices($c);
             $this->registerDbServices($c);

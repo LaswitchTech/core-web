@@ -1,6 +1,98 @@
 # Archives
 
 ## Archive
+- [x] Presentation Layer <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-20T14:31:32-04:00 priority: normal -->
+  - Centralize renderer runtime settings so applications can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
+  - Tags: framework, ui, renderer, config
+  - [x] Builder Component Library <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T14:31:31-04:00 priority: normal -->
+    - JavaScript component runtime for registering, creating, configuring,
+    - Supports kernel, application, and plugin component providers.
+    - Tags: feature, ui, components, javascript, builder, extensions
+    - [x] Implement Builder component registry and factory <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:20:56-04:00 priority: normal -->
+    - [x] Implement base Component class and lifecycle <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:21:09-04:00 priority: normal -->
+    - [x] Implement generated component identity and instance registry <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:21:10-04:00 priority: normal -->
+    - [x] Implement component configuration API <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:21:15-04:00 priority: normal -->
+    - [x] Implement DOM mounting and replacement APIs <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:21:18-04:00 priority: normal -->
+    - [x] Implement declarative component tag conversion <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:21:21-04:00 priority: normal -->
+    - [x] Observe dynamically inserted component tags <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:21:25-04:00 priority: normal -->
+    - [x] Implement safe HTML/text rendering utilities <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:44:15-04:00 priority: normal -->
+    - [x] Add provider metadata and deterministic override rules <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T09:21:30-04:00 priority: normal -->
+    - [x] Implement reference Card component <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T13:48:59-04:00 priority: normal -->
+    - [x] Document Builder component development conventions <!-- created_at: 2026-06-18T11:40:00-04:00 completed_at: 2026-07-20T14:31:29-04:00 priority: normal -->
+  - [x] Scoped Asset Registration and Canonical Delivery <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T13:06:53-04:00 priority: high -->
+    - Standardize asset ownership, registry identity, URL generation, and delivery around type, scope, and filename while preserving absolute-path serving and deterministic load order.
+    - Tags: framework, renderer, assets, registry, router, extensions, migration, v.1.0
+    - [x] Define scoped asset identity as type + scope + filename <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-14T21:13:05-04:00 priority: high -->
+      - Preserve provider as separate precedence metadata and preserve the resolved absolute physical path independently from the public asset identity.
+    - [x] Replace flat asset registration with scoped registration API <!-- created_at: 2026-07-14T15:46:24-04:00 completed_at: 2026-07-14T21:13:22-04:00 priority: normal -->
+      - Replace the current name-based CSS/JS registration model with the canonical type + scope + filename model. No legacy flat-name compatibility layer is required because the current asset subsystem has not yet been released as a supported public API.
+    - [x] Add canonical scoped asset URL generation <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T07:49:30-04:00 priority: high -->
+      - Generate kernel, application, theme, and plugin URLs using the documented canonical patterns.
+    - [x] Add canonical scoped asset delivery routes <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T07:49:35-04:00 priority: high -->
+      - Serve only registry-resolved absolute files and reject unregistered or malformed paths.
+    - [x] Add kernel and application conventional asset registration <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-14T21:13:30-04:00 priority: normal -->
+      - Resolve LESS before CSS for styles and register conventional kernel.js and app.js assets when readable.
+    - [x] Add scoped asset registry and router regression tests <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T11:34:24-04:00 priority: high -->
+      - Cover coexistence, lookup, ordering, URL generation, routing, content types, malformed requests, and traversal rejection.
+    - [x] Migrate enabled themes to scoped asset registration <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T07:49:45-04:00 priority: normal -->
+    - [x] Migrate enabled plugins to scoped asset registration <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T07:49:47-04:00 priority: high -->
+      - Review and migrate every existing asset provider, including jQuery, Bootstrap, JSZip, pdfmake, DataTables, Hello World, and other enabled plugins.
+    - [x] Add explicit default asset alias support <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T07:49:55-04:00 priority: normal -->
+      - Allow an extension-level shorthand URL only when exactly one asset is explicitly marked as the default for that type.
+    - [x] Remove flat asset URL and lookup behavior <!-- created_at: 2026-07-14T15:46:24-04:00 completed_at: 2026-07-16T07:49:54-04:00 priority: normal -->
+      - Remove the existing `/{type}/{name}` asset identity and delivery behavior after canonical scoped routing is implemented and all first-party asset providers are migrated.
+    - [x] Update asset architecture and extension documentation <!-- created_at: CURRENT_TIMESTAMP completed_at: 2026-07-16T13:06:49-04:00 priority: normal -->
+  - [x] Configure default rendering engine through Config <!-- created_at: 2026-06-23T00:00:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 priority: normal -->
+    - Implemented via renderer.default with metadata first, file extension fallback second, configured default third, and php fallback last.
+  - [x] Configure Latte cache path through Config <!-- created_at: 2026-06-23T00:00:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 priority: normal -->
+    - Implemented via renderer.latte.cache_path. Empty value preserves default storage/cache/renderer/latte behavior; relative paths resolve against app_root.
+  - [x] Configure Latte strict mode / debug mode <!-- created_at: 2026-06-23T00:00:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 priority: normal -->
+    - Implemented via renderer.latte.strict_mode and renderer.latte.debug_mode. strict_mode is applied to supported Latte strict APIs; debug_mode is reserved/documented because the installed Latte Engine exposes no direct debug API.
+  - [x] Allow application-level engine registration overrides <!-- created_at: 2026-06-23T00:00:00-04:00 completed_at: 2026-07-09T00:00:00-04:00 priority: normal -->
+    - Implemented via renderer.engine.register hook after built-in php and latte engines are registered. Hook listeners receive the engine registry and may call register() or replace().
+  - [x] LESS / CSS Asset Pipeline <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-10T21:30:00-04:00 priority: high -->
+    - Compile kernel, application, enabled theme, and enabled plugin LESS/CSS assets into a generated stylesheet served by the framework.
+    - Tags: framework, renderer, assets, less, css
+    - [x] Add `wikimedia/less.php` dependency for LESS compilation <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:42-04:00 priority: high -->
+    - [x] Implement static `/css` route for generated stylesheet output <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:18-04:00 priority: high -->
+      - Route should serve compiled CSS generated from kernel assets, application assets, the enabled theme, and all enabled plugins.
+    - [x] Compile kernel + application + enabled extension styles in deterministic order <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-10T21:30:00-04:00 priority: high -->
+      - Order should be explicit and documented: kernel first, application overrides second, enabled theme next, enabled plugins last unless a stronger precedence rule is defined later.
+    - [x] Cache compiled CSS under `/storage/cache/renderer/less/` <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:28-04:00 priority: normal -->
+      - Cache should avoid recompilation in production when source files are unchanged.
+    - [x] Recompile LESS on every request when debug mode is enabled <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-09T21:24:32-04:00 priority: normal -->
+      - Debug mode should bypass the cached compiled CSS so developers immediately see style changes.
+    - [x] Document asset discovery and cache invalidation behavior <!-- created_at: 2026-06-24T00:00:00-04:00 completed_at: 2026-07-10T21:30:00-04:00 priority: normal -->
+  - [x] Dedicated Frontend Asset Plugins <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T20:16:16-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+    - Move common frontend vendor assets out of the kernel and into dedicated first-party plugins so Bootstrap, Bootstrap Icons, DataTables, jQuery, and Chart.js can be installed, enabled, disabled, versioned, and overridden through the extension system.
+    - Tags: framework, extensions, assets, frontend, bootstrap, datatables, jquery, chartjs, v.1.0
+    - [x] Create jQuery plugin for jQuery asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T07:51:14-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Plugin should expose jQuery as an optional dependency for plugins that still require it without forcing it into the kernel baseline.
+    - [x] Define frontend asset dependency rules between plugins <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-14T15:46:32-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+      - Support deterministic load order and dependency declarations such as DataTables depending on jQuery and optional Bootstrap integration depending on the Bootstrap plugin.
+    - [x] Document frontend asset plugin conventions <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-13T13:13:53-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Document plugin manifest asset declarations, dependency examples, load order, override behavior, and how application layouts request assets from enabled plugins.
+    - [x] Create Bootstrap plugin for Bootstrap CSS/JS asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T07:51:36-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+      - Plugin should provide Bootstrap assets through the framework asset pipeline instead of hardcoded kernel/layout references.
+    - [x] Include Bootstrap Icons support in the Bootstrap plugin <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T07:51:37-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+      - Bootstrap Icons should be bundled or registered by the Bootstrap plugin so icon availability follows the plugin lifecycle.
+    - [x] Create JSZip plugin for JSZip asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T07:51:39-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Plugin should register JSZip assets for use by other plugins (e.g., DataTables export) without hardcoding JSZip into core layouts.
+    - [x] Create pdfmake plugin for pdfmake asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T07:51:40-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Plugin should register pdfmake assets for use by other plugins (e.g., DataTables export) without hardcoding pdfmake into core layouts.
+    - [x] Create DataTables plugin for DataTables asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T16:02:05-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Plugin should register DataTables CSS/JS assets and document its dependency on jQuery and any Bootstrap integration assets.
+      - [x] Add datatables-buttons to the datatables plugin <!-- created_at: 2026-07-13T12:33:25-04:00 completed_at: 2026-07-16T07:51:49-04:00 priority: normal -->
+      - [x] Add datatables-columncontrol to the datatables plugin <!-- created_at: 2026-07-13T12:33:35-04:00 completed_at: 2026-07-16T14:30:00-04:00 priority: normal -->
+      - [x] Add datatables-responsive to the datatables plugin <!-- created_at: 2026-07-13T12:33:42-04:00 completed_at: 2026-07-16T07:51:53-04:00 priority: normal -->
+      - [x] Add datatables-rowgroup to the datatables plugin <!-- created_at: 2026-07-13T12:33:50-04:00 completed_at: 2026-07-16T18:30:00-04:00 priority: normal -->
+      - [x] Add datatables-scroller to the datatables plugin <!-- created_at: 2026-07-13T12:33:55-04:00 completed_at: 2026-07-16T19:00:00-04:00 priority: normal -->
+      - [x] Add datatables-select to the datatables plugin <!-- created_at: 2026-07-13T12:34:01-04:00 completed_at: 2026-07-16T07:51:56-04:00 priority: normal -->
+      - [x] Add datatables-staterestore to the datatables plugin <!-- created_at: 2026-07-13T12:34:12-04:00 completed_at: 2026-07-16T19:30:00-04:00 priority: normal -->
+    - [x] Create Chart.js plugin for Chart.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T20:35:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Plugin should register Chart.js assets for dashboards, reporting, and visualization features without hardcoding Chart.js into core layouts.
+    - [x] Create Select2.js plugin for Select2.js asset registration <!-- created_at: 2026-07-01T00:00:00-04:00 completed_at: 2026-07-16T21:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+      - Plugin should register Select2.js assets for enhanced select boxes without hardcoding Select2.js into core layouts.
 - [x] Testing & Verification <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-09T12:40:06-04:00 priority: normal -->
   - Tags: testing
   - [x] Full cross-platform routing validation <!-- created_at: 2026-06-18T13:00:00-04:00 completed_at: 2026-07-09T12:40:05-04:00 priority: high -->

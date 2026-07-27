@@ -45,5 +45,18 @@ final class AssetProvider
                 [],
             );
         }
+
+        $settingsJsPath = $pluginRoot . '/Assets/js/settings.js';
+
+        if (is_file($settingsJsPath)) {
+            $context['registry']->js(
+                'plugins/administration',
+                'settings.js',
+                $settingsJsPath,
+                Entry::PROVIDER_PLUGIN,
+                400,
+                [],
+            );
+        }
     }
 }

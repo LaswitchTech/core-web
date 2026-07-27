@@ -36,5 +36,14 @@ final class RendererProvider
             0,
             [],
         );
+
+        $registry->add(
+            'admin.settings',
+            Entry::TYPE_VIEW,
+            $pluginRoot . '/views/settings.php',
+            Entry::PROVIDER_PLUGIN,
+            0,
+            [],
+        );
     }
 }

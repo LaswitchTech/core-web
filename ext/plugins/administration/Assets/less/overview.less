@@ -7,10 +7,26 @@
     gap: 1rem;
 }
 
-.admin-overview-widget-value {
-    display: block;
-    color: var(--app-body-color);
-    font-size: 1.75rem;
-    font-weight: 700;
-    line-height: 1.2;
+.admin-overview-entry {
+    min-width: 0;
+}
+
+.admin-overview-columns-2 {
+    grid-column: span 2;
+}
+
+.admin-overview-columns-3 {
+    grid-column: span 3;
+}
+
+.admin-overview-columns-4 {
+    grid-column: span 4;
+}
+
+@media (max-width: 767px) {
+    .admin-overview-columns-2,
+    .admin-overview-columns-3,
+    .admin-overview-columns-4 {
+        grid-column: span 1;
+    }
 }

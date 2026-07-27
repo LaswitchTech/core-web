@@ -7,17 +7,24 @@
         );
     }
 
-    function normalizeWidgets(value) {
+    function normalizeEntries(value) {
         if (!Array.isArray(value)) {
             return [];
         }
 
-        return value.filter(function (widget) {
-            return widget !== null
-                && typeof widget === "object"
-                && typeof widget.title === "string"
-                && typeof widget.value === "string"
-                && typeof widget.footer === "string";
+        return value.filter(function (entry) {
+            return entry !== null
+                && typeof entry === "object"
+                && typeof entry.id === "string"
+                && entry.id !== ""
+                && typeof entry.component === "string"
+                && entry.component !== ""
+                && entry.config !== null
+                && typeof entry.config === "object"
+                && !Array.isArray(entry.config)
+                && Number.isSafeInteger(entry.columns)
+                && entry.columns >= 1
+                && entry.columns <= 4;
         });
     }
 
@@ -30,30 +37,45 @@
             return;
         }
 
-        let widgets = [];
+        let entries = [];
 
         try {
-            widgets = normalizeWidgets(
+            entries = normalizeEntries(
                 JSON.parse(
-                    mount.dataset.overviewWidgets || "[]"
+                    mount.dataset.overviewEntries || "[]"
                 )
             );
         } catch (_error) {
-            widgets = [];
+            entries = [];
         }
 
-        widgets.forEach(function (widget) {
-            global.Builder.create(
-                "card",
-                {
-                    title: widget.title,
-                    content: '<strong class="admin-overview-widget-value">'
-                        + widget.value
-                        + "</strong>",
-                    footer: widget.footer,
-                }
-            ).appendTo(mount);
+        entries.forEach(function (entry) {
+            if (!global.Builder.has(entry.component)) {
+                return;
+            }
+
+            const component = global.Builder.create(
+                entry.component,
+                entry.config
+            );
+
+            const element = component.element();
+
+            if (element instanceof Element) {
+                element.classList.add(
+                    "admin-overview-entry",
+                    "admin-overview-columns-" + entry.columns
+                );
+
+                element.setAttribute(
+                    "data-overview-entry",
+                    entry.id
+                );
+            }
+
+            component.appendTo(mount);
         });
+
     }
 
     if (document.readyState === "loading") {
