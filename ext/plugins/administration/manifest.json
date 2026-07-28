@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "description": "First-party extensible administration panel for Core-Web.",
     "kernel-compat": "^1.0",
-    "locked": true,
+    "locked": false,
     "depends": [],
     "autoload": {
         "psr-4": {

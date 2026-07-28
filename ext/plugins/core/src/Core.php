@@ -747,8 +747,8 @@ SQL;
             return Response::text("Error: Extension '{$selector}' is not installed.\n", 400);
         }
 
-        // For existing code paths below we need 'name' to hold the manifest name.
-        $name = $lookup;
+        // Lifecycle state uses the canonical extension slug.
+        $name = (string) ($found['slug'] ?? $slug);
 
         // Locked protection: extension lifecycle state (enable/disable) is blocked while locked.
         if (!empty($found['locked'])) {
@@ -776,8 +776,11 @@ SQL;
             $enabledPlugins = [];
             $enabledThemes  = [];
             foreach ((array)$seedIndex as $_n => $entry) {
-                if (($entry['type'] ?? '') === 'plugin') { $enabledPlugins[] = $_n; }
-                elseif (($entry['type'] ?? '') === 'theme') { $enabledThemes[]  = $_n; }
+                if (($entry['type'] ?? '') === 'plugin') {
+                    $enabledPlugins[] = (string) ($entry['slug'] ?? '');
+                } elseif (($entry['type'] ?? '') === 'theme') {
+                    $enabledThemes[] = (string) ($entry['slug'] ?? '');
+                }
             }
 
             $payload  = [
@@ -794,6 +797,7 @@ SQL;
             'enabled' => ['plugins' => [], 'themes' => []],
             'pending' => [],
         ];
+        $state = self::normalizeLifecycleState($state);
 
         // ——— 6. Already disabled?                                              ————————
         if (!in_array($name, (array)($state['enabled'][$typeState] ?? []), true)) {
@@ -816,6 +820,8 @@ SQL;
             'name'   => $name,
             'source' => 'CLI',
         ];
+
+        $state = self::normalizeLifecycleState($state);
 
         file_put_contents($statePath, json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
@@ -1027,8 +1033,8 @@ SQL;
             return Response::text("Error: Extension '{$selector}' is not installed.\n", 400);
         }
 
-        // Ensure 'name' holds the manifest name for downstream code paths.
-        $name = $lookup;
+        // Lifecycle state uses the canonical extension slug.
+        $name = (string) ($found['slug'] ?? $slug);
 
         // Locked protection: extension cannot be enabled or disabled while locked.
         if (($found['locked'] ?? false) === true) {
@@ -1056,9 +1062,9 @@ SQL;
 
             foreach ((array) $allIndex as $_n => $entry) {
                 if (($entry['type'] ?? '') === 'plugin') {
-                    $enabledPlugins[] = $_n;
+                    $enabledPlugins[] = (string) ($entry['slug'] ?? '');
                 } elseif (($entry['type'] ?? '') === 'theme') {
-                    $enabledThemes[]  = $_n;
+                    $enabledThemes[] = (string) ($entry['slug'] ?? '');
                 }
             }
 
@@ -1077,7 +1083,7 @@ SQL;
             'enabled' => ['plugins' => [], 'themes' => []],
             'pending' => [],
         ];
-
+        $state = self::normalizeLifecycleState($state);
         // 7. Already enabled?
         if (in_array($name, (array)($state['enabled'][$typeState] ?? []), true)) {
             return Response::text("Already enabled: {$selector}\n");
@@ -1114,6 +1120,8 @@ SQL;
             'source' => 'CLI',
         ];
 
+        $state = self::normalizeLifecycleState($state);
+
         file_put_contents($statePath, json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         // 10. Output confirmation.
@@ -1127,6 +1135,47 @@ SQL;
         $slug = strtolower($slug);                           // lowercase
         $slug = preg_replace('/[^a-z0-9\-]/', '', $slug);   // strip non-alphanumeric except dash
         return rtrim($slug, '-');                             // trim trailing dashes
+    }
+
+    /** Normalize legacy or canonical extension lifecycle state. */
+    private static function normalizeLifecycleState(array $state): array
+    {
+        if (
+            !isset($state['enabled'])
+            && isset($state['plugins'])
+            && is_array($state['plugins'])
+            && isset($state['themes'])
+            && is_array($state['themes'])
+        ) {
+            $state = [
+                'enabled' => [
+                    'plugins' => $state['plugins'],
+                    'themes' => $state['themes'],
+                ],
+                'pending' => [],
+            ];
+        }
+
+        $state['enabled'] ??= [];
+        $state['enabled']['plugins'] ??= [];
+        $state['enabled']['themes'] ??= [];
+        $state['pending'] ??= [];
+
+        return [
+            'enabled' => [
+                'plugins' => array_values(array_unique(array_filter(
+                    $state['enabled']['plugins'],
+                    'is_string',
+                ))),
+                'themes' => array_values(array_unique(array_filter(
+                    $state['enabled']['themes'],
+                    'is_string',
+                ))),
+            ],
+            'pending' => is_array($state['pending'])
+                ? array_values($state['pending'])
+                : [],
+        ];
     }
 
     /** Pluralise an extension type for state-file key lookup.                  */

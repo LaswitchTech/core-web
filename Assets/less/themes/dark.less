@@ -1,44 +1,198 @@
 // ============================================================
-// Core-Web — Dark theme token definitions
-// Applied to [data-app-theme="dark"] (opt-in override).
-// Only tokens that differ from light theme need to be listed.
+// Core-Web — Dark theme
+// Overrides theme-sensitive LESS variables and their matching
+// CSS custom properties when [data-app-theme="dark"] is active.
 // ============================================================
 
 [data-app-theme="dark"] {
-    // Background layers
-    --app-body-bg:          #0f1115;
-    --app-panel:            #171a21;
-    --app-panel-2:          #1e2434;   // card headers — cool blue-tinted, clearly distinct from panel
-    --app-panel-3:          #252c3e;   // code blocks, disabled fields, deepest accent
-    --app-input-bg:         #11151b;
-    --app-secondary-bg:     #1e2434;
-    --app-tertiary-bg:      #252c3e;
+
+    // Colors
+    @app-primary:                       #6ea8fe;
+    @app-primary-border:                #084298;
+    @app-primary-subtle:                #031633;
+    @app-primary-emphasis:              #6ea8fe;
+
+    @app-secondary:                     #a7acb1;
+    @app-secondary-border:              #41464b;
+    @app-secondary-subtle:              #161719;
+    @app-secondary-emphasis:            #a7acb1;
+
+    @app-success:                       #75b798;
+    @app-success-border:                #0f5132;
+    @app-success-subtle:                #051b11;
+    @app-success-emphasis:              #75b798;
+
+    @app-danger:                        #ea868f;
+    @app-danger-border:                 #842029;
+    @app-danger-subtle:                 #2c0b0e;
+    @app-danger-emphasis:               #ea868f;
+
+    @app-warning:                       #ffda6a;
+    @app-warning-border:                #997404;
+    @app-warning-subtle:                #332701;
+    @app-warning-emphasis:              #ffda6a;
+
+    @app-info:                          #6edff6;
+    @app-info-border:                   #087990;
+    @app-info-subtle:                   #032830;
+    @app-info-emphasis:                 #6edff6;
+
+    @app-light:                         @app-gray-400;
+    @app-light-border:                  @app-gray-700;
+    @app-light-subtle:                  @app-gray-800;
+    @app-light-emphasis:                @app-gray-100;
+
+    @app-dark:                          @app-gray-900;
+    @app-dark-border:                   @app-gray-700;
+    @app-dark-subtle:                   #1a1d20;
+    @app-dark-emphasis:                 @app-gray-300;
+
+    --app-primary:                      @app-primary;
+    --app-primary-border:               @app-primary-border;
+    --app-primary-subtle:               @app-primary-subtle;
+    --app-primary-emphasis:             @app-primary-emphasis;
+
+    --app-secondary:                    @app-secondary;
+    --app-secondary-border:             @app-secondary-border;
+    --app-secondary-subtle:             @app-secondary-subtle;
+    --app-secondary-emphasis:           @app-secondary-emphasis;
+
+    --app-success:                      @app-success;
+    --app-success-border:               @app-success-border;
+    --app-success-subtle:               @app-success-subtle;
+    --app-success-emphasis:             @app-success-emphasis;
+
+    --app-danger:                       @app-danger;
+    --app-danger-border:                @app-danger-border;
+    --app-danger-subtle:                @app-danger-subtle;
+    --app-danger-emphasis:              @app-danger-emphasis;
+
+    --app-warning:                      @app-warning;
+    --app-warning-border:               @app-warning-border;
+    --app-warning-subtle:               @app-warning-subtle;
+    --app-warning-emphasis:             @app-warning-emphasis;
+
+    --app-info:                         @app-info;
+    --app-info-border:                  @app-info-border;
+    --app-info-subtle:                  @app-info-subtle;
+    --app-info-emphasis:                @app-info-emphasis;
+
+    --app-light:                        @app-light;
+    --app-light-border:                 @app-light-border;
+    --app-light-subtle:                 @app-light-subtle;
+    --app-light-emphasis:               @app-light-emphasis;
+
+    --app-dark:                         @app-dark;
+    --app-dark-border:                  @app-dark-border;
+    --app-dark-subtle:                  @app-dark-subtle;
+    --app-dark-emphasis:                @app-dark-emphasis;
+
+    // Body
+    @app-body-bg:                       @app-gray-900;
+    @app-body-color:                    @app-gray-300;
+
+    --app-body-bg:                      @app-body-bg;
+    --app-body-color:                   @app-body-color;
+
+    // Utilities
+    @app-gradient:                      linear-gradient(
+                                            180deg,
+                                            rgba(255, 255, 255, 0.08),
+                                            rgba(255, 255, 255, 0)
+                                        );
+    @app-secondary-color:               rgba(222, 226, 230, 0.75);
+    @app-secondary-bg:                  @app-gray-800;
+    @app-tertiary-color:                rgba(222, 226, 230, 0.5);
+    @app-tertiary-bg:                   #2b3035;
+    @app-emphasis-color:                @app-white;
+    @app-heading-color:                 inherit;
+    @app-code-color:                    #e685b5;
+    @app-highlight-color:               @app-gray-300;
+    @app-highlight-bg:                  #664d03;
+
+    --app-gradient:                     @app-gradient;
+    --app-secondary-color:              @app-secondary-color;
+    --app-secondary-bg:                 @app-secondary-bg;
+    --app-tertiary-color:               @app-tertiary-color;
+    --app-tertiary-bg:                  @app-tertiary-bg;
+    --app-emphasis-color:               @app-emphasis-color;
+    --app-heading-color:                @app-heading-color;
+    --app-code-color:                   @app-code-color;
+    --app-highlight-color:              @app-highlight-color;
+    --app-highlight-bg:                 @app-highlight-bg;
+
+    // Links
+    @app-link-color:                    #6ea8fe;
+    @app-link-hover-color:              #8bb9fe;
+
+    --app-link-color:                   @app-link-color;
+    --app-link-hover-color:             @app-link-hover-color;
 
     // Borders
-    --app-border-color:     #2f3744;
-    --app-border-subtle:    rgba(255, 255, 255, 0.06);
+    @app-body-border:                   @app-gray-700;
+    @app-border-color:                  @app-body-border;
+    @app-border-color-translucent:      rgba(255, 255, 255, 0.15);
 
-    // Text
-    --app-body-color:       #e9ecef;
-    --app-secondary-color:  #9aa4b2;
-    --app-tertiary-color:   #9aa4b2;
-    --app-emphasis-color:   #ffffff;
-    --app-heading-color:    inherit;
+    --app-body-border:                  @app-body-border;
+    --app-border-color:                 @app-border-color;
+    --app-border-color-translucent:     @app-border-color-translucent;
 
-    // Brand / accent
-    --app-primary:          #0d6efd;
+    // Shadows
+    @app-box-shadow:                    0 0.5rem 1rem rgba(0, 0, 0, 0.35);
+    @app-box-shadow-sm:                 0 0.125rem 0.25rem rgba(0, 0, 0, 0.25);
+    @app-box-shadow-lg:                 0 1rem 3rem rgba(0, 0, 0, 0.45);
+    @app-box-shadow-inset:              inset 0 1px 2px rgba(0, 0, 0, 0.35);
 
-    // Navigation states
-    --app-nav-active-bg:    rgba(13, 110, 253, 0.14);
-    --app-nav-active-text:  #ffffff;
-    --app-nav-hover-bg:     rgba(255, 255, 255, 0.04);
+    --app-box-shadow:                   @app-box-shadow;
+    --app-box-shadow-sm:                @app-box-shadow-sm;
+    --app-box-shadow-lg:                @app-box-shadow-lg;
+    --app-box-shadow-inset:             @app-box-shadow-inset;
 
-    // Structural surfaces
-    --app-sidebar-bg:       rgba(23, 26, 33, 0.92);
-    --app-topbar-bg:        rgba(23, 26, 33, 0.78);
+    // Forms
+    @app-focus-ring-color:              rgba(110, 168, 254, @app-focus-ring-opacity);
+    @app-form-valid-color:              @app-success;
+    @app-form-valid-border-color:       @app-success;
+    @app-form-invalid-color:            @app-danger;
+    @app-form-invalid-border-color:     @app-danger;
 
-    // Decoration
-    --app-border-radius:    0.85rem;
-    --app-box-shadow:       0 0.5rem 1.25rem rgba(0, 0, 0, 0.22);
-    --app-code-color:       #9ec5fe;
+    --app-focus-ring-color:             @app-focus-ring-color;
+    --app-form-valid-color:             @app-form-valid-color;
+    --app-form-valid-border-color:      @app-form-valid-border-color;
+    --app-form-invalid-color:           @app-form-invalid-color;
+    --app-form-invalid-border-color:    @app-form-invalid-border-color;
+
+    // Panel
+    @app-panel:                         #2b3035;
+    @app-panel-2:                       @app-gray-800;
+    @app-panel-3:                       @app-gray-700;
+
+    --app-panel:                        @app-panel;
+    --app-panel-2:                      @app-panel-2;
+    --app-panel-3:                      @app-panel-3;
+
+    // Sidepanel
+    @app-sidebar-bg:                    @app-panel-2;
+    @app-sidebar-width:                 280px;
+    @app-sidebar-collapse-breakpoint:   @app-breakpoint-lg;
+
+    --app-sidebar-bg:                   @app-sidebar-bg;
+    --app-sidebar-width:                @app-sidebar-width;
+    --app-sidebar-collapse-breakpoint:  @app-sidebar-collapse-breakpoint;
+
+    // Topbar
+    @app-topbar-bg:                     @app-panel-3;
+    @app-topbar-height:                 96px;
+
+    --app-topbar-bg:                    @app-topbar-bg;
+    --app-topbar-height:                @app-topbar-height;
+
+    // Navigation
+    @app-nav-hover-bg:                  @app-primary-subtle;
+    @app-nav-hover-text:                @app-primary;
+    @app-nav-active-bg:                 @app-primary;
+    @app-nav-active-text:               @app-light;
+
+    --app-nav-hover-bg:                 @app-nav-hover-bg;
+    --app-nav-active-bg:                @app-nav-active-bg;
+    --app-nav-active-text:              @app-nav-active-text;
 }

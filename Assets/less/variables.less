@@ -56,7 +56,7 @@
 @app-light:                         @app-gray-100;
 @app-light-border:                  @app-gray-200;
 @app-light-subtle:                  #fcfcfd;
-@app-light-emphasis:                @app-gray-700;
+@app-light-emphasis:                @app-gray-300;
 @app-dark:                          @app-gray-900;
 @app-dark-border:                   @app-gray-500;
 @app-dark-subtle:                   @app-gray-400;
@@ -134,7 +134,7 @@
 
 // Layout dimensions
 @app-sidebar-width:                 280px;
-@app-topbar-height:                   96px;
+@app-topbar-height:                 96px;
 @app-footer-height:                 48px;
 
 // Z-index ladder
@@ -143,10 +143,21 @@
 @app-z-overlay:                     1029;
 @app-z-dropdown:                    1050;
 
-// Sidebar mobile breakpoint
-@app-sidebar-collapse-breakpoint:   @app-breakpoint-lg;
-
 // Panel
 @app-panel:                         @app-light;
 @app-panel-2:                       @app-light-subtle;
 @app-panel-3:                       @app-light-emphasis;
+
+// Sidepanel
+@app-sidebar-bg:                    @app-panel-2;
+@app-sidebar-width:                 280px;
+@app-sidebar-collapse-breakpoint:   @app-breakpoint-lg;
+
+@app-topbar-bg:                     @app-panel-2;
+@app-topbar-height:                 96px;
+
+// Navigation
+@app-nav-hover-bg:                  @app-primary-subtle;
+@app-nav-hover-text:                @app-primary;
+@app-nav-active-bg:                 @app-primary;
+@app-nav-active-text:               @app-light;

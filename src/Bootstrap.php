@@ -1263,11 +1263,30 @@ class Bootstrap
                 $compatStatus = 'incompatible';
             }
 
+            // Canonical lifecycle identifier is the extension directory slug.
+            $slug = (string) preg_replace(
+                '/[^a-z0-9\-]/',
+                '',
+                str_replace(
+                    '_',
+                    '-',
+                    str_replace(
+                        ' ',
+                        '-',
+                        strtolower(basename($m->directory)),
+                    ),
+                ),
+            );
+
             // Determine lifecycle state.
             // When the config file is absent *and* no enabled lists exist → all are effectively "enabled".
             if ($lifecycle['exists']) {
                 $typeKey = $m->type === 'theme' ? 'themes' : 'plugins';
-                $inEnabledList = in_array($m->name, $lifecycle['enabled'][$typeKey], true);
+                $inEnabledList = in_array(
+                    $slug,
+                    $lifecycle['enabled'][$typeKey],
+                    true,
+                );
 
                 // Persisted but empty enabled list => all are still "enabled" (zero-state = unfiltered).
                 if ($lifecycle['enabled'] === ['plugins' => [], 'themes' => []]) {
@@ -1281,8 +1300,7 @@ class Bootstrap
                 $lifecycleState = 'enabled';
             }
 
-            // Derive slug from directory basename: lowercased, spaces → -, underscores → -, remove invalid chars.
-            $slug = (string) preg_replace('/[^a-z0-9\-]/', '', str_replace('_', '-', str_replace(' ', '-', strtolower(basename($m->directory)))));
+
 
             $allIndex[$m->name] = [
                 'type'          => $m->type,
@@ -1593,6 +1611,23 @@ class Bootstrap
             ];
         }
 
+        $legacyFlatSchema =
+            isset($json['plugins'])
+            && is_array($json['plugins'])
+            && isset($json['themes'])
+            && is_array($json['themes'])
+            && !isset($json['enabled']);
+
+        if ($legacyFlatSchema) {
+            $json = [
+                'enabled' => [
+                    'plugins' => $json['plugins'],
+                    'themes' => $json['themes'],
+                ],
+                'pending' => [],
+            ];
+        }
+
         $enabledPlugins = [];
         $enabledThemes  = [];
 
@@ -1642,11 +1677,23 @@ class Bootstrap
             }
         }
 
-        return [
-            'exists'  => true,
-            'enabled' => ['plugins' => array_values($enabledPlugins), 'themes' => array_values($enabledThemes)],
+        $state = [
+            'exists' => true,
+            'enabled' => [
+                'plugins' => array_values($enabledPlugins),
+                'themes' => array_values($enabledThemes),
+            ],
             'pending' => array_values($pending),
         ];
+
+        if ($legacyFlatSchema) {
+            $this->saveLifecycleState([
+                'enabled' => $state['enabled'],
+                'pending' => $state['pending'],
+            ]);
+        }
+
+        return $state;
     }
 
     /** Fire pending lifecycle hooks for every unresolved pending entry.

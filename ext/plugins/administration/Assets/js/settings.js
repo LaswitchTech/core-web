@@ -53,9 +53,23 @@
             return entry.category === "branding";
         });
 
-        if (!global.Builder.has("card")) {
+        if (
+            !global.Builder.has("card")
+            || !global.Builder.has("form-field")
+            || !global.Builder.has("input")
+            || !global.Builder.has("button")
+        ) {
             return;
         }
+
+        const form = document.createElement("form");
+
+        form.method = "post";
+        form.action = "/admin/settings";
+
+        form.classList.add(
+            "admin-system-settings-form"
+        );
 
         const categoryCard = global.Builder.create(
             "card",
@@ -97,76 +111,75 @@
         }
 
         brandingEntries.forEach(function (entry) {
-            const field = document.createElement("div");
+                            const controlId =
+                                "admin-setting-" + entry.key;
 
-            field.classList.add(
-                "admin-system-settings-field"
-            );
+                            const field = global.Builder.create(
+                                "form-field",
+                                {
+                                    controlId,
+                                    label: entry.label,
+                                    description: entry.description,
+                                    error: "",
+                                    required: false,
+                                }
+                            );
 
-            field.setAttribute(
-                "data-setting-key",
-                entry.key
-            );
+                            const fieldElement = field.element();
 
-            const label = document.createElement("label");
+                            if (!(fieldElement instanceof Element)) {
+                                return;
+                            }
 
-            label.classList.add(
-                "admin-system-settings-label"
-            );
+                            fieldElement.setAttribute(
+                                "data-setting-key",
+                                entry.key
+                            );
+                            const input = global.Builder.create(
+                                "input",
+                                {
+                                    type: "text",
+                                    name: entry.key,
+                                    value:
+                                        typeof entry.value === "string"
+                                            ? entry.value
+                                            : "",
+                                    placeholder: "",
+                                    autocomplete: "",
+                                    describedBy: field.descriptionId(),
+                                    required: false,
+                                    disabled: false,
+                                    readonly: false,
+                                    invalid: false,
+                                }
+                            );
 
-            label.setAttribute(
-                "for",
-                "admin-setting-" + entry.key
-            );
+                            const inputElement = input.element();
 
-            global.Builder.text(
-                label,
-                entry.label
-            );
+                            if (!(inputElement instanceof HTMLInputElement)) {
+                                return;
+                            }
 
-            field.append(label);
+                            inputElement.id = controlId;
 
-            const description = document.createElement("p");
+                            input.appendTo(
+                                field.controlMount()
+                            );
 
-            description.classList.add(
-                "admin-system-settings-description"
-            );
-
-            description.id =
-                "admin-setting-description-" + entry.key;
-
-            global.Builder.text(
-                description,
-                entry.description
-            );
-
-            field.append(description);
-
-            const input = document.createElement("input");
-
-            input.type = "text";
-            input.id = "admin-setting-" + entry.key;
-            input.name = entry.key;
-            input.classList.add(
-                "admin-system-settings-input"
-            );
-
-            input.setAttribute(
-                "aria-describedby",
-                description.id
-            );
-
-            input.value =
-                typeof entry.value === "string"
-                    ? entry.value
-                    : "";
-
-            field.append(input);
-
-            categoryBody.append(field);
+                            field.appendTo(categoryBody);
         });
 
-        categoryCard.appendTo(mount);
+        const actions = document.createElement("div");
+
+        actions.classList.add(
+            "admin-system-settings-actions"
+        );
+
+        form.append(actions);
+
+        categoryCard.appendTo(form);
+
+        mount.append(form);
     }
 
     if (document.readyState === "loading") {
