@@ -357,7 +357,7 @@
   - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
   - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
     - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
-- [x] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 completed_at: 2026-07-29T14:48:29-04:00 priority: normal -->
+- [~] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 priority: normal -->
   - Provide a settings route and Administration menu entry.
   - Use the writable Configuration Manager rather than modifying `core.cfg`.
   - Initial settings should include application name, Administration brand, logo, and related presentation values.
@@ -380,14 +380,14 @@
   - [x] Register unrestricted `/admin/settings` route <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:49-04:00 priority: normal -->
   - [x] Register System Settings Administration menu entry <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:55-04:00 priority: normal -->
   - [x] Register System Settings renderer resources <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:58-04:00 priority: normal -->
-  - [x] Register System Settings plugin assets <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:48:17-04:00 priority: normal -->
-  - [x] Render System Settings UI through Builder <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:48:19-04:00 priority: normal -->
-  - [x] Load resolved and locally overridden values <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:48:20-04:00 priority: normal -->
-  - [x] Persist validated settings through the writable configuration service <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:48:21-04:00 priority: normal -->
-  - [x] Support resetting settings to inherited defaults <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:48:22-04:00 priority: normal -->
-  - [x] Display deterministic success and validation feedback <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:48:24-04:00 priority: normal -->
-  - [x] Apply configured branding to the Administration layout <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:48:25-04:00 priority: normal -->
-  - [x] Verify settings persistence and inherited fallback behavior <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:48:26-04:00 priority: normal -->
+  - [~] Register System Settings plugin assets <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [ ] Render System Settings UI through Builder <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [ ] Load resolved and locally overridden values <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [ ] Persist validated settings through the writable configuration service <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [ ] Support resetting settings to inherited defaults <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [ ] Display deterministic success and validation feedback <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [ ] Apply configured branding to the Administration layout <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [ ] Verify settings persistence and inherited fallback behavior <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
 - [~] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
   - The `/admin` panel is implemented as a first-party plugin.
   - The plugin owns the Administration layout and Overview route.
