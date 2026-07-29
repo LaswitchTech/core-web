@@ -23,6 +23,44 @@
         var(--app-transition-ease);
 }
 
+.app-form-control-file {
+    padding: 0;
+    overflow: hidden;
+}
+
+.app-form-control-file::file-selector-button {
+    margin: 0 0.75rem 0 0;
+    padding: 0.375rem 0.75rem;
+    border: 0;
+    border-right:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    color: var(--app-body-color);
+    background-color: var(--app-panel-2);
+    font: inherit;
+    line-height: 1.5;
+    cursor: pointer;
+    transition:
+        color
+        var(--app-transition-speed)
+        var(--app-transition-ease),
+        background-color
+        var(--app-transition-speed)
+        var(--app-transition-ease);
+}
+
+.app-form-control-file:hover:not(:disabled)::file-selector-button {
+    color: var(--app-primary-contrast);
+    background-color: var(--app-primary);
+}
+
+.app-form-control-file:disabled::file-selector-button {
+    color: var(--app-secondary-color);
+    background-color: var(--app-panel-2);
+    cursor: not-allowed;
+}
+
 .app-form-control::placeholder {
     color: var(--app-secondary-color);
     opacity: 1;
@@ -72,4 +110,30 @@
             var(--app-danger) 25%,
             transparent
         );
+}
+
+.app-form-control-file::-webkit-file-upload-button {
+    margin: 0 0.75rem 0 0;
+    padding: 0.375rem 0.75rem;
+    border: 0;
+    border-right:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    color: var(--app-body-color);
+    background-color: var(--app-panel-2);
+    font: inherit;
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+.app-form-control-file:hover:not(:disabled)::-webkit-file-upload-button {
+    color: var(--app-primary-contrast);
+    background-color: var(--app-primary);
+}
+
+.app-form-control-file:disabled::-webkit-file-upload-button {
+    color: var(--app-secondary-color);
+    background-color: var(--app-panel-2);
+    cursor: not-allowed;
 }

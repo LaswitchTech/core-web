@@ -21,6 +21,9 @@ final class Web
     /** @var array<string, mixed> */
     private readonly array $postBody;
 
+    /** @var array<string,mixed> */
+    private readonly array $files;
+
     /* ─── Construction ──────────────────────────────────────────────── */
 
     /**
@@ -38,6 +41,7 @@ final class Web
         array  $query      = [],
         array  $params     = [],
         array  $postBody   = [],
+        array  $files      = [],
     ) {
         $this->method        = strtoupper($method);
         $this->path          = rtrim('/' . ltrim($path, '/'), '/') ?: '/';
@@ -52,6 +56,7 @@ final class Web
 
         $this->params        = $params;
         $this->postBody      = $postBody;
+        $this->files         = $files;
     }
 
     /* ─── Required entry point ─────────────────────────────────────── */
@@ -79,6 +84,7 @@ final class Web
             query:           $_GET ?? [],
             params:          [],               // filled during dispatch
             postBody:        $_POST ?? [],
+            files:           $_FILES ?? [],
         );
     }
 
@@ -106,8 +112,97 @@ final class Web
     /** GET / POST body parameters ($_GET, $_POST merged with constructor args). */
     public function post(): array { return $this->postBody; }
 
-    /* ─── Convenience accessors ────────────────────────────────────── */
+    /** @return array<string,mixed> */
+    public function files(): array
+    {
+        return $this->files;
+    }
 
+    /**
+     * @return array{
+     *     name:string,
+     *     type:string,
+     *     tmp_name:string,
+     *     error:int,
+
+     *     size:int
+     * }|null
+     */
+    public function file(
+        string $group,
+        string $name,
+    ): ?array {
+        if (
+            !isset($this->files[$group])
+            || !is_array($this->files[$group])
+        ) {
+            return null;
+        }
+
+        $groupFiles = $this->files[$group];
+
+        foreach (
+            [
+                'name',
+                'type',
+                'tmp_name',
+                'error',
+                'size',
+            ] as $property
+        ) {
+            if (
+                !isset($groupFiles[$property])
+                || !is_array($groupFiles[$property])
+                || !array_key_exists(
+                    $name,
+
+                    $groupFiles[$property],
+                )
+            ) {
+                return null;
+            }
+        }
+
+        return [
+            'name' => (string) $groupFiles['name'][$name],
+            'type' => (string) $groupFiles['type'][$name],
+            'tmp_name' => (string) $groupFiles['tmp_name'][$name],
+            'error' => (int) $groupFiles['error'][$name],
+            'size' => (int) $groupFiles['size'][$name],
+        ];
+    }
+
+    /** @return bool */
+    public function hasUploadedFile(
+        string $group,
+        string $name,
+    ): bool {
+        $file = $this->file(
+            $group,
+            $name,
+        );
+
+        return $file !== null
+            && $file['error'] === UPLOAD_ERR_OK;
+    }
+
+    /**
+     * @return array{
+     *     name:string,
+     *     type:string,
+     *     tmp_name:string,
+     *     error:int,
+     *     size:int
+     * }|null
+     */
+    public function getUploadedFile(
+        string $group,
+        string $name,
+    ): ?array {
+        return $this->file($group, $name);
+    }
+
+    /* ─── Convenience accessors ────────────────────────────────────── */
     /** Shortcut for `$request->params()[$name]`. */
     public function param(string $name, mixed $default = null): mixed {
         return $this->params[$name] ?? $default;

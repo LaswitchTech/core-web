@@ -25,6 +25,7 @@ use Laswitchtech\CoreWeb\Database\Seeding\Seeder;
 use Laswitchtech\CoreWeb\Database\Seeding\RegistryTable as SeedRegistryTable;
 use Laswitchtech\CoreWeb\Logger\Logger;
 use Laswitchtech\CoreWeb\Logger\Level;
+use Laswitchtech\CoreWeb\Helper\Application;
 use Laswitchtech\CoreWeb\Helper\HelperInterface;
 use Laswitchtech\CoreWeb\Helper\Url;
 use Laswitchtech\CoreWeb\Helper\Html;
@@ -41,10 +42,11 @@ use Laswitchtech\CoreWeb\Asset\Registry as AssetRegistry;
 use Laswitchtech\CoreWeb\Asset\LessCompiler;
 use Laswitchtech\CoreWeb\Message\Template\TemplateRegistry;
 use Laswitchtech\CoreWeb\Message\Template\TemplateRegistryInterface;
+use Laswitchtech\CoreWeb\File\ImageUploader;
 
 /**
-
-
+ *
+ *
  * Mode-driven single-entry bootstrap.
  * Documentation: docs/development/architecture/Bootstrap.md
  *
@@ -245,6 +247,20 @@ class Bootstrap
 
         // Bootstrap mode for downstream subsystem selection (router vs cli).
         $c->set('mode', $this->mode);
+
+        $appRoot = $this->appRoot;
+
+        $c->registerSingleton(
+            'application_logo_uploader',
+            static fn (): ImageUploader => new ImageUploader(
+                $appRoot
+                    . DIRECTORY_SEPARATOR
+                    . 'uploads'
+                    . DIRECTORY_SEPARATOR
+                    . 'application',
+                '/uploads/application',
+            ),
+        );
     }
 
     /* ------------------------------------------------------------------ --/
@@ -623,6 +639,16 @@ class Bootstrap
         // 1. Create registry and register core helpers.
         $registry = new HelperRegistry();
 
+        $configManager = $c->resolve(
+            'config_manager',
+        );
+
+        if (!($configManager instanceof ConfigManager)) {
+            throw new \RuntimeException(
+                'Application helper configuration manager is invalid.',
+            );
+        }
+
         $coreHelpers = [
             new Url(),
             new Html(),
@@ -630,6 +656,10 @@ class Bootstrap
             new Date(),
             new Asset(),
             new ConfigHelper(),
+            new Application(
+                $configManager,
+                $this->appRoot,
+            ),
         ];
 
         foreach ($coreHelpers as $helper) {

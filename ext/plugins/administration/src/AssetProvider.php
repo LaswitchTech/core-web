@@ -46,6 +46,19 @@ final class AssetProvider
             );
         }
 
+        $settingsLessPath = $pluginRoot . '/Assets/less/settings.less';
+
+        if (is_file($settingsLessPath)) {
+            $context['registry']->css(
+                'plugins/administration',
+                'settings.less',
+                $settingsLessPath,
+                Entry::PROVIDER_PLUGIN,
+                400,
+                [],
+            );
+        }
+
         $settingsJsPath = $pluginRoot . '/Assets/js/settings.js';
 
         if (is_file($settingsJsPath)) {

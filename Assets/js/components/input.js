@@ -12,6 +12,7 @@
 
     const INPUT_TYPES = Object.freeze([
         "email",
+        "file",
         "number",
         "password",
         "search",
@@ -28,7 +29,9 @@
                 value: "",
                 placeholder: "",
                 autocomplete: "",
+                accept: "",
                 describedBy: "",
+                multiple: false,
                 required: false,
                 disabled: false,
                 readonly: false,
@@ -58,6 +61,7 @@
             const value = this.config("value");
             const placeholder = this.config("placeholder");
             const autocomplete = this.config("autocomplete");
+            const accept = this.config("accept");
             const describedBy = this.config("describedBy");
 
             if (
@@ -65,7 +69,7 @@
                 || !INPUT_TYPES.includes(type)
             ) {
                 throw new TypeError(
-                    "Input type must be email, number, password, search, tel, text, or url."
+                    "Input type must be email, file, number, password, search, tel, text, or url."
                 );
             }
 
@@ -97,6 +101,12 @@
                 );
             }
 
+            if (typeof accept !== "string") {
+                throw new TypeError(
+                    "Input accept must be a string."
+                );
+            }
+
             if (typeof describedBy !== "string") {
                 throw new TypeError(
                     "Input describedBy must be a string."
@@ -104,10 +114,22 @@
             }
 
             element.type = type;
+            element.classList.toggle(
+                "app-form-control-file",
+                type === "file"
+            );
             element.name = name;
-            element.value =
-                value === null ? "" : String(value);
+
+            if (type === "file") {
+                element.value = "";
+            } else {
+                element.value =
+                    value === null ? "" : String(value);
+            }
+
             element.placeholder = placeholder;
+            element.multiple =
+                this.config("multiple") === true;
             element.required =
                 this.config("required") === true;
             element.disabled =
@@ -121,6 +143,15 @@
                 element.setAttribute(
                     "autocomplete",
                     autocomplete
+                );
+            }
+
+            if (accept === "") {
+                element.removeAttribute("accept");
+            } else {
+                element.setAttribute(
+                    "accept",
+                    accept
                 );
             }
 

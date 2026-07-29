@@ -1,0 +1,84 @@
+.admin-system-settings-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.admin-system-settings-feedback {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        transparent;
+    border-radius: var(--app-border-radius);
+}
+
+.admin-system-settings-feedback-success {
+    color: var(--app-success-emphasis);
+    background-color: var(--app-success-subtle);
+    border-color: var(--app-success-border);
+}
+
+.admin-system-settings-feedback-error {
+    color: var(--app-danger-emphasis);
+    background-color: var(--app-danger-subtle);
+    border-color: var(--app-danger-border);
+}
+
+.admin-system-settings-logo-preview {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    max-width: 100%;
+    padding: 0.75rem;
+    background: var(--app-panel-2);
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    border-radius: var(--app-border-radius);
+    cursor: pointer;
+}
+
+.admin-system-settings-logo-preview:hover {
+    border-color: var(--app-primary);
+}
+
+.admin-system-settings-logo-preview:focus-visible {
+    outline: 0;
+    border-color: var(--app-primary);
+    box-shadow:
+        0 0 0 0.25rem
+        color-mix(
+            in srgb,
+            var(--app-primary) 25%,
+            transparent
+        );
+}
+
+.admin-system-settings-logo-image {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 240px;
+    max-height: 120px;
+    object-fit: contain;
+}
+
+.admin-system-settings-logo-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.admin-system-settings-logo-removal-note {
+    margin: 0.75rem 0 0;
+    color: var(--app-danger);
+    font-size: 0.875rem;
+}
+

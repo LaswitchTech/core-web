@@ -726,6 +726,6 @@
     - Document scaffold-provider integration.
     - Document asset and Builder component requirements.
     - Document development-mode and future authorization expectations.
-- [~] BUG: Assets loading does not seem to take into account if the extension is enabled or not. All assets remain loaded. <!-- created_at: 2026-07-27T20:32:56-04:00 priority: urgent -->
+- [x] BUG: Assets loading does not seem to take into account if the extension is enabled or not. All assets remain loaded. <!-- created_at: 2026-07-27T20:32:56-04:00 completed_at: 2026-07-28T08:24:09-04:00 priority: urgent -->
 
 ## Done

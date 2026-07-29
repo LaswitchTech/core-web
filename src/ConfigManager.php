@@ -15,6 +15,9 @@ final class ConfigManager {
     /** @var array<string,mixed> current merged configuration payload */
     private array $config;
 
+    /** @var array<string,mixed> configuration payload before local overrides */
+    private array $inheritedConfig;
+
     /** @var list<non-empty-string>|null ordered file paths (resolves lazily) */
     private ?array $configPaths = null;
 
@@ -25,6 +28,7 @@ final class ConfigManager {
 
     public function __construct() {
         $this->config = [];
+        $this->inheritedConfig = [];
     }
 
     /** Create a manager pre-loaded from the given ordered file list (later overrides earlier, deep-merged). */
@@ -36,16 +40,28 @@ final class ConfigManager {
             if ($path === null || !is_file($path)) continue;
 
             if (basename((string)$path) === 'local.cfg') {
-                $json = json_decode((string)file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+                $json = json_decode(
+                    (string) file_get_contents($path),
+                    true,
+                    512,
+                    JSON_THROW_ON_ERROR,
+                );
 
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     throw new \JsonException(
-                        "Failed to parse local configuration file \"{$path}\": " . json_last_error_msg(),
-                        json_last_error()
+                        "Failed to parse local configuration file \"{$path}\": "
+                            . json_last_error_msg(),
+                        json_last_error(),
                     );
                 }
 
+                $manager->inheritedConfig = $result;
                 $manager->localData = $json ?? [];
+
+                $result = self::deepMerge(
+                    $result,
+                    $manager->localData,
+                );
             } else {
                 $json = json_decode((string)file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
 
@@ -156,52 +172,185 @@ final class ConfigManager {
         return $value;
     }
 
+    private function getInherited(
+        string $key,
+        mixed $default = null,
+    ): mixed {
+        $tokens = explode('.', $key);
+        $value = $this->inheritedConfig;
+
+        foreach ($tokens as $token) {
+            if (
+                !is_array($value)
+                || !array_key_exists($token, $value)
+            ) {
+                return $default;
+            }
+
+            $value = $value[$token];
+        }
+
+        return $value;
+    }
+
+    private function hasInherited(string $key): bool {
+        $tokens = explode('.', $key);
+        $value = $this->inheritedConfig;
+
+        foreach ($tokens as $token) {
+            if (
+                !is_array($value)
+                || !array_key_exists($token, $value)
+            ) {
+                return false;
+            }
+
+            $value = $value[$token];
+        }
+
+        return true;
+    }
+
     /* ── mutation ───────────────────────────────────────────────── */
 
     /** Set a nested value using dot-notation path. Creates intermediate arrays as needed. */
     public function set(string $key, mixed $value): self {
         $tokens = explode('.', $key);
-        // Navigate/create to the penultimate level in-place.
-        $current = &$this->config;
+
+        $this->setResolvedValue(
+            $key,
+            $value,
+        );
+
+        // Mirror to localData — the persisted override payload.
+        if ($this->localData === null) {
+            $this->localData = [];
+        }
+
+        $currentLocal = &$this->localData;
 
         $max = count($tokens) - 1;
         for ($i = 0; $i < $max; $i++) {
             $t = $tokens[$i];
 
-            if (!\is_array($current)) {
-                $current = [];
+            if (!\is_array($currentLocal)) {
+                $currentLocal = [];
             }
 
-            if (!\array_key_exists($t, $current) || !\is_array($current[$t])) {
-                $current[$t] = [];
+            if (!\array_key_exists($t, $currentLocal) || !\is_array($currentLocal[$t])) {
+                $currentLocal[$t] = [];
             }
 
-            $current = &$current[$t];
+            $currentLocal = &$currentLocal[$t];
         }
 
-        // Last token: write the actual value.
         $lastToken = end($tokens);
-        $current[$lastToken] = $value;
+        $currentLocal[$lastToken] = $value;
 
         return $this;
     }
 
-    /** Unset (delete) a nested key.  No error when absent; silently ignored.   */
-    public function unsetKey(string $key): self {
-        if (!$this->has($key)) return $this;   // idempotent
-
+    private function setResolvedValue(
+        string $key,
+        mixed $value,
+    ): void {
         $tokens = explode('.', $key);
         $current = &$this->config;
 
         $max = count($tokens) - 1;
+
         for ($i = 0; $i < $max; $i++) {
-            if (!\is_array($current) || !\array_key_exists($tokens[$i], $current)) {
-                return $this;   // path already missing — defensive exit
+            $token = $tokens[$i];
+
+            if (!is_array($current)) {
+                $current = [];
             }
+
+            if (
+                !array_key_exists($token, $current)
+                || !is_array($current[$token])
+            ) {
+                $current[$token] = [];
+            }
+
+            $current = &$current[$token];
+        }
+
+        $lastToken = end($tokens);
+
+        $current[$lastToken] = $value;
+    }
+
+    private function unsetResolvedValue(string $key): void {
+        $tokens = explode('.', $key);
+        $current = &$this->config;
+
+        $max = count($tokens) - 1;
+
+        for ($i = 0; $i < $max; $i++) {
+            if (
+                !is_array($current)
+                || !array_key_exists(
+                    $tokens[$i],
+                    $current,
+                )
+            ) {
+                return;
+            }
+
             $current = &$current[$tokens[$i]];
         }
 
-        unset($current[end($tokens)]);
+        $lastToken = end($tokens);
+
+        if (
+            is_array($current)
+            && array_key_exists($lastToken, $current)
+        ) {
+            unset($current[$lastToken]);
+        }
+    }
+
+    /** Unset (delete) a nested key.  No error when absent; silently ignored.   */
+    public function unsetKey(string $key): self {
+        if (!$this->hasLocal($key)) {
+            return $this;
+        }
+
+        $tokens = explode('.', $key);
+        $currentLocal = &$this->localData;
+
+        $max = count($tokens) - 1;
+
+        for ($i = 0; $i < $max; $i++) {
+            if (
+                !is_array($currentLocal)
+                || !array_key_exists(
+                    $tokens[$i],
+                    $currentLocal,
+                )
+            ) {
+                return $this;
+            }
+
+            $currentLocal = &$currentLocal[$tokens[$i]];
+        }
+
+        $lastToken = end($tokens);
+
+        unset($currentLocal[$lastToken]);
+
+        if ($this->hasInherited($key)) {
+            $this->setResolvedValue(
+                $key,
+                $this->getInherited($key),
+            );
+
+            return $this;
+        }
+
+        $this->unsetResolvedValue($key);
+
         return $this;
     }
 
@@ -250,7 +399,10 @@ final class ConfigManager {
         }
 
         // Write a defensive copy (json_encode produces an independent serialisation).
-        $output = json_encode($this->config, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+        $output = json_encode(
+            $this->localData ?? [],
+            JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR,
+        );
 
         if (file_put_contents($path, "\n" . $output . "\n", LOCK_EX) === false) {
             throw new \RuntimeException("Cannot write local config to {$path}");

@@ -144,8 +144,141 @@ $res    = $router->dispatch($req);
 $assert('status 404 (not 405)', $res->statusCode() === 404);
 
 /* ════════════════════════════════════════════
- * Summary
+ * 11. File upload resolution via ->file() and hasUploadedFile()
  * ════════════════════════════════════════════ */
+echo "\n--- File resolution: ->file() and hasUploadedFile() ---\n";
+
+$uploadedFiles = [
+    'uploads' => [
+        'name' => [
+            'application_logo' => 'logo.png',
+        ],
+        'type' => [
+            'application_logo' => 'image/png',
+        ],
+        'tmp_name' => [
+            'application_logo' => '/tmp/core-web-logo',
+        ],
+        'error' => [
+            'application_logo' => UPLOAD_ERR_OK,
+        ],
+        'size' => [
+            'application_logo' => 1234,
+        ],
+    ],
+];
+
+$reqFiles = new Web(
+    method: 'POST',
+    path: '/admin/settings',
+    files: $uploadedFiles,
+);
+
+$result = $reqFiles->file('uploads', 'application_logo');
+
+$assert('result is array',      is_array($result));
+$assert('name == logo.png',     $result['name'] === 'logo.png');
+$assert('type == image/png',    $result['type'] === 'image/png');
+$assert('tmp_name == /tmp/...', $result['tmp_name'] === '/tmp/core-web-logo');
+$assert('error == UPLOAD_ERR_OK',$result['error'] === UPLOAD_ERR_OK);
+$assert('size == 1234',         $result['size'] === 1234);
+$hasUploaded = $reqFiles->hasUploadedFile(
+    'uploads',
+    'application_logo',
+);
+$assert('hasUploadedFile true',  $hasUploaded === true);
+
+$nullViaSettings = $reqFiles->file('settings', 'application.logo');
+$assert('unrelated group returns null', $nullViaSettings === null);
+
+/* ════════════════════════════════════════════
+ * 12. Files preserved through Router dispatch with route params
+ * ════════════════════════════════════════════ */
+echo "\n--- Files preserved through dispatch ---\n";
+
+$files = [
+    'uploads' => [
+        'name' => [
+            'application_logo' => 'logo.png',
+        ],
+        'full_path' => [
+            'application_logo' => 'logo.png',
+        ],
+        'type' => [
+            'application_logo' => 'image/png',
+        ],
+        'tmp_name' => [
+            'application_logo' => '/tmp/core-web-logo',
+        ],
+        'error' => [
+            'application_logo' => UPLOAD_ERR_OK,
+        ],
+        'size' => [
+            'application_logo' => 122586,
+        ],
+    ],
+];
+
+$router = new Router();
+$routeRegistered = false;
+$router->post(
+    '/upload/{section}',
+    function (Web $request) use (&$routeRegistered): Response {
+        $file = $request->file(
+            'uploads',
+            'application_logo',
+        );
+
+        return Response::text(
+            json_encode(
+                [
+                    'section' => $request->param('section'),
+                    'files' => $request->files(),
+                    'file' => $file,
+                ],
+                JSON_THROW_ON_ERROR,
+            ),
+        );
+    },
+);
+
+$routeRegistered = true;
+
+$dispatchRequest = new Web(
+    method: 'POST',
+    path: '/upload/branding',
+    postBody: [
+        'settings' => [
+            'application.name' => 'Core-Web',
+        ],
+    ],
+    files: $files,
+);
+
+$response = $router->dispatch($dispatchRequest);
+$decoded  = json_decode($response->body(), true);
+
+// Assert route was hit (not 404)
+$assert('route registered', $routeRegistered === true);
+$assert('response status 200', $response->statusCode() === 200);
+
+$data = $decoded;
+// Route param preserved through dispatch
+$assert('section == branding', ($data['section'] ?? null) === 'branding');
+
+// Files preserved entirely through dispatch
+$assert('files match original', ($data['files'] ?? null) === $files);
+
+// Resolved file details
+$file = $data['file'] ?? null;
+$assert('file is array', is_array($file));
+$assert('file name == logo.png', ($file['name'] ?? '')  === 'logo.png');
+$assert('file type == image/png', ($file['type'] ?? '') === 'image/png');
+$assert('file tmp_name /tmp/core-web-logo', ($file['tmp_name'] ?? '') === '/tmp/core-web-logo');
+$assert('file error == UPLOAD_ERR_OK', ($file['error'] ?? -1) === UPLOAD_ERR_OK);
+$assert('file size == 122586', ($file['size'] ?? -1)   === 122586);
+
+echo "\n═══════════════════════════════════════════\n";
 echo "\n═══════════════════════════════════════════\n";
 printf("Results: %d passed, %d failed\n", $passed, $failed);
 if ($failed > 0) {

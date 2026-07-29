@@ -34,6 +34,19 @@
 
 .app-button:hover:not(:disabled) {
     text-decoration: none;
+    box-shadow:
+        0 0 0 0.25rem
+        color-mix(
+            in srgb,
+            var(--app-primary) 25%,
+            transparent
+        );
+}
+
+.app-button:active:not(:disabled),
+.app-button[aria-pressed="true"]:not(:disabled) {
+    box-shadow: var(--app-box-shadow-inset);
+    transform: translateY(1px);
 }
 
 .app-button:focus-visible {
@@ -42,7 +55,7 @@
         0 0 0 0.25rem
         color-mix(
             in srgb,
-            currentColor 25%,
+            var(--app-primary) 25%,
             transparent
         );
 }
@@ -97,7 +110,8 @@
 }
 
 .app-button-success:hover:not(:disabled) {
-    filter: brightness(0.9);
+    background-color: var(--app-success-hover);
+    border-color: var(--app-success-hover);
 }
 
 .app-button-danger {
@@ -107,7 +121,8 @@
 }
 
 .app-button-danger:hover:not(:disabled) {
-    filter: brightness(0.9);
+    background-color: var(--app-danger-hover);
+    border-color: var(--app-danger-hover);
 }
 
 .app-button-warning {
@@ -117,7 +132,8 @@
 }
 
 .app-button-warning:hover:not(:disabled) {
-    filter: brightness(0.9);
+    background-color: var(--app-warning-hover);
+    border-color: var(--app-warning-hover);
 }
 
 .app-button-info {
@@ -127,7 +143,8 @@
 }
 
 .app-button-info:hover:not(:disabled) {
-    filter: brightness(0.9);
+    background-color: var(--app-info-hover);
+    border-color: var(--app-info-hover);
 }
 
 .app-button-light {
@@ -137,7 +154,8 @@
 }
 
 .app-button-light:hover:not(:disabled) {
-    background-color: var(--app-panel-2);
+    background-color: var(--app-light-hover);
+    border-color: var(--app-light-hover);
 }
 
 .app-button-dark {
@@ -147,7 +165,8 @@
 }
 
 .app-button-dark:hover:not(:disabled) {
-    filter: brightness(1.15);
+    background-color: var(--app-dark-hover);
+    border-color: var(--app-dark-hover);
 }
 
 .app-button-link {

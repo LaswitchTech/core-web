@@ -75,13 +75,14 @@ final class Entry
             'boolean',
             'array',
             'url',
+            'file',
             'email',
             'text',
         ];
 
         if (!in_array($type, $typeCandidates, true)) {
             throw new \InvalidArgumentException(
-                'Settings Entry type must be one of: string, integer, float, boolean, array, url, email, text.',
+                'Settings Entry type must be one of: string, integer, float, boolean, array, url, file, email, text.',
             );
         }
 

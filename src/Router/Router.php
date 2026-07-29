@@ -186,6 +186,7 @@ final class Router
                 query:       $request->query(),
                 params:      $params + $request->params(),
                 postBody:    $request->post(),
+                files:       $request->files(),
             );
 
             return ($route->handler)($withParams);

@@ -15,6 +15,7 @@ final class Response
     public const STATUS_ACCEPTED             = 202;
     public const STATUS_NOT_FOUND            = 404;
     public const STATUS_METHOD_NOT_ALLOWED   = 405;
+    public const STATUS_UNPROCESSABLE_ENTITY = 422;
     public const STATUS_INTERNAL_ERROR       = 500;
 
     /** @var array<string,string> */
@@ -34,6 +35,7 @@ final class Response
             202 => 'Accepted',
             404 => 'Not Found',
             405 => 'Method Not Allowed',
+            422 => 'Unprocessable Entity',
             500 => 'Internal Server Error',
             301 => 'Moved Permanently',
             302 => 'Found',

@@ -43,17 +43,42 @@
     text-decoration: none;
 }
 
-// ── Sidebar brand icon ──────────────────────────────────────
-.panel-sidebar-brand-icon {
-    width: 32px;
-    height: 32px;
+// ── Sidebar brand mark container ──────────────────────────────
+.panel-sidebar-brand-mark {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    border-radius: var(--app-border-radius);
-    background: var(--app-primary);
+    flex: 0 0 auto;
+}
+
+// ── Sidebar brand fallback (no logo) ──────────────────────────
+.panel-sidebar-brand-mark-fallback {
+    width: 32px;
+    height: 32px;
     color: var(--app-white);
+    background: var(--app-primary);
+    border-radius: var(--app-border-radius);
+}
+
+// ── Sidebar brand mark image (has logo) ───────────────────────
+.panel-sidebar-brand-mark-image {
+    width: auto;
+    height: auto;
+    max-width: 72px;
+    max-height: 56px;
+    background: transparent;
+    border-radius: 0;
+    overflow: visible;
+}
+
+// ── Sidebar brand image (uploaded logo) ───────────────────────
+.panel-sidebar-brand-image {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 72px;
+    max-height: 56px;
+    object-fit: contain;
 }
 
 // ── Sidebar brand text ───────────────────────────────────────
@@ -111,6 +136,24 @@
     &:hover {
         background: var(--app-nav-hover-bg);
         color: var(--app-body-color);
+        box-shadow:
+            0 0 0 0.25rem
+            color-mix(
+                in srgb,
+                var(--app-primary) 25%,
+                transparent
+            );
+    }
+
+    &:focus-visible {
+        outline: 0;
+        box-shadow:
+            0 0 0 0.25rem
+            color-mix(
+                in srgb,
+                var(--app-primary) 25%,
+                transparent
+            );
     }
 
     &.active {
@@ -341,6 +384,8 @@
 }
 
 .panel-history-breadcrumbs a {
+    display: inline-flex;
+    align-items: center;
     color: var(--app-link-color);
     text-decoration: none;
 }
@@ -488,6 +533,8 @@
 }
 
 .panel-route-breadcrumbs a {
+    display: inline-flex;
+    align-items: center;
     color: var(--app-link-color);
     text-decoration: none;
 }
@@ -519,6 +566,12 @@
     padding: 0 1.5rem;
     font-size: 0.8rem;
     color: var(--app-secondary-color);
+}
+
+// ── Footer content wrapper ───────────────────────────────────────
+.panel-footer-content {
+    margin-left: auto;
+    text-align: right;
 }
 
 // ── Responsive: collapse sidebar below lg ────────────────────
