@@ -372,13 +372,13 @@
   - [x] Register unrestricted `/admin/settings` route <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:49-04:00 priority: normal -->
   - [x] Register System Settings Administration menu entry <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:55-04:00 priority: normal -->
   - [x] Register System Settings renderer resources <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:58-04:00 priority: normal -->
-  - [~] Register System Settings plugin assets <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
-  - [ ] Render System Settings UI through Builder <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
-  - [ ] Load resolved and locally overridden values <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
-  - [ ] Persist validated settings through the writable configuration service <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [x] Register System Settings plugin assets <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:55:57-04:00 priority: normal -->
+  - [x] Render System Settings UI through Builder <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:56:03-04:00 priority: normal -->
+  - [x] Load resolved and locally overridden values <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:56:12-04:00 priority: normal -->
+  - [~] Persist validated settings through the writable configuration service <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
   - [ ] Support resetting settings to inherited defaults <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
   - [ ] Display deterministic success and validation feedback <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
-  - [ ] Apply configured branding to the Administration layout <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+  - [x] Apply configured branding to the Administration layout <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:56:22-04:00 priority: normal -->
   - [ ] Verify settings persistence and inherited fallback behavior <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
 - [~] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
   - The `/admin` panel is implemented as a first-party plugin.
