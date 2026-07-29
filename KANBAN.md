@@ -349,14 +349,6 @@
     - Document module organization, entry points, import conventions, extension authoring, dependency rules, and migration guidance.
 
 ## In Progress <!-- hide: archive -->
-- [ ] Configuration Manager <!-- created_at: 2026-06-18T11:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
-  - Load, merge, and provide read-only access to application configuration (`core.cfg` + optional `local.cfg`).
-  - Tags: feature, config, v.1.0
-  - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
-  - [ ] Auto-save changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
-    - No save/write/persist method exists in `src/Config.php`; pending future configuration manager work.
 - [~] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 priority: normal -->
   - Provide a settings route and Administration menu entry.
   - Use the writable Configuration Manager rather than modifying `core.cfg`.
@@ -726,6 +718,15 @@
     - Document scaffold-provider integration.
     - Document asset and Builder component requirements.
     - Document development-mode and future authorization expectations.
-- [x] BUG: Assets loading does not seem to take into account if the extension is enabled or not. All assets remain loaded. <!-- created_at: 2026-07-27T20:32:56-04:00 completed_at: 2026-07-28T08:24:09-04:00 priority: urgent -->
 
 ## Done
+- [x] BUG: Assets loading does not seem to take into account if the extension is enabled or not. All assets remain loaded. <!-- created_at: 2026-07-27T20:32:56-04:00 completed_at: 2026-07-28T08:24:09-04:00 priority: urgent -->
+- [x] Configuration Manager <!-- created_at: 2026-06-18T11:00:00-04:00 completed_at: 2026-07-29T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+  - Load, merge, and provide read and write access to application configuration (`core.cfg` + optional `local.cfg`).
+  - Tags: feature, config, v.1.0
+  - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Persist changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 completed_at: 2026-07-29T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - `ConfigManager` supports nested set and unset operations and explicit persistence through `saveLocal()`.
+    - Only the local override payload is written; inherited configuration files such as `core.cfg` remain unchanged.
