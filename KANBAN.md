@@ -1,23 +1,112 @@
 # Kanban
 
 ## Todo <!-- hide: archive -->
+- [ ] Developer Tools Plugin <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
+  - First-party `dev` plugin for development-only Administration and page-inspection features.
+  - The plugin extends the Administration panel through public menu, route, renderer, asset, and component integration points.
+  - The plugin must only expose development tooling when it is installed and enabled.
+  - UI components must use the Builder runtime.
+  - Developer Tools tab contributions must be extensible by other plugins.
+  - Tags: feature, dev, admin, plugin, extensions, builder, debugging, v.1.0
+  - [ ] Create first-party Dev plugin foundation <!-- created_at: 2026-07-22T07:00:00-04:00 priority: high -->
+    - [ ] Add plugin manifest, namespace, asset provider, renderer resources, and route provider. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Register the plugin through normal extension discovery. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Do not make the Dev plugin a mandatory Administration dependency. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Add Developer Tools floating trigger <!-- created_at: 2026-07-24T09:00:00-04:00 priority: high -->
+    - [ ] Display a small fixed button on the right edge of the screen. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Position it approximately `200px` from the top of the viewport. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Show it only while the Dev plugin is enabled. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] The button opens the Developer Tools OffCanvas component. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Provide an accessible label, keyboard focus, tooltip, and suitable icon. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Avoid obstructing primary application controls on small viewports. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Add Developer Tools OffCanvas shell <!-- created_at: 2026-07-24T09:01:00-04:00 priority: high -->
+    - [ ] Use the kernel OffCanvas Builder component when it becomes available. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Provide sufficient width for debugging tables and source displays. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Include a Tabs component for switching tools. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Preserve the currently selected tab while the OffCanvas remains open. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Define close, Escape, backdrop, focus, and responsive behavior. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Create Developer Tools tab registry <!-- created_at: 2026-07-24T09:02:00-04:00 priority: high -->
+    - [ ] Allow the Dev plugin and other plugins to register tabs. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Define tab ID, label, icon, Builder component, configuration, priority, provider, and registration order. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Expose a hook such as `dev.tools.register`. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Apply deterministic provider/priority/order resolution. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Variable Inspector tab <!-- created_at: 2026-06-18T12:14:00-04:00 priority: high -->
+    - [ ] Display all renderer variables made available to the current page. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Identify each variable’s scope: <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Render the inspector using the Builder Table component. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Required columns: <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Include a built-in search filter. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Mask sensitive values and credentials. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Safely summarize arrays, objects, resources, binary data, and long strings. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Do not invoke unsafe object methods during inspection. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Provide a way to inspect nested values. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Preserve deterministic handling when the same variable name exists in multiple scopes. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Add full-value inspection modal <!-- created_at: 2026-07-24T09:04:00-04:00 priority: normal -->
+    - [ ] Add a “Show more” action for truncated or complex values. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Open the complete value in a Builder Modal component. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Use a Code Block component for textual or serialized content where appropriate. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Allow scrolling, copying, and safe wrapping. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Continue masking sensitive values in the complete view. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Prevent active HTML or executable content from being rendered. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Scaffold Generator tab <!-- created_at: 2026-07-24T09:05:00-04:00 priority: normal -->
+    - [ ] Provide an extensible scaffold-generation interface. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Initial targets may include plugins, themes, routes, commands, migrations, providers, and Builder components. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Present generated file plans before writing. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Require explicit confirmation before creating or replacing files. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Reuse established Core-Web naming and directory conventions. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Define whether generation is performed directly, through CLI commands, or through a shared scaffold service. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Add Theme Preview shortcut <!-- created_at: 2026-07-24T09:06:00-04:00 priority: normal -->
+    - [ ] Provide a link or action inside Developer Tools that opens the Theme Preview page. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] The shortcut may appear in a dedicated tab, in the OffCanvas header/footer, or in an extensible tools-navigation area. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Avoid embedding the entire Theme Preview page inside the OffCanvas. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Theme Preview page <!-- created_at: 2026-06-18T12:15:00-04:00 priority: normal -->
+    - [ ] Create a dedicated Dev plugin route and Administration menu entry. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Render representative examples of every built-in Builder component. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Use Builder itself to create the component demonstrations. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Organize components by category. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Include light and dark theme validation. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Include interactive state and option controls where practical. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Include examples for empty, normal, long-content, error, disabled, collapsed, fullscreen, and responsive states. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Display the source code required to create each example. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Use the Code Block component for source display. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Use PrismJS syntax highlighting only when the PrismJS plugin is enabled. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Fall back to escaped plain source when PrismJS is unavailable. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Include component configuration and public-method documentation. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Allow plugins to contribute previews for their own Builder components. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Define Builder component preview registry <!-- created_at: 2026-07-24T09:08:00-04:00 priority: normal -->
+    - [ ] Allow the kernel, application, and plugins to register component preview examples. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Define component slug, category, title, description, configurations, source examples, priority, and provider. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Use deterministic resolution and ordering. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Allow more than one example state per component. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Restrict Developer Tools to safe development contexts <!-- created_at: 2026-07-24T09:09:00-04:00 priority: high -->
+    - [ ] Define configuration or mode rules controlling when Dev tools may render. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Avoid exposing debugging values in production by default. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Prepare the plugin for V2 authorization checks. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Ensure disabled Dev tooling contributes no trigger, assets, routes, or rendered values. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Document Dev plugin extension conventions <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
+    - [ ] Document Developer Tools tab registration. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Document Theme Preview example registration. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Document variable masking and safe inspection rules. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Document scaffold-provider integration. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Document asset and Builder component requirements. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Document development-mode and future authorization expectations. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
 - [ ] Middleware Pipeline <!-- created_at: 2026-06-18T11:07:00-04:00 priority: normal -->
   - Future enhancement: before/after hooks per route and global middleware support.
   - [ ] Authentication middleware <!-- created_at: 2026-07-01T11:52:25-04:00 priority: normal -->
-    - Verify user credentials on each request, establish and maintain session state, and enforce login requirements for protected routes.
+    - [ ] Verify user credentials on each request, establish and maintain session state, and enforce login requirements for protected routes. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
   - [ ] Authorization middleware <!-- created_at: 2026-07-01T11:52:25-04:00 priority: normal -->
-    - Enforce route- and controller-level access rules based on user roles and groups after authentication has succeeded.
-    - Supports what each type of user (Administrators, Users, Guests) can access and do, with roles assignable to users, groups, and organizations, and groups assignable to organizations.
+    - [ ] Enforce route- and controller-level access rules based on user roles and groups after authentication has succeeded. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+    - [ ] Supports what each type of user (Administrators, Users, Guests) can access and do, with roles assignable to users, groups, and organizations, and groups assignable to organizations. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
 - [ ] Auth Middleware / Authorization System <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
   - Implementation of the auth middleware components defined under Middleware Pipeline (Authentication middleware and Authorization middleware). Deferred to Version 2.0.
   - Core entity model: Users, Organizations, Groups, and Roles.
-  - Default groups to seed: Administrators, Users, Guests. A request without a logged-in user should be treated as a Guest context.
-  - Roles should be assignable to Users, Groups, and Organizations.
-  - Groups should be assignable to Users and Organizations.
-  - Default authentication provider: local database credentials.
-  - Authentication provider model must be plugin-extensible so future extensions can add LDAP, SMTP-backed authentication, and OAuth providers.
-  - Authorization should support route/middleware checks for what each type of user can access and do.
   - Tags: framework, auth, authorization, middleware, security, v.2.0
+  - [ ] Default groups to seed: Administrators, Users, Guests. A request without a logged-in user should be treated as a Guest context. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Roles should be assignable to Users, Groups, and Organizations. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Groups should be assignable to Users and Organizations. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Default authentication provider: local database credentials. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Authentication provider model must be plugin-extensible so future extensions can add LDAP, SMTP-backed authentication, and OAuth providers. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
+  - [ ] Authorization should support route/middleware checks for what each type of user can access and do. <!-- created_at: 2026-08-10T08:45:27-04:00 priority: normal -->
   - [ ] Design auth middleware pipeline integration <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
   - [ ] Design user, organization, group, and role schema <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
   - [ ] Design local database authentication provider <!-- created_at: 2026-06-26T00:00:00-04:00 priority: normal -->
@@ -347,39 +436,9 @@
     - Continue exposing `Builder` and `Component` on `globalThis` for backward compatibility with existing applications and plugins.
   - [ ] Document ECMAScript module conventions <!-- created_at: 2026-07-20T00:00:00-04:00 priority: normal -->
     - Document module organization, entry points, import conventions, extension authoring, dependency rules, and migration guidance.
+- [ ] Log Viewer: Render reusable result and state components through Builder rather than direct DOM-only construction. <!-- created_at: 2026-08-05T12:16:53-04:00 priority: normal -->
 
 ## In Progress <!-- hide: archive -->
-- [~] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 priority: normal -->
-  - Provide a settings route and Administration menu entry.
-  - Use the writable Configuration Manager rather than modifying `core.cfg`.
-  - Initial settings should include application name, Administration brand, logo, and related presentation values.
-  - UI must use Builder components.
-  - [x] Audit existing writable configuration behavior <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:38-04:00 priority: normal -->
-    - Review `core.config set` and `core.config unset`.
-    - Identify reusable persistence logic and avoid duplicating it in Administration.
-  - [x] Expose reusable writable configuration service <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:41-04:00 priority: normal -->
-    - Write only to `config/local.cfg`.
-    - Preserve inherited values from `core.cfg`.
-    - Support nested keys.
-    - Support set and unset operations.
-    - Use atomic file replacement where practical.
-  - [x] Define Administration presentation settings <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:44-04:00 priority: normal -->
-    - Application name.
-    - Administration brand label.
-    - Administration logo.
-    - Footer content or related presentation metadata.
-    - Define validation and default/inherited behavior for each key.
-  - [x] Register unrestricted `/admin/settings` route <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:49-04:00 priority: normal -->
-  - [x] Register System Settings Administration menu entry <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:55-04:00 priority: normal -->
-  - [x] Register System Settings renderer resources <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:58-04:00 priority: normal -->
-  - [x] Register System Settings plugin assets <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:55:57-04:00 priority: normal -->
-  - [x] Render System Settings UI through Builder <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:56:03-04:00 priority: normal -->
-  - [x] Load resolved and locally overridden values <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:56:12-04:00 priority: normal -->
-  - [~] Persist validated settings through the writable configuration service <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
-  - [ ] Support resetting settings to inherited defaults <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
-  - [ ] Display deterministic success and validation feedback <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
-  - [x] Apply configured branding to the Administration layout <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:56:22-04:00 priority: normal -->
-  - [ ] Verify settings persistence and inherited fallback behavior <!-- created_at: 2026-07-27T08:57:38-04:00 priority: normal -->
 - [~] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 priority: normal -->
   - The `/admin` panel is implemented as a first-party plugin.
   - The plugin owns the Administration layout and Overview route.
@@ -444,34 +503,11 @@
       - Include examples for badges, cards, charts, system monitors, and third-party Builder components.
       - Document component availability, column spans, priorities, providers, IDs, and safe configuration values.
       - Explain that a future monitoring plugin may register CPU, RAM, disk usage, disk health, network, and service widgets.
-  - [ ] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 priority: normal -->
+  - [x] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 completed_at: 2026-08-03T14:38:12-04:00 priority: normal -->
     - Provide a settings route and Administration menu entry.
     - Use the future writable Configuration Manager rather than modifying `core.cfg`.
     - Initial settings should include application name, Administration brand, logo, and related presentation values.
     - UI must use Builder components.
-  - [ ] Log Viewer <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
-    - Provide an Administration route and menu entry.
-    - Use Builder Table/List/Card components as they become available.
-    - Include filtering, searching, level selection, date selection, and safe long-entry inspection.
-    - Do not expose sensitive values without masking.
-  - [ ] Plugin Management <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
-    - Provide enabled and disabled plugin listings.
-    - Support plugin detail inspection.
-    - Define safe enable/disable workflows.
-    - Clearly distinguish locked first-party plugins from optional plugins.
-    - Use Builder components.
-  - [ ] Theme Management <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
-    - Provide enabled and disabled theme listings.
-    - Support theme detail inspection and application-theme selection.
-    - Distinguish runtime light/dark mode from extension-level theme selection.
-    - Use Builder components.
-  - [ ] Document Administration plugin extension conventions <!-- created_at: 2026-07-20T15:00:00-04:00 priority: normal -->
-    - Document Administration menu registration.
-    - Document route and renderer registration.
-    - Document Overview registration.
-    - Document plugin-owned Administration assets.
-    - Document reusable-kernel versus Administration-specific component placement.
-    - Document current unrestricted V1 routes and planned V2 authorization integration.
 - [~] Builder Component Library <!-- created_at: 2026-07-22T07:00:00-04:00 priority: high -->
   - Reusable first-party UI components implemented through the Builder runtime.
   - Kernel components must not depend directly on Administration or any application.
@@ -544,7 +580,7 @@
       - Preserve `destroy()` as the canonical close/destruction operation.
       - Methods must refresh the existing component rather than replacing its root.
     - [ ] Document Card configuration and method API <!-- created_at: 2026-07-24T08:23:00-04:00 priority: normal -->
-  - [ ] Table component <!-- created_at: 2026-07-24T08:30:00-04:00 priority: normal -->
+  - [x] Table component <!-- created_at: 2026-07-24T08:30:00-04:00 completed_at: 2026-08-10T09:06:52-04:00 priority: normal -->
     - Create a generic Builder Table component for structured row and column data.
     - Include a built-in client-side search filter.
     - Support configurable columns, headings, empty-state content, row identifiers, and optional row actions.
@@ -579,147 +615,206 @@
     - Controls must be individually configurable and expose explicit show/hide/toggle methods.
     - Keep persistence and authorization outside the component.
   - [ ] Timeline component <!-- created_at: 2026-07-24T08:36:00-04:00 priority: normal -->
-    - Create a timeline suitable for activity logs, history, events, and audit information.
-    - Support vertical and horizontal layouts.
-    - Include a built-in search filter.
-    - Include a category filter with a “Show all” option.
-    - Support categories, icons, timestamps, headings, descriptions, links, metadata, and semantic colors.
-    - Expose an explicit method for changing orientation.
-    - Consider optional TimeagoJS formatting when its asset plugin is available.
+    - [ ] Create a timeline suitable for activity logs, history, events, and audit information. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Support vertical and horizontal layouts. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Include a built-in search filter. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Include a category filter with a “Show all” option. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Support categories, icons, timestamps, headings, descriptions, links, metadata, and semantic colors. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Expose an explicit method for changing orientation. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Consider optional TimeagoJS formatting when its asset plugin is available. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
   - [ ] Stepper component <!-- created_at: 2026-07-24T08:37:00-04:00 priority: normal -->
-    - Create a multi-step workflow/navigation component.
-    - Support vertical and horizontal layouts.
-    - Support current, complete, incomplete, disabled, and error states.
-    - Include configurable Previous and Next buttons.
-    - Expose explicit methods for showing, hiding, and toggling Previous and Next controls.
-    - Expose methods for navigating to the previous, next, or a specific step.
-    - Allow validation callbacks to prevent invalid step transitions.
+    - [ ] Create a multi-step workflow/navigation component. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Support vertical and horizontal layouts. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Support current, complete, incomplete, disabled, and error states. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Include configurable Previous and Next buttons. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Expose explicit methods for showing, hiding, and toggling Previous and Next controls. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Expose methods for navigating to the previous, next, or a specific step. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Allow validation callbacks to prevent invalid step transitions. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
   - [ ] Modal component <!-- created_at: 2026-07-24T08:38:00-04:00 priority: normal -->
-    - Create a modal/dialog component implemented through Builder.
-    - Support semantic colors.
-    - Support multiple sizes.
-    - Support configurable header, body, footer, icon, title, and controls.
-    - Include options similar to Card where applicable, including close, collapse, fullscreen, and control-menu behavior when appropriate.
-    - Expose explicit `open()`, `close()`, and `toggle()` methods.
-    - Define focus trapping, Escape behavior, backdrop behavior, and ARIA semantics.
-    - Support displaying complete long-form values from Developer Tools.
+    - [ ] Create a modal/dialog component implemented through Builder. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Support semantic colors. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Support multiple sizes. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Support configurable header, body, footer, icon, title, and controls. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Include options similar to Card where applicable, including close, collapse, fullscreen, and control-menu behavior when appropriate. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Expose explicit `open()`, `close()`, and `toggle()` methods. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Define focus trapping, Escape behavior, backdrop behavior, and ARIA semantics. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Support displaying complete long-form values from Developer Tools. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
   - [ ] Collapsible component <!-- created_at: 2026-07-24T08:39:00-04:00 priority: normal -->
-    - Create a generic expandable/collapsible content region.
-    - Expose explicit `expand()`, `collapse()`, and `toggle()` methods.
-    - Support optional title, icon, initial state, and animation.
-    - Include accessible expanded-state semantics.
+    - [ ] Create a generic expandable/collapsible content region. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Expose explicit `expand()`, `collapse()`, and `toggle()` methods. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Support optional title, icon, initial state, and animation. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Include accessible expanded-state semantics. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
   - [ ] OffCanvas component <!-- created_at: 2026-07-24T08:40:00-04:00 priority: normal -->
-    - Create a slide-in panel component.
-    - Support left, right, top, and bottom placement where practical.
-    - Support configurable size, semantic color, backdrop, header, body, footer, and close behavior.
-    - Expose explicit `open()`, `close()`, and `toggle()` methods.
-    - Define focus, keyboard, backdrop, and accessibility behavior.
-    - Must support the Developer Tools panel use case.
+    - [ ] Create a slide-in panel component. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Support left, right, top, and bottom placement where practical. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Support configurable size, semantic color, backdrop, header, body, footer, and close behavior. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Expose explicit `open()`, `close()`, and `toggle()` methods. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Define focus, keyboard, backdrop, and accessibility behavior. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Must support the Developer Tools panel use case. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
   - [ ] Code Block component <!-- created_at: 2026-07-24T08:41:00-04:00 priority: normal -->
-    - Create a safe source-code display component.
-    - Support language, title, filename, line numbers, wrapping, copy action, and optional collapse.
-    - Integrate with PrismJS only when the PrismJS plugin is installed and enabled.
-    - Fall back to escaped plain-text rendering when PrismJS is unavailable.
-    - Support displaying Builder component examples on the Theme Preview page.
+    - [ ] Create a safe source-code display component. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Support language, title, filename, line numbers, wrapping, copy action, and optional collapse. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Integrate with PrismJS only when the PrismJS plugin is installed and enabled. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Fall back to escaped plain-text rendering when PrismJS is unavailable. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Support displaying Builder component examples on the Theme Preview page. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
   - [ ] Document Builder component conventions <!-- created_at: 2026-07-24T08:45:00-04:00 priority: normal -->
-    - Document component file placement and stylesheet import conventions.
-    - Document Builder registration provider and priority rules.
-    - Document configuration defaults, validation, rendering, refresh, mounting, and destruction behavior.
-    - Document explicit option/state method conventions.
-    - Document optional asset-plugin capability detection.
-    - Document safe text, sanitized HTML, trusted SVG, and accessibility requirements.
-    - Document how container components own sorting and persistence while child components expose handles.
-- [ ] Developer Tools Plugin <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
-  - First-party `dev` plugin for development-only Administration and page-inspection features.
-  - The plugin extends the Administration panel through public menu, route, renderer, asset, and component integration points.
-  - The plugin must only expose development tooling when it is installed and enabled.
-  - UI components must use the Builder runtime.
-  - Developer Tools tab contributions must be extensible by other plugins.
-  - Tags: feature, dev, admin, plugin, extensions, builder, debugging, v.1.0
-  - [ ] Create first-party Dev plugin foundation <!-- created_at: 2026-07-22T07:00:00-04:00 priority: high -->
-    - Add plugin manifest, namespace, asset provider, renderer resources, and route provider.
-    - Register the plugin through normal extension discovery.
-    - Do not make the Dev plugin a mandatory Administration dependency.
-  - [ ] Add Developer Tools floating trigger <!-- created_at: 2026-07-24T09:00:00-04:00 priority: high -->
-    - Display a small fixed button on the right edge of the screen.
-    - Position it approximately `200px` from the top of the viewport.
-    - Show it only while the Dev plugin is enabled.
-    - The button opens the Developer Tools OffCanvas component.
-    - Provide an accessible label, keyboard focus, tooltip, and suitable icon.
-    - Avoid obstructing primary application controls on small viewports.
-  - [ ] Add Developer Tools OffCanvas shell <!-- created_at: 2026-07-24T09:01:00-04:00 priority: high -->
-    - Use the kernel OffCanvas Builder component when it becomes available.
-    - Provide sufficient width for debugging tables and source displays.
-    - Include a Tabs component for switching tools.
-    - Preserve the currently selected tab while the OffCanvas remains open.
-    - Define close, Escape, backdrop, focus, and responsive behavior.
-  - [ ] Create Developer Tools tab registry <!-- created_at: 2026-07-24T09:02:00-04:00 priority: high -->
-    - Allow the Dev plugin and other plugins to register tabs.
-    - Define tab ID, label, icon, Builder component, configuration, priority, provider, and registration order.
-    - Expose a hook such as `dev.tools.register`.
-    - Apply deterministic provider/priority/order resolution.
-  - [ ] Variable Inspector tab <!-- created_at: 2026-06-18T12:14:00-04:00 priority: high -->
-    - Display all renderer variables made available to the current page.
-    - Identify each variable’s scope:
-    - Render the inspector using the Builder Table component.
-    - Required columns:
-    - Include a built-in search filter.
-    - Mask sensitive values and credentials.
-    - Safely summarize arrays, objects, resources, binary data, and long strings.
-    - Do not invoke unsafe object methods during inspection.
-    - Provide a way to inspect nested values.
-    - Preserve deterministic handling when the same variable name exists in multiple scopes.
-  - [ ] Add full-value inspection modal <!-- created_at: 2026-07-24T09:04:00-04:00 priority: normal -->
-    - Add a “Show more” action for truncated or complex values.
-    - Open the complete value in a Builder Modal component.
-    - Use a Code Block component for textual or serialized content where appropriate.
-    - Allow scrolling, copying, and safe wrapping.
-    - Continue masking sensitive values in the complete view.
-    - Prevent active HTML or executable content from being rendered.
-  - [ ] Scaffold Generator tab <!-- created_at: 2026-07-24T09:05:00-04:00 priority: normal -->
-    - Provide an extensible scaffold-generation interface.
-    - Initial targets may include plugins, themes, routes, commands, migrations, providers, and Builder components.
-    - Present generated file plans before writing.
-    - Require explicit confirmation before creating or replacing files.
-    - Reuse established Core-Web naming and directory conventions.
-    - Define whether generation is performed directly, through CLI commands, or through a shared scaffold service.
-  - [ ] Add Theme Preview shortcut <!-- created_at: 2026-07-24T09:06:00-04:00 priority: normal -->
-    - Provide a link or action inside Developer Tools that opens the Theme Preview page.
-    - The shortcut may appear in a dedicated tab, in the OffCanvas header/footer, or in an extensible tools-navigation area.
-    - Avoid embedding the entire Theme Preview page inside the OffCanvas.
-  - [ ] Theme Preview page <!-- created_at: 2026-06-18T12:15:00-04:00 priority: normal -->
-    - Create a dedicated Dev plugin route and Administration menu entry.
-    - Render representative examples of every built-in Builder component.
-    - Use Builder itself to create the component demonstrations.
-    - Organize components by category.
-    - Include light and dark theme validation.
-    - Include interactive state and option controls where practical.
-    - Include examples for empty, normal, long-content, error, disabled, collapsed, fullscreen, and responsive states.
-    - Display the source code required to create each example.
-    - Use the Code Block component for source display.
-    - Use PrismJS syntax highlighting only when the PrismJS plugin is enabled.
-    - Fall back to escaped plain source when PrismJS is unavailable.
-    - Include component configuration and public-method documentation.
-    - Allow plugins to contribute previews for their own Builder components.
-  - [ ] Define Builder component preview registry <!-- created_at: 2026-07-24T09:08:00-04:00 priority: normal -->
-    - Allow the kernel, application, and plugins to register component preview examples.
-    - Define component slug, category, title, description, configurations, source examples, priority, and provider.
-    - Use deterministic resolution and ordering.
-    - Allow more than one example state per component.
-  - [ ] Restrict Developer Tools to safe development contexts <!-- created_at: 2026-07-24T09:09:00-04:00 priority: high -->
-    - Define configuration or mode rules controlling when Dev tools may render.
-    - Avoid exposing debugging values in production by default.
-    - Prepare the plugin for V2 authorization checks.
-    - Ensure disabled Dev tooling contributes no trigger, assets, routes, or rendered values.
-  - [ ] Document Dev plugin extension conventions <!-- created_at: 2026-07-22T07:00:00-04:00 priority: normal -->
-    - Document Developer Tools tab registration.
-    - Document Theme Preview example registration.
-    - Document variable masking and safe inspection rules.
-    - Document scaffold-provider integration.
-    - Document asset and Builder component requirements.
-    - Document development-mode and future authorization expectations.
+    - [ ] Document component file placement and stylesheet import conventions. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Document Builder registration provider and priority rules. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Document configuration defaults, validation, rendering, refresh, mounting, and destruction behavior. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Document explicit option/state method conventions. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Document optional asset-plugin capability detection. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Document safe text, sanitized HTML, trusted SVG, and accessibility requirements. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+    - [ ] Document how container components own sorting and persistence while child components expose handles. <!-- created_at: 2026-07-30T08:02:46-04:00 priority: normal -->
 
 ## Done
+- [x] Create reusable Builder Table component <!-- created_at: 2026-08-05T07:52:00-04:00 completed_at: 2026-08-10T09:05:40-04:00 priority: high -->
+  - [x] Implement a native HTML table that works without third-party plugins. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:16:54-04:00 priority: normal -->
+  - [x] Support declarative columns and client-safe row objects. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:16:56-04:00 priority: normal -->
+  - [x] Support replacing, adding, removing, and clearing rows. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:16:58-04:00 priority: normal -->
+  - [x] Support loading, empty, and invalid-row states. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-06T13:22:13-04:00 priority: normal -->
+  - [x] Provide a reusable table controls region. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:05-04:00 priority: normal -->
+  - [x] Initialize DataTables only when its runtime is available. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:07-04:00 priority: normal -->
+  - [x] Integrate compatible controls through DataTables Buttons when available. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:09-04:00 priority: normal -->
+  - [x] Preserve native controls when DataTables Buttons is unavailable. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:13-04:00 priority: normal -->
+  - [x] Add an optional actions column only when actions are configured. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:16-04:00 priority: normal -->
+  - [x] Render one direct action button when exactly one action is configured. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:19-04:00 priority: normal -->
+  - [x] Render a dropdown menu with a vertical-dots trigger when multiple actions are configured. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:22-04:00 priority: normal -->
+  - [x] Pass the original row object to action callbacks. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:26-04:00 priority: normal -->
+  - [x] Provide safe DataTables initialization, refresh, and destruction methods. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:35-04:00 priority: normal -->
+  - [x] Add kernel table styling and responsive overflow behavior. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:37-04:00 priority: normal -->
+  - [x] Support selectable Table rows <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:23-04:00 priority: high -->
+    - [x] Keep selection state owned by the native Builder Table. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:22-04:00 priority: normal -->
+    - [x] Support optional single and multiple selection modes. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:20-04:00 priority: normal -->
+    - [x] Highlight selected rows through a configurable CSS class. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:18-04:00 priority: normal -->
+    - [x] Ignore clicks originating from interactive row content. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:17-04:00 priority: normal -->
+    - [x] Expose selected rows and original row indexes. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:16-04:00 priority: normal -->
+    - [x] Clear stale selection when rows are replaced. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:14-04:00 priority: normal -->
+  - [x] Support modifier-assisted multiple selection <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:39-04:00 priority: high -->
+    - [x] Support Ctrl-click and Command-click toggling. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:38-04:00 priority: normal -->
+    - [x] Support Shift-click range selection. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:37-04:00 priority: normal -->
+    - [x] Preserve a deterministic selection anchor. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:36-04:00 priority: normal -->
+  - [x] Synchronize row selection with DataTables <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:52-04:00 priority: high -->
+    - [x] Preserve Table-owned selection through sorting, filtering, paging, and redraws. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:51-04:00 priority: normal -->
+    - [x] Do not require the DataTables Select extension. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:49-04:00 priority: normal -->
+    - [x] Reapply selected row classes after DataTables redraws. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:49-04:00 priority: normal -->
+  - [x] Support conditional Table controls <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T13:34:22-04:00 priority: high -->
+    - [x] Allow control visibility conditions based on current selection. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:04-04:00 priority: normal -->
+    - [x] Allow control disabled conditions based on current selection. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:03-04:00 priority: normal -->
+    - [x] Reevaluate native and DataTables Button controls when selection changes. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T13:34:20-04:00 priority: normal -->
+  - [x] Support conditional row actions <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:20-04:00 priority: high -->
+    - [x] Allow action visibility conditions using the row and current selection. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:19-04:00 priority: normal -->
+    - [x] Preserve existing action disabled conditions. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:18-04:00 priority: normal -->
+    - [x] Render direct or dropdown actions based on the number of visible actions. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:17-04:00 priority: normal -->
+  - [x] Expose Table selection-change notifications <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:34-04:00 priority: normal -->
+    - [x] Support an optional onSelectionChange callback. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:33-04:00 priority: normal -->
+    - [x] Provide selected rows, indexes, and count. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:32-04:00 priority: normal -->
+  - [x] Add selected-row styling <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:44-04:00 priority: normal -->
+    - [x] Add native selected-row highlighting. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:43-04:00 priority: normal -->
+    - [x] Maintain readable hover and selected states with Bootstrap and DataTables. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:42-04:00 priority: normal -->
+  - [x] Verify native operation with DataTables disabled. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-10T08:46:07-04:00 priority: normal -->
+  - [x] Verify enhanced operation with DataTables and Buttons enabled. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-10T08:46:08-04:00 priority: normal -->
+- [x] Log Viewer <!-- created_at: 2026-07-22T07:00:00-04:00 completed_at: 2026-08-10T08:54:19-04:00 priority: high -->
+  - Provide an unrestricted Administration log viewer for Version 1.0.
+  - Read logs through a reusable kernel Logger reader rather than directly from Administration route handlers.
+  - Use Builder components for filters, results, loading, empty, error, and inspection states.
+  - Perform filtering, pagination, masking, and path validation server-side.
+  - Never expose arbitrary filesystem paths or unmasked sensitive context values.
+  - [x] Audit current Logger format and configuration <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-03T14:54:05-04:00 priority: high -->
+    - Confirm configured logging directory resolution.
+    - Confirm channel filename rules.
+    - Confirm timestamp, level, message, and JSON context line format.
+    - Identify malformed-line and partial-write behavior.
+  - [x] Implement reusable Logger reader service <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - Add a kernel-side reader under `src/Logger`.
+    - Resolve the configured logging directory relative to the application root.
+    - Reject paths outside the resolved logging directory.
+    - Discover readable channel files dynamically rather than hardcoding channels.
+    - Validate channel names using the Logger channel contract.
+  - [x] Parse structured log entries <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - Parse timestamp, channel, level, message, and context.
+    - Decode valid JSON context.
+    - Tolerate malformed and partially written lines without failing the full request.
+    - Return deterministic client-safe arrays.
+  - [x] Mask sensitive log data <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - Recursively mask sensitive context keys.
+    - Mask authorization values, bearer tokens, credentials, secrets, cookies, and private keys.
+    - Apply masking before any data is returned to Administration.
+  - [x] Implement bounded reverse log reading <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - Read newest entries first.
+    - Avoid loading complete large files into memory.
+    - Support deterministic page and page-size limits.
+    - Enforce a maximum page size.
+  - [x] Implement server-side log filtering <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - Filter by channel.
+    - Filter by level.
+    - Filter by start and end date.
+    - Search message and masked context text.
+    - Return pagination metadata with results.
+  - [x] Register Logger reader service <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-04T13:09:29-04:00 priority: high -->
+    - Expose the reusable reader through the dependency injection container.
+    - Keep Logger writing behavior unchanged.
+  - [x] Register Log Viewer Administration menu entry <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+  - [x] Register unrestricted `/admin/logs` route <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - Render the Administration layout and Log Viewer mount.
+  - [x] Register unrestricted `/admin/logs/data` route <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - Accept only validated filter and pagination parameters.
+    - Return deterministic JSON success and error responses.
+    - Never accept a filesystem path from the request.
+  - [x] Register Log Viewer renderer resources <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: normal -->
+  - [x] Register Log Viewer plugin assets <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: normal -->
+  - [x] Render Log Viewer controls through Builder <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-06T12:29:23-04:00 priority: high -->
+    - [x] Provide channel, level, date, and search controls. <!-- created_at: 2026-08-06T12:29:19-04:00 completed_at: 2026-08-06T12:29:20-04:00 priority: normal -->
+    - [x] Provide an explicit refresh action. <!-- created_at: 2026-08-06T12:29:19-04:00 completed_at: 2026-08-06T12:29:21-04:00 priority: normal -->
+    - [x] Preserve selected filters while paging. <!-- created_at: 2026-08-06T12:29:19-04:00 completed_at: 2026-08-06T12:29:22-04:00 priority: normal -->
+  - [x] Render paginated log results through Builder <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-10T08:54:14-04:00 priority: high -->
+    - [x] Render the initial Log Viewer card and result mount through Builder <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - [x] Load and render the first page of log entries <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - [x] Show timestamp, channel, level, message, and masked context <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - [x] Include deterministic loading, empty, and error states <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - [x] Add Previous and Next pagination controls. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-06T12:29:32-04:00 priority: normal -->
+  - [x] Add safe long-entry inspection <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-06T13:00:33-04:00 priority: normal -->
+    - [x] Keep long messages and context collapsed in the primary listing. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-06T13:00:30-04:00 priority: normal -->
+    - [x] Expand only through an explicit inspection action. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-05T12:19:23-04:00 priority: normal -->
+    - [x] Preserve masked values in expanded content. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-05T12:19:25-04:00 priority: normal -->
+  - [x] Verify Log Viewer behavior <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-10T08:45:38-04:00 priority: high -->
+    - [x] Verify every discovered channel. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-10T08:45:28-04:00 priority: normal -->
+    - [x] Verify all supported levels and filters. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-10T08:45:29-04:00 priority: normal -->
+    - [x] Verify pagination with large log files. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-10T08:45:30-04:00 priority: normal -->
+    - [x] Verify malformed-line tolerance. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-10T08:45:31-04:00 priority: normal -->
+    - [x] Verify sensitive-value masking. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-10T08:45:34-04:00 priority: normal -->
+    - [x] Verify empty, missing, and unreadable log directories. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-10T08:45:35-04:00 priority: normal -->
+    - [x] Verify arbitrary path traversal is impossible. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-10T08:45:35-04:00 priority: normal -->
+- [x] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 completed_at: 2026-08-03T14:36:37-04:00 priority: normal -->
+  - Provide a settings route and Administration menu entry.
+  - Use the writable Configuration Manager rather than modifying `core.cfg`.
+  - Initial settings should include application name, Administration brand, logo, and related presentation values.
+  - UI must use Builder components.
+  - [x] Audit existing writable configuration behavior <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+    - Review `core.config set` and `core.config unset`.
+    - Identify reusable persistence logic and avoid duplicating it in Administration.
+  - [x] Expose reusable writable configuration service <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:41-04:00 priority: normal -->
+    - Write only to `config/local.cfg`.
+    - Preserve inherited values from `core.cfg`.
+    - Support nested keys.
+    - Support set and unset operations.
+    - Use atomic file replacement where practical.
+  - [x] Define Administration presentation settings <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:44-04:00 priority: normal -->
+    - Application name.
+    - Administration brand label.
+    - Administration logo.
+    - Footer content or related presentation metadata.
+    - Define validation and default/inherited behavior for each key.
+  - [x] Register unrestricted `/admin/settings` route <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:49-04:00 priority: normal -->
+  - [x] Register System Settings Administration menu entry <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:55-04:00 priority: normal -->
+  - [x] Register System Settings renderer resources <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:58-04:00 priority: normal -->
+  - [x] Register System Settings plugin assets <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:55:57-04:00 priority: normal -->
+  - [x] Render System Settings UI through Builder <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:56:03-04:00 priority: normal -->
+  - [x] Load resolved and locally overridden values <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:56:12-04:00 priority: normal -->
+  - [x] Persist validated settings through the writable configuration service <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+  - [x] Support resetting settings to inherited defaults <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-08-03T14:33:43-04:00 priority: normal -->
+  - [x] Display deterministic success and validation feedback <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-08-03T14:33:44-04:00 priority: normal -->
+  - [x] Apply configured branding to the Administration layout <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:56:22-04:00 priority: normal -->
+  - [x] Verify settings persistence and inherited fallback behavior <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-08-03T14:36:34-04:00 priority: normal -->
 - [x] BUG: Assets loading does not seem to take into account if the extension is enabled or not. All assets remain loaded. <!-- created_at: 2026-07-27T20:32:56-04:00 completed_at: 2026-07-28T08:24:09-04:00 priority: urgent -->
 - [x] Configuration Manager <!-- created_at: 2026-06-18T11:00:00-04:00 completed_at: 2026-07-29T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
   - Load, merge, and provide read and write access to application configuration (`core.cfg` + optional `local.cfg`).

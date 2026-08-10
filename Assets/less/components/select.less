@@ -1,0 +1,291 @@
+.app-select-group {
+    grid-template-columns:
+        auto
+        minmax(0, 1fr);
+}
+
+.app-select-group > .app-select-control {
+    grid-column: 2;
+    grid-row: 1;
+    border-left: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.app-select-group > .select2-container {
+    grid-column: 2;
+    grid-row: 1;
+    width: 100% !important;
+    min-width: 0;
+}
+
+.app-select-group
+    > .select2-container
+    .select2-selection {
+    min-height: 100%;
+    color: var(--app-body-color);
+    background-color: var(--app-panel);
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    border-left: 0;
+    border-radius: 0;
+    border-top-right-radius:
+        var(--app-border-radius);
+    border-bottom-right-radius:
+        var(--app-border-radius);
+}
+
+.app-select-group > .select2-container
+    .select2-selection--single {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 2.375rem;
+    padding: 0.375rem 2rem 0.375rem 0.75rem;
+}
+
+.app-select-group
+    > .select2-container
+    .select2-selection--single
+    .select2-selection__rendered {
+    padding: 0;
+    color: inherit;
+    line-height: 1.5;
+}
+
+.app-select-group
+    > .select2-container
+    .select2-selection--multiple {
+    display: flex;
+    align-items: center;
+    min-height: 2.375rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.app-select-group
+    > .select2-container
+    .select2-selection--multiple
+    .select2-selection__rendered {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+}
+
+/* multiple-selection choice chips */
+.app-select-group > .select2-container
+    .select2-selection--multiple
+    .select2-selection__choice {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0.125rem 0.5rem;
+    color: var(--app-body-color);
+    background-color: var(--app-panel-2);
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    border-radius: var(--app-border-radius);
+    font: inherit;
+}
+
+/* remove button inside a choice chip */
+.app-select-group > .select2-container
+    .select2-selection--multiple
+    .select2-selection__choice__remove {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    padding: 0;
+    color: var(--app-secondary-color);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--app-danger);
+    }
+}
+
+.app-select-control {
+    cursor: pointer;
+}
+
+.app-select-control[multiple] {
+    min-height: 2.375rem;
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+}
+
+.app-select-control:disabled {
+    cursor: not-allowed;
+}
+
+/* ── Single-select arrow restoration ────────────────────────── */
+
+.app-select-group > .select2-container
+    .select2-selection--single
+    .select2-selection__arrow {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 2rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* hide Select2's original triangle */
+.app-select-group > .select2-container
+    .select2-selection--single
+    .select2-selection__arrow b {
+    display: none;
+}
+
+/* visible arrow via ::before pseudo-element — down state (default) */
+.app-select-group > .select2-container
+    .select2-selection--single
+    .select2-selection__arrow::before {
+    content: "";
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    background-color: currentColor;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+    mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20fill-rule%3D'evenodd'%20d%3D'M1.646%204.646a.5.5%200%200%201%20.708%200L8%2010.293l5.646-5.647a.5.5%200%200%201%20.708.708l-6%206a.5.5%200%200%201-.708%200l-6-6a.5.5%200%200%201%200-.708'%2F%3E%3C%2Fsvg%3E");
+    -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20fill-rule%3D'evenodd'%20d%3D'M1.646%204.646a.5.5%200%200%201%20.708%200L8%2010.293l5.646-5.647a.5.5%200%200%201%20.708.708l-6%206a.5.5%200%200%201-.708%200l-6-6a.5.5%200%200%201%200-.708'%2F%3E%3C%2Fsvg%3E");
+}
+
+/* open state → up-arrow */
+.app-select-group > .select2-container.select2-container--open
+    .select2-selection--single
+    .select2-selection__arrow::before {
+    mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20fill-rule%3D'evenodd'%20d%3D'M7.646%204.646a.5.5%200%200%201%20.708%200l6%206a.5.5%200%200%201-.708.708L8%205.707l-5.646%205.647a.5.5%200%200%201-.708-.708z'%2F%3E%3C%2Fsvg%3E");
+    -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2016%2016'%3E%3Cpath%20fill-rule%3D'evenodd'%20d%3D'M7.646%204.646a.5.5%200%200%201%20.708%200l6%206a.5.5%200%200%201-.708.708L8%205.707l-5.646%205.647a.5.5%200%200%201-.708-.708z'%2F%3E%3C%2Fsvg%3E");
+}
+
+/* ── Result list inside detached dropdown ─────────────────────── */
+
+/* results container background */
+.app-select2-dropdown .select2-results__list {
+    color: var(--app-body-color);
+    background-color: var(--app-panel);
+}
+
+/* individual option row */
+.app-select2-dropdown .select2-results__option {
+    padding: 0.375rem 0.75rem;
+    font: inherit;
+    line-height: 1.5;
+    cursor: pointer;
+    color: var(--app-body-color);
+    background-color: var(--app-panel);
+}
+
+/* selectable options only */
+.app-select2-dropdown .select2-results__option--selectable {
+    cursor: pointer;
+}
+
+/* highlighted / keyboard-active option (primary state wins) */
+.app-select2-dropdown .select2-results__option--highlighted {
+    color: var(--app-primary-contrast);
+    background-color: var(--app-primary);
+}
+
+/* selected option — secondary background, readable text */
+.app-select2-dropdown .select2-results__option[aria-selected="true"] {
+    color: var(--app-body-color);
+    background-color: color-mix(
+        in srgb,
+        var(--app-primary) 18%,
+        var(--app-panel)
+    );
+}
+
+/* both highlighted AND selected → highlighted state wins */
+.app-select2-dropdown .select2-results__option[aria-selected="true"].select2-results__option--highlighted {
+    color: var(--app-primary-contrast);
+    background-color: var(--app-primary);
+}
+
+/* disabled options */
+.app-select2-dropdown .select2-results__option--disabled {
+    color: var(--app-secondary-color);
+    background-color: transparent;
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* status messages (no results, searching, etc.) */
+.app-select2-dropdown .select2-results__message[role] {
+    color: var(--app-secondary-color);
+}
+
+
+/* dropdown wrapper (dropdownParent target) */
+.app-select2-dropdown {
+    color: var(--app-body-color);
+    background-color: var(--app-panel);
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    border-radius: var(--app-border-radius);
+    box-shadow: var(--app-box-shadow);
+}
+
+/* search region inside dropdown */
+.app-select2-dropdown
+    .select2-search {
+    background-color: var(--app-panel);
+    padding: 0.375rem;
+}
+
+/* search input ── mirrors .app-form-control */
+.app-select2-dropdown
+    .select2-search__field {
+    color: var(--app-body-color);
+    background-color: var(--app-panel);
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    border-radius: var(--app-border-radius);
+    font: inherit;
+    line-height: 1.5;
+    padding: 0.375rem 0.75rem;
+    outline: 0;
+
+    &::placeholder {
+        color: var(--app-secondary-color);
+        opacity: 1;
+    }
+
+    &:focus {
+        border-color: var(--app-primary);
+        box-shadow:
+            0 0 0 0.25rem
+            color-mix(
+                in srgb,
+                var(--app-primary) 25%,
+                transparent
+            );
+    }
+}
+

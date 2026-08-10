@@ -59,6 +59,19 @@ final class AssetProvider
             );
         }
 
+        $logsLessPath = $pluginRoot . '/Assets/less/logs.less';
+
+        if (is_file($logsLessPath)) {
+            $context['registry']->css(
+                'plugins/administration',
+                'logs.less',
+                $logsLessPath,
+                Entry::PROVIDER_PLUGIN,
+                400,
+                [],
+            );
+        }
+
         $settingsJsPath = $pluginRoot . '/Assets/js/settings.js';
 
         if (is_file($settingsJsPath)) {
@@ -66,6 +79,19 @@ final class AssetProvider
                 'plugins/administration',
                 'settings.js',
                 $settingsJsPath,
+                Entry::PROVIDER_PLUGIN,
+                400,
+                [],
+            );
+        }
+
+        $logsJsPath = $pluginRoot . '/Assets/js/logs.js';
+
+        if (is_file($logsJsPath)) {
+            $context['registry']->js(
+                'plugins/administration',
+                'logs.js',
+                $logsJsPath,
                 Entry::PROVIDER_PLUGIN,
                 400,
                 [],

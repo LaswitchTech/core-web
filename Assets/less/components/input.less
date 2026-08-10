@@ -1,3 +1,94 @@
+.app-input-group {
+    display: grid;
+    grid-template-columns:
+        auto
+        minmax(0, 1fr)
+        repeat(3, auto);
+    align-items: stretch;
+    width: 100%;
+}
+
+.app-input-group-label {
+    grid-column: 1;
+    grid-row: 1;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    color: var(--app-body-color);
+    background-color: var(--app-panel-2);
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    border-top-left-radius:
+        var(--app-border-radius);
+    border-bottom-left-radius:
+        var(--app-border-radius);
+    font-weight: 500;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.app-input-group > .app-form-control {
+    grid-column: 2;
+    grid-row: 1;
+    border-left: 0;
+    border-radius: 0;
+}
+
+.app-input-group > .app-form-control-actionless {
+    border-top-right-radius:
+        var(--app-border-radius);
+    border-bottom-right-radius:
+        var(--app-border-radius);
+}
+
+.app-input-group-action {
+    display: inline-flex;
+    grid-row: 1;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.375rem;
+    padding: 0.375rem 0.625rem;
+    color: var(--app-body-color);
+    background-color: var(--app-panel-2);
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    border-left: 0;
+    border-radius: 0;
+    font: inherit;
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+.app-input-group-action-last {
+    border-top-right-radius:
+        var(--app-border-radius);
+    border-bottom-right-radius:
+        var(--app-border-radius);
+}
+
+.app-input-group-action:hover {
+    color: var(--app-primary-contrast);
+    background-color: var(--app-primary);
+    border-color: var(--app-primary);
+}
+
+.app-input-group-action:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 0;
+    box-shadow:
+        0 0 0 0.25rem
+        color-mix(
+            in srgb,
+            var(--app-primary) 25%,
+            transparent
+        );
+}
+
 .app-form-control {
     display: block;
     width: 100%;
@@ -135,5 +226,36 @@
 .app-form-control-file:disabled::-webkit-file-upload-button {
     color: var(--app-secondary-color);
     background-color: var(--app-panel-2);
+    cursor: not-allowed;
+}
+
+.app-form-control[type="date"],
+.app-form-control[type="datetime-local"],
+.app-form-control[type="time"] {
+    color-scheme: light dark;
+}
+
+.app-form-control[type="date"]::-webkit-calendar-picker-indicator,
+.app-form-control[type="datetime-local"]::-webkit-calendar-picker-indicator,
+.app-form-control[type="time"]::-webkit-calendar-picker-indicator {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    padding: 0.375rem;
+    color: inherit;
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+.app-form-control[type="date"]:hover:not(:disabled)::-webkit-calendar-picker-indicator,
+.app-form-control[type="datetime-local"]:hover:not(:disabled)::-webkit-calendar-picker-indicator,
+.app-form-control[type="time"]:hover:not(:disabled)::-webkit-calendar-picker-indicator {
+    opacity: 1;
+}
+
+.app-form-control[type="date"]:disabled::-webkit-calendar-picker-indicator,
+.app-form-control[type="datetime-local"]:disabled::-webkit-calendar-picker-indicator,
+.app-form-control[type="time"]:disabled::-webkit-calendar-picker-indicator {
+    opacity: 0.5;
     cursor: not-allowed;
 }

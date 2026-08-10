@@ -162,6 +162,7 @@
                 footer: "",
                 headerVisible: true,
                 bodyVisible: true,
+                bodyPaddingEnabled: true,
                 footerVisible: true,
                 headerIcon: "",
                 moveHandleVisible: false,
@@ -636,6 +637,17 @@
                 this.config("title")
             );
 
+            const bodyPaddingEnabled =
+                this.config(
+                    "bodyPaddingEnabled"
+                );
+
+            if (typeof bodyPaddingEnabled !== "boolean") {
+                throw new TypeError(
+                    "Card bodyPaddingEnabled must be a boolean."
+                );
+            }
+
             const collapsed =
                 this.config("collapsed") === true;
 
@@ -645,6 +657,11 @@
             body.hidden =
                 this.config("bodyVisible") !== true
                 || collapsed;
+
+            body.classList.toggle(
+                "app-card-body-flush",
+                bodyPaddingEnabled === false
+            );
 
             global.Builder.html(
                 body,

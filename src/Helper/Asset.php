@@ -80,8 +80,10 @@ final class Asset implements HelperInterface
             return '';
         }
 
-        $hasLess   = false;
-        $regularCss = [];
+        $hasLess = false;
+        $pluginCss = [];
+        $frameworkCss = [];
+        $themeCss = [];
 
         foreach ($registry->orderedCss() as $entry) {
             $path = rtrim(strtolower($entry->path), '/\\');
@@ -98,16 +100,38 @@ final class Asset implements HelperInterface
                 continue;
             }
 
-            $regularCss[] = "<link rel=\"stylesheet\" href=\"{$url}\">";
+            $link =
+                "<link rel=\"stylesheet\" href=\"{$url}\">";
+
+            if ($entry->provider === Entry::PROVIDER_PLUGIN) {
+                $pluginCss[] = $link;
+
+                continue;
+            }
+
+            if ($entry->provider === Entry::PROVIDER_THEME) {
+                $themeCss[] = $link;
+
+                continue;
+            }
+
+            $frameworkCss[] = $link;
         }
 
-        $css = [];
+        $css = [
+            ...$pluginCss,
+            ...$frameworkCss,
+        ];
 
         if ($hasLess) {
-            $css[] = '<link rel="stylesheet" href="/css">';
+            $css[] =
+                '<link rel="stylesheet" href="/css">';
         }
 
-        $css = [...$css, ...$regularCss];
+        $css = [
+            ...$css,
+            ...$themeCss,
+        ];
 
         return implode("\n", $css);
     }

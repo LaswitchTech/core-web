@@ -45,5 +45,14 @@ final class RendererProvider
             0,
             [],
         );
+
+        $registry->add(
+            'admin.logs',
+            Entry::TYPE_VIEW,
+            $pluginRoot . '/views/logs.php',
+            Entry::PROVIDER_PLUGIN,
+            0,
+            [],
+        );
     }
 }

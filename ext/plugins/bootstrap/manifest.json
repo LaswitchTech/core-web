@@ -1,6 +1,6 @@
 {
     "type": "plugin",
-    "name": "Bootstrap",
+    "name": "bootstrap",
     "version": "5.3.3",
     "description": "First-party Bootstrap 5.3 framework assets.",
     "depends": [

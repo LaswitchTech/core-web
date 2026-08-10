@@ -25,6 +25,7 @@ use Laswitchtech\CoreWeb\Database\Seeding\Seeder;
 use Laswitchtech\CoreWeb\Database\Seeding\RegistryTable as SeedRegistryTable;
 use Laswitchtech\CoreWeb\Logger\Logger;
 use Laswitchtech\CoreWeb\Logger\Level;
+use Laswitchtech\CoreWeb\Logger\Reader;
 use Laswitchtech\CoreWeb\Helper\Application;
 use Laswitchtech\CoreWeb\Helper\HelperInterface;
 use Laswitchtech\CoreWeb\Helper\Url;
@@ -290,6 +291,14 @@ class Bootstrap
         $loggerFactory = function (string $channel) use ($appRoot, $enabled, $relativePath, $levelKey): Logger {
             return new Logger($channel, $appRoot, $relativePath, $enabled, $levelKey);
         };
+
+        $c->registerSingleton(
+            'logger_reader',
+            static fn (): Reader => new Reader(
+                $appRoot,
+                $relativePath,
+            ),
+        );
 
         // Expose a factory callable so callers can create their own channels.
         $c->set('logger_factory', $loggerFactory);

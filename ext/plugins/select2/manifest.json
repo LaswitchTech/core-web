@@ -5,7 +5,7 @@
     "description": "First-party Select2 assets with Bootstrap 5 theme integration.",
     "depends": [
         "jquery",
-        "Bootstrap"
+        "bootstrap"
     ],
     "autoload": {
         "psr-4": {

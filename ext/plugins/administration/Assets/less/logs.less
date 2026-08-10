@@ -1,0 +1,260 @@
+.admin-log-viewer {
+    display: grid;
+    gap: 1rem;
+}
+
+.admin-log-viewer .app-table-controls {
+    padding: 0.75rem;
+    background-color: var(--app-panel-2);
+    border-bottom:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+}
+
+.admin-log-viewer .app-table-controls > .app-input-group {
+    min-width: 12rem;
+    flex: 1 1 12rem;
+}
+
+.admin-log-viewer
+    .app-table-controls
+    > .app-input-group:has(
+        input[type="search"]
+    ) {
+    min-width: 18rem;
+    flex-basis: 18rem;
+}
+
+.admin-log-viewer
+    .app-table-controls
+    > .app-input-group:has(
+        input[type="datetime-local"]
+    ) {
+    min-width: 15rem;
+    flex-basis: 15rem;
+}
+
+.admin-log-viewer
+    .app-table-controls
+    > .app-select-group {
+    min-width: 12rem;
+    flex: 1 1 12rem;
+}
+
+.admin-log-viewer .app-table-bottom-controls {
+    padding: 0.75rem;
+    background-color: var(--app-panel-2);
+    border-top:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+}
+
+.admin-log-viewer-pagination {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.admin-log-viewer-pagination .page-item {
+    display: block;
+    margin: 0;
+    list-style: none;
+}
+
+.admin-log-viewer-pagination .page-link {
+    min-width: auto;
+    min-height: auto;
+    margin: 0;
+    border-radius: 0;
+}
+
+.admin-log-viewer-pagination
+    .page-item:first-child
+    .page-link {
+    border-top-left-radius:
+        var(--app-border-radius);
+    border-bottom-left-radius:
+        var(--app-border-radius);
+}
+
+.admin-log-viewer-pagination
+    .page-item:last-child
+    .page-link {
+    border-top-right-radius:
+        var(--app-border-radius);
+    border-bottom-right-radius:
+        var(--app-border-radius);
+}
+
+.admin-log-viewer-refresh {
+    flex: 0 0 auto;
+    width: 2.375rem;
+    min-width: 2.375rem;
+    padding-left: 0;
+    padding-right: 0;
+
+    .app-icon {
+        margin: 0.25rem auto;
+    }
+}
+
+.admin-log-viewer-refresh-spinner {
+    width: 1rem;
+    height: 1rem;
+    border:
+        0.125rem solid
+        currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation:
+        admin-log-viewer-refresh-spin
+        0.75s linear infinite;
+}
+
+@keyframes admin-log-viewer-refresh-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.admin-log-viewer-feedback {
+    padding: 0.75rem 1rem;
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        transparent;
+    border-radius: var(--app-border-radius);
+}
+
+.admin-log-viewer-feedback-error {
+    color: var(--app-danger-emphasis);
+    background-color: var(--app-danger-subtle);
+    border-color: var(--app-danger-border);
+}
+
+.admin-log-viewer-feedback-info {
+    color: var(--app-info-emphasis);
+    background-color: var(--app-info-subtle);
+    border-color: var(--app-info-border);
+}
+
+.admin-log-viewer-results {
+    display: grid;
+}
+
+.admin-log-viewer-empty {
+    margin: 0;
+    padding: 1rem;
+    color: var(--app-secondary-color);
+    text-align: center;
+}
+
+.admin-log-viewer-entry-level {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--app-border-radius);
+    color: var(--app-primary-contrast);
+    background-color: var(--app-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.admin-log-viewer-entry-level-warning {
+    background-color: var(--app-warning);
+}
+
+.admin-log-viewer-entry-level-error,
+.admin-log-viewer-entry-level-critical {
+    background-color: var(--app-danger);
+}
+
+.admin-log-viewer-column-channel {
+    font-weight: 600;
+}
+
+.admin-log-viewer-column-timestamp,
+.admin-log-viewer-column-level {
+    white-space: nowrap;
+}
+
+.admin-log-viewer-column-message {
+    width: 100%;
+}
+
+.admin-log-viewer-entry-timestamp {
+    margin-left: auto;
+    color: var(--app-secondary-color);
+    font-size: 0.875rem;
+}
+
+.admin-log-viewer-entry-message {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.admin-log-viewer-inspection {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem;
+    background-color: var(--app-panel-2);
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    border-radius: var(--app-border-radius);
+}
+
+.admin-log-viewer-inspection-title {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.admin-log-viewer-inspection-metadata {
+    margin: 0;
+    color: var(--app-secondary-color);
+    font-size: 0.875rem;
+}
+
+.admin-log-viewer-inspection-message {
+    max-height: 20rem;
+    margin: 0;
+    padding: 0.75rem;
+    overflow: auto;
+    color: var(--app-body-color);
+    background-color: var(--app-panel);
+    border-radius: var(--app-border-radius);
+    font: inherit;
+    font-family: monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.admin-log-viewer-entry-context {
+    max-height: 20rem;
+    margin: 0;
+    padding: 0.75rem;
+    overflow: auto;
+    color: var(--app-body-color);
+    background-color: var(--app-panel);
+    border-radius: var(--app-border-radius);
+    font: inherit;
+    font-family: monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

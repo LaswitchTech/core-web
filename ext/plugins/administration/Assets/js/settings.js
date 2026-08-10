@@ -180,11 +180,61 @@
             return;
         }
 
+        var settingInputs = new Map();
+
         var currentLogoValue = "";
         var logoFieldElement = null;
         var logoInputElement = null;
         var logoRemoveButton = null;
         var logoPreviewElement = null;
+
+        var feedback = document.createElement("div");
+
+        feedback.classList.add(
+            "admin-system-settings-feedback"
+        );
+
+        feedback.hidden = true;
+
+        feedback.setAttribute(
+            "aria-live",
+            "polite"
+        );
+
+        function showFeedback(type, message) {
+            feedback.classList.remove(
+                "admin-system-settings-feedback-success",
+                "admin-system-settings-feedback-error"
+            );
+
+            feedback.classList.add(
+                type === "success"
+                    ? "admin-system-settings-feedback-success"
+                    : "admin-system-settings-feedback-error"
+            );
+
+            feedback.setAttribute(
+                "role",
+                type === "success"
+                    ? "status"
+                    : "alert"
+            );
+
+            feedback.textContent = message;
+            feedback.hidden = false;
+        }
+
+        function clearFeedback() {
+            feedback.hidden = true;
+            feedback.textContent = "";
+
+            feedback.classList.remove(
+                "admin-system-settings-feedback-success",
+                "admin-system-settings-feedback-error"
+            );
+
+            feedback.removeAttribute("role");
+        }
 
         var form = document.createElement("form");
 
@@ -289,8 +339,14 @@
         }
 
         function removeLogoPreview() {
-            if (logoPreviewElement instanceof Element) {
-                logoPreviewElement.remove();
+            if (
+                logoFieldElement instanceof Element
+            ) {
+                logoFieldElement.querySelectorAll(
+                    ".admin-system-settings-logo-preview"
+                ).forEach(function (previewElement) {
+                    previewElement.remove();
+                });
             }
 
             logoPreviewElement = null;
@@ -473,6 +529,7 @@
         }
 
         brandingEntries.forEach(function (entry) {
+
             var controlId =
                 "admin-setting-" + entry.key;
 
@@ -485,7 +542,7 @@
                 "form-field",
                 {
                     controlId: controlId,
-                    label: entry.label,
+                    label: "",
                     description: entry.description,
                     error: "",
                     required: false,
@@ -538,16 +595,43 @@
                     disabled: false,
                     readonly: false,
                     invalid: false,
+                    label: entry.label,
+                    clearActionEnabled:
+                        entry.type !== "file",
+                    resetActionEnabled:
+                        entry.type !== "file",
+                    previousValue:
+                        typeof entry.value === "string"
+                            ? entry.value
+                            : "",
+                    defaultActionEnabled:
+                        entry.type !== "file",
+                    defaultValue:
+                        typeof entry.default === "string"
+                            ? entry.default
+                            : "",
                 }
             );
 
-            var inputElement = input.element();
+            var inputElement = input.inputElement();
 
             if (!(inputElement instanceof HTMLInputElement)) {
                 return;
             }
 
             inputElement.id = controlId;
+
+            if (entry.type !== "file") {
+                settingInputs.set(
+                    entry.key,
+                    input
+                );
+
+                inputElement.setAttribute(
+                    "data-setting-key",
+                    entry.key
+                );
+            }
 
             if (entry.type === "file") {
                 logoFieldElement = fieldElement;
@@ -634,7 +718,10 @@
         categoryCard.appendTo(form);
         saveButton.appendTo(actions);
         form.append(actions);
-        mount.append(form);
+        mount.append(
+            feedback,
+            form
+        );
 
         var saveButtonElement = saveButton.element();
 
@@ -646,6 +733,7 @@
             "submit",
             function (event) {
                 event.preventDefault();
+                clearFeedback();
 
                 saveButton.config({
                     loading: true,
@@ -653,6 +741,23 @@
                 });
 
                 var formData = new FormData(form);
+
+                settingInputs.forEach(function (
+                    settingInput,
+                    settingKey
+                ) {
+                    if (
+                        typeof settingInput.isDirty
+                            !== "function"
+                        || settingInput.isDirty()
+                    ) {
+                        return;
+                    }
+
+                    formData.delete(
+                        "settings[" + settingKey + "]"
+                    );
+                });
 
                 fetch(
                     form.action,
@@ -683,14 +788,68 @@
                             || typeof payload !== "object"
                             || payload.success !== true
                         ) {
+                            var errorMessage =
+                                payload !== null
+                                && typeof payload === "object"
+                                && typeof payload.message === "string"
+                                && payload.message !== ""
+                                    ? payload.message
+                                    : "The settings could not be saved.";
+
+                            if (
+                                payload !== null
+                                && typeof payload === "object"
+                                && payload.errors !== null
+                                && typeof payload.errors === "object"
+                            ) {
+                                var errorValues =
+                                    Object.values(
+                                        payload.errors
+                                    );
+
+                                var firstError =
+                                    errorValues.find(function (value) {
+                                        return typeof value === "string"
+                                            && value !== "";
+                                    });
+
+                                if (typeof firstError === "string") {
+                                    errorMessage += " " + firstError;
+                                }
+                            }
+
+                            showFeedback(
+                                "error",
+                                errorMessage
+                            );
+
                             return;
                         }
+
+                        showFeedback(
+                            "success",
+                            typeof payload.message === "string"
+                            && payload.message !== ""
+                                ? payload.message
+                                : "Settings saved successfully."
+                        );
 
                         var settings =
                             payload.settings !== null
                             && typeof payload.settings === "object"
                                 ? payload.settings
                                 : {};
+
+                        settingInputs.forEach(function (settingInput) {
+                            if (
+                                typeof settingInput.commit
+                                    !== "function"
+                            ) {
+                                return;
+                            }
+
+                            settingInput.commit();
+                        });
 
                         currentLogoValue =
                             typeof settings["application.logo"] === "string"
@@ -718,6 +877,10 @@
                         renderLogoFieldState();
                     })
                     .catch(function () {
+                        showFeedback(
+                            "error",
+                            "The settings request could not be completed."
+                        );
                     })
                     .finally(function () {
                         saveButton.config({
