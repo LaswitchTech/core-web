@@ -1,0 +1,118 @@
+.dev-theme-preview {
+    display: grid;
+    gap: 2rem;
+}
+
+.dev-theme-preview-section {
+    display: grid;
+    gap: 1rem;
+}
+
+.dev-theme-preview-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.dev-theme-preview-section-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+}
+
+.dev-theme-preview-section-title {
+    margin: 0;
+    color: var(--app-body-color);
+    font-size: 1.25rem;
+}
+
+.dev-theme-preview-section-description {
+    margin: -0.5rem 0 0;
+    color: var(--app-secondary-color);
+}
+
+.dev-theme-preview-examples {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.dev-theme-preview-examples > .app-button {
+    justify-self: start;
+}
+
+.dev-toast-area-viewport {
+    position: relative;
+    display: grid;
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(0, 1fr)
+        );
+    grid-template-rows:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+    gap: 1rem;
+    min-height: 18rem;
+    padding: 1rem;
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    border-radius:
+        var(--app-border-radius);
+    background:
+        var(--app-panel);
+}
+
+.dev-toast-area-viewport
+.app-button[
+    data-toast-area-preview-position="top-left"
+] {
+    align-self: start;
+    justify-self: start;
+}
+
+.dev-toast-area-viewport
+.app-button[
+    data-toast-area-preview-position="top-center"
+] {
+    align-self: start;
+    justify-self: center;
+}
+
+.dev-toast-area-viewport
+.app-button[
+    data-toast-area-preview-position="top-right"
+] {
+    align-self: start;
+    justify-self: end;
+}
+
+.dev-toast-area-viewport
+.app-button[
+    data-toast-area-preview-position="bottom-left"
+] {
+    align-self: end;
+    justify-self: start;
+}
+
+.dev-toast-area-viewport
+.app-button[
+    data-toast-area-preview-position="bottom-center"
+] {
+    align-self: end;
+    justify-self: center;
+}
+
+.dev-toast-area-viewport
+.app-button[
+    data-toast-area-preview-position="bottom-right"
+] {
+    align-self: end;
+    justify-self: end;
+}

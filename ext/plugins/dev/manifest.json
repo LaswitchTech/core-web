@@ -1,0 +1,20 @@
+{
+    "type": "plugin",
+    "name": "dev",
+    "version": "1.0.0",
+    "description": "First-party development tools for Core-Web.",
+    "kernel-compat": "^1.0",
+    "locked": false,
+    "depends": [],
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\Dev\\": "src/"
+        }
+    },
+    "hooks": [
+        "admin.menu.register::Laswitchtech\\CoreWeb\\Plugin\\Dev\\MenuProvider::register",
+        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\Dev\\AssetProvider::registerAssets",
+        "renderer.register::Laswitchtech\\CoreWeb\\Plugin\\Dev\\RendererProvider::registerResources",
+        "router.register::Laswitchtech\\CoreWeb\\Plugin\\Dev\\Dev::registerRoutes"
+    ]
+}

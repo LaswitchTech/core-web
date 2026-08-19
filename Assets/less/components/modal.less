@@ -1,0 +1,322 @@
+// ============================================================
+// Core-Web — Modal component
+// ============================================================
+
+
+.app-modal {
+    position: fixed;
+    z-index: 1090;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+}
+
+.app-modal-backdrop {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    background:
+        color-mix(
+            in srgb,
+            var(--app-dark) 55%,
+            transparent
+        );
+}
+
+.app-modal-dialog {
+    --app-modal-color:
+        var(--app-primary);
+
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height:
+        calc(100vh - 2rem);
+    overflow: hidden;
+    color:
+        var(--app-body-color);
+    background:
+        var(--app-panel);
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-modal-color);
+    border-radius:
+        var(--app-border-radius);
+    box-shadow:
+        var(--app-box-shadow);
+}
+
+.app-modal[data-modal-size="small"]
+.app-modal-dialog {
+    max-width: 24rem;
+}
+
+.app-modal[data-modal-size="medium"]
+.app-modal-dialog {
+    max-width: 36rem;
+}
+
+.app-modal[data-modal-size="large"]
+.app-modal-dialog {
+    max-width: 52rem;
+}
+
+.app-modal[data-modal-size="xlarge"]
+.app-modal-dialog {
+    max-width: 72rem;
+}
+
+.app-modal[data-modal-color="primary"]
+.app-modal-dialog {
+    --app-modal-color:
+        var(--app-primary);
+}
+
+.app-modal[data-modal-color="secondary"]
+.app-modal-dialog {
+    --app-modal-color:
+        var(--app-secondary);
+}
+
+.app-modal[data-modal-color="success"]
+.app-modal-dialog {
+    --app-modal-color:
+        var(--app-success);
+}
+
+.app-modal[data-modal-color="danger"]
+.app-modal-dialog {
+    --app-modal-color:
+        var(--app-danger);
+}
+
+.app-modal[data-modal-color="warning"]
+.app-modal-dialog {
+    --app-modal-color:
+        var(--app-warning);
+}
+
+.app-modal[data-modal-color="info"]
+.app-modal-dialog {
+    --app-modal-color:
+        var(--app-info);
+}
+
+.app-modal[data-modal-color="light"]
+.app-modal-dialog {
+    --app-modal-color:
+        var(--app-light);
+}
+
+.app-modal[data-modal-color="dark"]
+.app-modal-dialog {
+    --app-modal-color:
+        var(--app-dark);
+}
+
+.app-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex: 0 0 auto;
+    padding: 1rem;
+    background:
+        color-mix(
+            in srgb,
+            var(--app-modal-color) 25%,
+            var(--app-panel)
+        );
+    border-bottom:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+}
+
+.app-modal-header-identity {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.app-modal-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    color:
+        var(--app-modal-color);
+}
+
+.app-modal-icon .app-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.app-modal-title {
+    min-width: 0;
+    margin: 0;
+    color:
+        var(--app-body-color);
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.app-modal-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 0 0 auto;
+}
+
+.app-modal-control {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    color:
+        var(--app-body-color);
+    background: transparent;
+    border: 0;
+    border-radius:
+        var(--app-border-radius);
+    cursor: pointer;
+    transition:
+        box-shadow
+        var(--app-transition-speed)
+        var(--app-transition-ease);
+}
+
+.app-modal-control:hover,
+.app-modal-control:focus-visible {
+    outline: 0;
+    box-shadow:
+        0 0 0 0.25rem
+        color-mix(
+            in srgb,
+            var(--app-primary) 25%,
+            transparent
+        );
+}
+
+.app-modal-control .app-icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.app-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 75vh;
+    padding: 1rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.app-modal-body > :first-child {
+    margin-top: 0;
+}
+
+.app-modal-body > :last-child {
+    margin-bottom: 0;
+}
+
+.app-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+    padding: 1rem;
+    background:
+        color-mix(
+            in srgb,
+            var(--app-modal-color) 25%,
+            var(--app-panel)
+        );
+    border-top:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+}
+
+.app-modal.is-fullscreen {
+    padding: 0;
+}
+
+.app-modal.is-fullscreen
+.app-modal-dialog {
+    width: 100vw;
+    max-width: none;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+}
+
+.app-modal.is-fullscreen
+.app-modal-body {
+    max-height: none;
+}
+
+@keyframes app-modal-backdrop-open {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes app-modal-dialog-open {
+    from {
+        opacity: 0;
+        transform:
+            translateY(-1rem)
+            scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0)
+            scale(1);
+    }
+}
+
+.app-modal.is-open
+.app-modal-backdrop {
+    animation:
+        app-modal-backdrop-open
+        180ms
+        ease-out;
+}
+
+.app-modal.is-open
+.app-modal-dialog {
+    animation:
+        app-modal-dialog-open
+        220ms
+        ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-modal.is-open
+    .app-modal-backdrop,
+    .app-modal.is-open
+    .app-modal-dialog {
+        animation: none;
+    }
+}
+
+.app-modal [hidden] {
+    display: none !important;
+}
+

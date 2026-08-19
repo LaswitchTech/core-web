@@ -10,6 +10,21 @@
         );
     }
 
+    const BADGE_ICONS = Object.freeze({
+        default: [
+            '<svg xmlns="http://www.w3.org/2000/svg"',
+            ' viewBox="0 0 16 16">',
+            '<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>',
+            "</svg>",
+        ].join(""),
+        move: [
+            '<svg xmlns="http://www.w3.org/2000/svg"',
+            ' viewBox="0 0 16 16">',
+            '<path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>',
+            "</svg>",
+        ].join(""),
+    });
+
     function renderIcon(element, value) {
         global.Builder.text(element, "");
 
@@ -87,27 +102,115 @@
         element.replaceChildren(svg);
     }
 
+    function normalizeBadgeColor(value) {
+        const colors = [
+            "primary",
+            "secondary",
+            "success",
+            "danger",
+            "warning",
+            "info",
+            "light",
+            "dark",
+        ];
+
+        return colors.includes(value)
+            ? value
+            : "primary";
+    }
+
     class Badge extends global.Component {
         static defaults() {
             return {
                 href: "",
                 icon: "",
+                color: "primary",
+                moveHandleVisible: false,
                 value: "",
                 label: "",
                 tooltip: "",
             };
         }
 
+        isSortableAvailable() {
+            return typeof global.Sortable === "function"
+                || (
+                    global.Sortable !== null
+                    && typeof global.Sortable === "object"
+                    && typeof global.Sortable.create === "function"
+                );
+        }
+
+        showMoveHandle() {
+            this.config(
+                "moveHandleVisible",
+                true
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        hideMoveHandle() {
+            this.config(
+                "moveHandleVisible",
+                false
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        toggleMoveHandle() {
+            return this.config(
+                "moveHandleVisible"
+            ) === true
+                ? this.hideMoveHandle()
+                : this.showMoveHandle();
+        }
+
+        setColor(color) {
+            this.config(
+                "color",
+                normalizeBadgeColor(color)
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
         render() {
             const badge = document.createElement(
                 this.config("href") === "" ? "div" : "a"
             );
+            const moveHandle = document.createElement("button");
             const icon = document.createElement("span");
             const content = document.createElement("span");
             const value = document.createElement("span");
             const label = document.createElement("span");
 
             badge.classList.add("app-badge");
+
+            moveHandle.type = "button";
+            moveHandle.classList.add(
+                "app-badge-move-handle"
+            );
+            moveHandle.setAttribute(
+                "data-badge-region",
+                "move-handle"
+            );
+            moveHandle.setAttribute(
+                "aria-label",
+                "Move badge"
+            );
+            moveHandle.setAttribute(
+                "title",
+                "Move badge"
+            );
+
             icon.classList.add("app-badge-icon");
             content.classList.add("app-badge-content");
             value.classList.add("app-badge-value");
@@ -118,7 +221,17 @@
             label.setAttribute("data-badge-region", "label");
 
             content.append(value, label);
-            badge.append(icon, content);
+
+            renderIcon(
+                moveHandle,
+                BADGE_ICONS.move
+            );
+
+            badge.append(
+                moveHandle,
+                icon,
+                content
+            );
 
             this.update(badge);
 
@@ -126,6 +239,10 @@
         }
 
         update(element) {
+            const moveHandle = element.querySelector(
+                '[data-badge-region="move-handle"]'
+            );
+
             const icon = element.querySelector(
                 '[data-badge-region="icon"]'
             );
@@ -137,7 +254,8 @@
             );
 
             if (
-                !(icon instanceof Element)
+                !(moveHandle instanceof HTMLButtonElement)
+                || !(icon instanceof Element)
                 || !(value instanceof Element)
                 || !(label instanceof Element)
             ) {
@@ -148,6 +266,23 @@
 
             const href = this.config("href");
             const tooltip = this.config("tooltip");
+            const color = normalizeBadgeColor(
+                this.config("color")
+            );
+
+            element.setAttribute(
+                "data-badge-color",
+                color
+            );
+
+            moveHandle.hidden =
+                this.config("moveHandleVisible") !== true
+                || !this.isSortableAvailable();
+
+            element.classList.toggle(
+                "has-move-handle",
+                !moveHandle.hidden
+            );
 
             if (element instanceof HTMLAnchorElement) {
                 element.href = href;
@@ -159,7 +294,11 @@
                 element.setAttribute("title", tooltip);
             }
 
-            renderIcon(icon, this.config("icon"));
+            renderIcon(
+                icon,
+                this.config("icon") || BADGE_ICONS.default
+            );
+
             global.Builder.text(value, this.config("value"));
             global.Builder.text(label, this.config("label"));
 

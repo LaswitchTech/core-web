@@ -1,0 +1,121 @@
+// ============================================================
+// Core-Web — Button Group component
+// ============================================================
+
+.app-button-group {
+    display: inline-flex;
+    width: fit-content;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.app-button-group-buttons {
+    display: flex;
+    align-items: stretch;
+    min-width: 0;
+}
+
+.app-button-group[
+    data-button-group-orientation="horizontal"
+] .app-button-group-buttons {
+    flex-direction: row;
+}
+
+.app-button-group[
+    data-button-group-orientation="vertical"
+] .app-button-group-buttons {
+    flex-direction: column;
+}
+
+.app-button-group.is-wrapping[
+    data-button-group-orientation="horizontal"
+] .app-button-group-buttons {
+    flex-wrap: wrap;
+}
+
+.app-button-group:not(.is-wrapping)
+    .app-button-group-buttons {
+    flex-wrap: nowrap;
+}
+
+.app-button-group.is-equal-width {
+    width: 100%;
+}
+
+.app-button-group.is-equal-width
+    .app-button-group-buttons {
+    width: 100%;
+}
+
+.app-button-group.is-equal-width
+    .app-button-group-button {
+    flex: 1 1 0;
+}
+
+.app-button-group[
+    data-button-group-presentation="spaced"
+] .app-button-group-buttons {
+    gap: 0.5rem;
+}
+
+.app-button-group[
+    data-button-group-presentation="attached"
+][
+    data-button-group-orientation="horizontal"
+] .app-button-group-buttons {
+    gap: 0;
+}
+
+.app-button-group[
+    data-button-group-presentation="attached"
+][
+    data-button-group-orientation="horizontal"
+] .app-button-group-button:not(:first-child) {
+    margin-left:
+        calc(
+            var(--app-border-width)
+            * -1
+        );
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.app-button-group[
+    data-button-group-presentation="attached"
+][
+    data-button-group-orientation="horizontal"
+] .app-button-group-button:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.app-button-group[
+    data-button-group-presentation="attached"
+][
+    data-button-group-orientation="vertical"
+] .app-button-group-buttons {
+    gap: 0;
+}
+
+.app-button-group[
+    data-button-group-presentation="attached"
+][
+    data-button-group-orientation="vertical"
+] .app-button-group-button:not(:first-child) {
+    margin-top:
+        calc(
+            var(--app-border-width)
+            * -1
+        );
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.app-button-group[
+    data-button-group-presentation="attached"
+][
+    data-button-group-orientation="vertical"
+] .app-button-group-button:not(:last-child) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}

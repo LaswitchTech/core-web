@@ -1,0 +1,70 @@
+// ============================================================
+// Core-Web — Toast Area component
+// ============================================================
+
+.app-toast-area {
+    position: fixed;
+    z-index: 1080;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width:
+        min(
+            calc(100vw - 2rem),
+            24rem
+        );
+    max-height:
+        calc(100vh - 2rem);
+    pointer-events: none;
+}
+
+.app-toast-area > .app-toast {
+    flex: 0 0 auto;
+    pointer-events: auto;
+}
+
+.app-toast-area[
+    data-toast-area-position="top-left"
+] {
+    top: 1rem;
+    left: 1rem;
+}
+
+.app-toast-area[
+    data-toast-area-position="top-center"
+] {
+    top: 1rem;
+    left: 50%;
+    transform:
+        translateX(-50%);
+}
+
+.app-toast-area[
+    data-toast-area-position="top-right"
+] {
+    top: 1rem;
+    right: 1rem;
+}
+
+.app-toast-area[
+    data-toast-area-position="bottom-left"
+] {
+    bottom: 1rem;
+    left: 1rem;
+}
+
+.app-toast-area[
+    data-toast-area-position="bottom-center"
+] {
+    bottom: 1rem;
+    left: 50%;
+    transform:
+        translateX(-50%);
+}
+
+.app-toast-area[
+    data-toast-area-position="bottom-right"
+] {
+    right: 1rem;
+    bottom: 1rem;
+}

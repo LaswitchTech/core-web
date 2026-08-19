@@ -1,0 +1,148 @@
+// ============================================================
+// Core-Web — Alert component
+// ============================================================
+
+.app-alert {
+    display: grid;
+    grid-template-columns:
+        auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.75rem;
+    min-width: 0;
+    padding: 1rem;
+    color: var(--app-body-color);
+    background-color:
+        color-mix(
+            in srgb,
+            var(--app-alert-color) 12%,
+            var(--app-panel)
+        );
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-alert-color);
+    border-radius:
+        var(--app-border-radius);
+    position: relative;
+}
+
+.app-alert[data-alert-color="primary"] {
+    --app-alert-color:
+        var(--app-primary);
+}
+
+.app-alert[data-alert-color="secondary"] {
+    --app-alert-color:
+        var(--app-secondary);
+}
+
+.app-alert[data-alert-color="success"] {
+    --app-alert-color:
+        var(--app-success);
+}
+
+.app-alert[data-alert-color="danger"] {
+    --app-alert-color:
+        var(--app-danger);
+}
+
+.app-alert[data-alert-color="warning"] {
+    --app-alert-color:
+        var(--app-warning);
+}
+
+.app-alert[data-alert-color="info"] {
+    --app-alert-color:
+        var(--app-info);
+}
+
+.app-alert[data-alert-color="light"] {
+    --app-alert-color:
+        var(--app-light);
+}
+
+.app-alert[data-alert-color="dark"] {
+    --app-alert-color:
+        var(--app-dark);
+}
+
+.app-alert-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    color: var(--app-alert-color);
+}
+
+.app-alert-icon .app-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.app-alert-content {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.app-alert-title {
+    color: var(--app-body-color);
+    font-weight: 600;
+}
+
+.app-alert-body {
+    min-width: 0;
+    color: var(--app-body-color);
+}
+
+.app-alert-body > :first-child {
+    margin-top: 0;
+}
+
+.app-alert-body > :last-child {
+    margin-bottom: 0;
+}
+
+.app-alert-dismiss {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    color: var(--app-body-color);
+    background: transparent;
+    border: 0;
+    border-radius:
+        var(--app-border-radius);
+    cursor: pointer;
+    transition:
+        box-shadow
+        var(--app-transition-speed)
+        var(--app-transition-ease);
+}
+
+.app-alert-dismiss:hover,
+.app-alert-dismiss:focus-visible {
+    outline: 0;
+    box-shadow:
+        0 0 0 0.25rem
+        color-mix(
+            in srgb,
+            var(--app-primary) 25%,
+            transparent
+        );
+}
+
+.app-alert-dismiss .app-icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.app-alert [hidden] {
+    display: none !important;
+}

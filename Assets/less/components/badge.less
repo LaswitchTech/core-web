@@ -1,4 +1,5 @@
 .app-badge {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -16,10 +17,118 @@
         transform var(--app-transition-speed) var(--app-transition-ease);
 }
 
+.app-badge.has-move-handle {
+    padding-left: 2.5rem;
+}
+
+.app-badge.sortable-ghost {
+    background: color-mix(
+        in srgb,
+        var(--app-primary) 25%,
+        transparent
+    );
+    border-color: var(--app-primary);
+    border-style: dashed;
+    border-radius: var(--app-border-radius);
+    box-shadow: none;
+}
+
+.app-badge.sortable-ghost > * {
+    visibility: hidden;
+}
+
 .app-badge[href]:hover {
     background: var(--app-panel-2);
     border-color: var(--app-primary);
     transform: translateY(-1px);
+}
+
+.app-badge[data-badge-color="primary"] {
+    --app-badge-icon-color:
+        var(--app-primary);
+    --app-badge-icon-bg:
+        var(--app-primary-subtle);
+}
+
+.app-badge[data-badge-color="secondary"] {
+    --app-badge-icon-color:
+        var(--app-secondary);
+    --app-badge-icon-bg:
+        var(--app-secondary-subtle);
+}
+
+.app-badge[data-badge-color="success"] {
+    --app-badge-icon-color:
+        var(--app-success);
+    --app-badge-icon-bg:
+        var(--app-success-subtle);
+}
+
+.app-badge[data-badge-color="danger"] {
+    --app-badge-icon-color:
+        var(--app-danger);
+    --app-badge-icon-bg:
+        var(--app-danger-subtle);
+}
+
+.app-badge[data-badge-color="warning"] {
+    --app-badge-icon-color:
+        var(--app-warning);
+    --app-badge-icon-bg:
+        var(--app-warning-subtle);
+}
+
+.app-badge[data-badge-color="info"] {
+    --app-badge-icon-color:
+        var(--app-info);
+    --app-badge-icon-bg:
+        var(--app-info-subtle);
+}
+
+.app-badge[data-badge-color="light"] {
+    --app-badge-icon-color:
+        var(--app-light-emphasis);
+    --app-badge-icon-bg:
+        var(--app-light-subtle);
+}
+
+.app-badge[data-badge-color="dark"] {
+    --app-badge-icon-color:
+        var(--app-dark-emphasis);
+    --app-badge-icon-bg:
+        var(--app-dark-subtle);
+}
+
+.app-badge-move-handle {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: var(--app-secondary-color);
+    background: transparent;
+    border: 0;
+    border-radius: var(--app-border-radius-sm);
+    cursor: grab;
+}
+
+.app-badge-move-handle:hover,
+.app-badge-move-handle:focus-visible {
+    color: var(--app-body-color);
+    background: var(--app-panel-2);
+}
+
+.app-badge-move-handle:active {
+    cursor: grabbing;
+}
+
+.app-badge-move-handle .app-icon {
+    width: 1rem;
+    height: 1rem;
 }
 
 .app-badge-icon {
@@ -29,8 +138,12 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: var(--app-primary);
-    background: var(--app-primary-subtle);
+    color: var(--app-badge-icon-color, var(--app-primary));
+    background:
+        var(
+            --app-badge-icon-bg,
+            var(--app-primary-subtle)
+        );
     border-radius: var(--app-border-radius);
 }
 

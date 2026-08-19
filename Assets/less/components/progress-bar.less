@@ -1,0 +1,127 @@
+// ============================================================
+// Core-Web — Progress Bar component
+// ============================================================
+
+.app-progress-bar {
+    display: grid;
+    gap: 0.375rem;
+    width: 100%;
+    min-width: 0;
+}
+
+.app-progress-bar-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.app-progress-bar-label {
+    min-width: 0;
+    color: var(--app-body-color);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.app-progress-bar-percentage {
+    flex: 0 0 auto;
+    color: var(--app-secondary-color);
+    font-size: 0.875rem;
+}
+
+.app-progress-bar-track {
+    position: relative;
+    width: 100%;
+    height: 0.75rem;
+    overflow: hidden;
+    background-color: var(--app-panel-2);
+    border-radius: var(--app-border-radius);
+}
+
+.app-progress-bar-value {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    transition: width 0.2s ease;
+}
+
+.app-progress-bar[
+    data-progress-bar-color="primary"
+] .app-progress-bar-value {
+    background-color: var(--app-primary);
+}
+
+.app-progress-bar[
+    data-progress-bar-color="secondary"
+] .app-progress-bar-value {
+    background-color: var(--app-secondary);
+}
+
+.app-progress-bar[
+    data-progress-bar-color="success"
+] .app-progress-bar-value {
+    background-color: var(--app-success);
+}
+
+.app-progress-bar[
+    data-progress-bar-color="danger"
+] .app-progress-bar-value {
+    background-color: var(--app-danger);
+}
+
+.app-progress-bar[
+    data-progress-bar-color="warning"
+] .app-progress-bar-value {
+    background-color: var(--app-warning);
+}
+
+.app-progress-bar[
+    data-progress-bar-color="info"
+] .app-progress-bar-value {
+    background-color: var(--app-info);
+}
+
+.app-progress-bar[
+    data-progress-bar-color="light"
+] .app-progress-bar-value {
+    background-color: var(--app-light);
+}
+
+.app-progress-bar[
+    data-progress-bar-color="dark"
+] .app-progress-bar-value {
+    background-color: var(--app-dark);
+}
+
+.app-progress-bar.is-indeterminate
+    .app-progress-bar-value {
+    width: 40%;
+    animation:
+        app-progress-bar-indeterminate
+        1.25s ease-in-out infinite;
+}
+
+@keyframes app-progress-bar-indeterminate {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    50% {
+        transform: translateX(150%);
+    }
+
+    100% {
+        transform: translateX(300%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-progress-bar-value {
+        transition: none;
+    }
+
+    .app-progress-bar.is-indeterminate
+        .app-progress-bar-value {
+        animation-duration: 2.5s;
+    }
+}

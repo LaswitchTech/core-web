@@ -60,6 +60,110 @@
         );
 }
 
+.app-button.app-button-primary {
+    &:focus-visible,
+    &:hover:not(:disabled) {
+        box-shadow:
+            0 0 0 0.25rem
+            color-mix(
+                in srgb,
+                var(--app-primary) 25%,
+                transparent
+            );
+    }
+}
+
+.app-button.app-button-secondary {
+    &:focus-visible,
+    &:hover:not(:disabled) {
+        box-shadow:
+            0 0 0 0.25rem
+            color-mix(
+                in srgb,
+                var(--app-secondary) 25%,
+                transparent
+            );
+    }
+}
+
+.app-button.app-button-success {
+    &:focus-visible,
+    &:hover:not(:disabled) {
+        box-shadow:
+            0 0 0 0.25rem
+            color-mix(
+                in srgb,
+                var(--app-success) 25%,
+                transparent
+            );
+    }
+}
+
+.app-button.app-button-danger {
+    &:focus-visible,
+    &:hover:not(:disabled) {
+        box-shadow:
+            0 0 0 0.25rem
+            color-mix(
+                in srgb,
+                var(--app-danger) 25%,
+                transparent
+            );
+    }
+}
+
+.app-button.app-button-warning {
+    &:focus-visible,
+    &:hover:not(:disabled) {
+        box-shadow:
+            0 0 0 0.25rem
+            color-mix(
+                in srgb,
+                var(--app-warning) 25%,
+                transparent
+            );
+    }
+}
+
+.app-button.app-button-info {
+    &:focus-visible,
+    &:hover:not(:disabled) {
+        box-shadow:
+            0 0 0 0.25rem
+            color-mix(
+                in srgb,
+                var(--app-info) 25%,
+                transparent
+            );
+    }
+}
+
+.app-button.app-button-light {
+    &:focus-visible,
+    &:hover:not(:disabled) {
+        box-shadow:
+            0 0 0 0.25rem
+            color-mix(
+                in srgb,
+                var(--app-light) 25%,
+                transparent
+            );
+    }
+}
+
+.app-button.app-button-dark {
+    &:focus-visible,
+    &:hover:not(:disabled) {
+        box-shadow:
+            0 0 0 0.25rem
+            color-mix(
+                in srgb,
+                var(--app-dark) 25%,
+                transparent
+            );
+    }
+}
+
 .app-button:disabled {
     opacity: 0.65;
     cursor: not-allowed;
@@ -182,4 +286,16 @@
 
 .app-button.is-loading {
     cursor: wait;
+}
+
+.app-button-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.app-button-icon .app-icon {
+    width: 1rem;
+    height: 1rem;
 }

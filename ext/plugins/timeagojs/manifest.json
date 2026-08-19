@@ -1,0 +1,17 @@
+{
+    "type": "plugin",
+    "name": "timeagojs",
+    "version": "1.6.7",
+    "description": "First-party jQuery Timeago relative-time formatting assets.",
+    "depends": [
+        "jquery"
+    ],
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\TimeagoJS\\": "src/"
+        }
+    },
+    "hooks": [
+        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\TimeagoJS\\TimeagoJSAssetProvider::registerAssets"
+    ]
+}

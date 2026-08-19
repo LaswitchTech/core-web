@@ -1,0 +1,23 @@
+// ============================================================
+// Core-Web — Collapse component
+// ============================================================
+
+.app-collapse {
+    display: grid;
+    grid-template-rows: 1fr;
+    min-width: 0;
+    transition:
+        grid-template-rows
+        var(--app-transition-speed)
+        var(--app-transition-ease);
+}
+
+.app-collapse[data-collapse-collapsed="true"] {
+    grid-template-rows: 0fr;
+}
+
+.app-collapse-content {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}

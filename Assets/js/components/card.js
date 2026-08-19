@@ -148,11 +148,82 @@
     }
 
 
+
+    function normalizeControlMenuItems(value) {
+        if (!Array.isArray(value)) {
+            throw new TypeError(
+                "Card controlMenuItems must be an array."
+            );
+        }
+
+        return value.map(function (item) {
+            if (
+                item === null
+                || typeof item !== "object"
+                || Array.isArray(item)
+            ) {
+                throw new TypeError(
+                    "Card control menu item configuration is invalid."
+                );
+            }
+
+            const label =
+                typeof item.label === "string"
+                    ? item.label
+                    : "";
+
+            const icon =
+                typeof item.icon === "string"
+                    ? item.icon
+                    : "";
+
+            const href =
+                typeof item.href === "string"
+                    ? item.href
+                    : "";
+
+            const callback =
+                typeof item.callback === "function"
+                    ? item.callback
+                    : null;
+
+            if (
+                label === ""
+                && icon === ""
+            ) {
+                throw new TypeError(
+                    "Card control menu items require a label or icon."
+                );
+            }
+
+            if (
+                href === ""
+                && callback === null
+            ) {
+                throw new TypeError(
+                    "Card control menu items require href or callback."
+                );
+            }
+
+            return {
+                label: label,
+                icon: icon,
+                href: href,
+                disabled:
+                    item.disabled === true,
+                callback: callback,
+            };
+        });
+    }
+
+
     class Card extends global.Component {
         constructor(config) {
             super(config);
 
             this.handleClick = this.handleClick.bind(this);
+            this.controlMenuDropdown = null;
+            this.collapseComponent = null;
         }
 
         static defaults() {
@@ -168,7 +239,7 @@
                 moveHandleVisible: false,
                 controlMenuEnabled: false,
                 controlMenuOpen: false,
-                controlMenuContent: "",
+                controlMenuItems: [],
                 closeControlVisible: false,
                 fullscreenControlVisible: false,
                 collapseControlVisible: false,
@@ -199,13 +270,7 @@
                     "Move card"
                 );
 
-            const menuControl =
-                createControlButton(
-                    "menu",
-                    "Open card controls"
-                );
-
-            const controlMenu =
+            const controlMenuRegion =
                 document.createElement("div");
 
             const header =
@@ -224,6 +289,9 @@
                 document.createElement("div");
 
             const footer =
+                document.createElement("div");
+
+            const collapsible =
                 document.createElement("div");
 
             const headerControls =
@@ -247,18 +315,20 @@
                     "Close card"
                 );
 
-            card.classList.add("app-card");
+            card.classList.add(
+                "app-card"
+            );
+
             overlayControls.classList.add(
                 "app-card-overlay-controls"
             );
+
             moveHandle.classList.add(
                 "app-card-move-handle"
             );
-            menuControl.classList.add(
-                "app-card-menu-control"
-            );
-            controlMenu.classList.add(
-                "app-card-control-menu"
+
+            controlMenuRegion.classList.add(
+                "app-card-control-menu-region"
             );
 
             overlayControls.setAttribute(
@@ -271,31 +341,38 @@
                 "move-handle"
             );
 
-            menuControl.setAttribute(
-                "data-card-region",
-                "menu-control"
-            );
-
-            controlMenu.setAttribute(
+            controlMenuRegion.setAttribute(
                 "data-card-region",
                 "control-menu"
             );
 
-            header.classList.add("app-card-header");
+            header.classList.add(
+                "app-card-header"
+            );
+
             headerIdentity.classList.add(
                 "app-card-header-identity"
             );
+
             headerIcon.classList.add(
                 "app-card-header-icon"
             );
+
             headerTitle.classList.add(
                 "app-card-header-title"
             );
+
             headerControls.classList.add(
                 "app-card-header-controls"
             );
-            body.classList.add("app-card-body");
-            footer.classList.add("app-card-footer");
+
+            body.classList.add(
+                "app-card-body"
+            );
+
+            footer.classList.add(
+                "app-card-footer"
+            );
 
             header.setAttribute(
                 "data-card-region",
@@ -383,27 +460,53 @@
                 this.config("footer")
             );
 
+            collapsible.append(
+                body,
+                footer
+            );
+
+            if (!global.Builder.has("collapse")) {
+                throw new Error(
+                    "Card requires the Collapse component."
+                );
+            }
+
+            this.destroyCollapseComponent();
+
+            this.collapseComponent =
+                global.Builder.create(
+                    "collapse",
+                    {
+                        content:
+                            collapsible,
+                        collapsed:
+                            this.config("collapsed") === true,
+                    }
+                );
+
+            const collapseElement =
+                this.collapseComponent.element();
+
+            if (!(collapseElement instanceof HTMLElement)) {
+                throw new Error(
+                    "Card Collapse component did not render an HTMLElement."
+                );
+            }
+
             renderIcon(
                 moveHandle,
                 CARD_ICONS.move
             );
 
-            renderIcon(
-                menuControl,
-                CARD_ICONS.menu
-            );
-
             overlayControls.append(
                 moveHandle,
-                menuControl,
-                controlMenu
+                controlMenuRegion
             );
 
             card.append(
                 overlayControls,
                 header,
-                body,
-                footer
+                collapseElement
             );
 
             card.addEventListener(
@@ -411,7 +514,9 @@
                 this.handleClick
             );
 
-            this.update(card);
+            this.update(
+                card
+            );
 
             return card;
         }
@@ -442,36 +547,51 @@
             }
 
             if (action === "collapse") {
-                this.config(
-                    "collapsed",
-                    this.config("collapsed") !== true
-                );
-                this.refresh();
+                this.toggleCollapsed();
+
                 return;
             }
 
             if (action === "fullscreen") {
-                this.config(
-                    "fullscreen",
-                    this.config("fullscreen") !== true
-                );
-                this.refresh();
+                this.toggleFullscreen();
+
                 return;
             }
 
-            if (action !== "menu") {
-                return;
+            return;
+        }
+
+        destroyControlMenuDropdown() {
+            if (
+                this.controlMenuDropdown !== null
+                && typeof this.controlMenuDropdown.destroy === "function"
+            ) {
+                this.controlMenuDropdown.destroy();
             }
 
-            this.config(
-                "controlMenuOpen",
-                this.config("controlMenuOpen") !== true
-            );
+            this.controlMenuDropdown = null;
 
-            this.refresh();
+            return this;
+        }
+
+        destroyCollapseComponent() {
+            if (
+                this.collapseComponent !== null
+                && typeof this.collapseComponent.destroy
+                    === "function"
+            ) {
+                this.collapseComponent.destroy();
+            }
+
+            this.collapseComponent = null;
+
+            return this;
         }
 
         beforeDestroy() {
+            this.destroyControlMenuDropdown();
+            this.destroyCollapseComponent();
+
             const element = this.element();
 
             if (element instanceof Element) {
@@ -482,114 +602,451 @@
             }
         }
 
-        update(element) {
-            if (
-                typeof Element === "undefined"
-                || !(element instanceof Element)
-            ) {
-                throw new TypeError(
-                    "Card update requires the rendered Element."
+        isSortableAvailable() {
+            return typeof global.Sortable === "function"
+                || (
+                    global.Sortable !== null
+                    && typeof global.Sortable === "object"
+                    && typeof global.Sortable.create === "function"
                 );
+        }
+
+        showHeader() {
+            this.config(
+                "headerVisible",
+                true
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        hideHeader() {
+            this.config(
+                "headerVisible",
+                false
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        toggleHeader() {
+            return this.config(
+                "headerVisible"
+            ) === true
+                ? this.hideHeader()
+                : this.showHeader();
+        }
+
+        showBody() {
+            this.config(
+                "bodyVisible",
+                true
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        hideBody() {
+            this.config(
+                "bodyVisible",
+                false
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        toggleBody() {
+            return this.config(
+                "bodyVisible"
+            ) === true
+                ? this.hideBody()
+                : this.showBody();
+        }
+
+        showFooter() {
+            this.config(
+                "footerVisible",
+                true
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        hideFooter() {
+            this.config(
+                "footerVisible",
+                false
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        toggleFooter() {
+            return this.config(
+                "footerVisible"
+            ) === true
+                ? this.hideFooter()
+                : this.showFooter();
+        }
+
+        showMoveHandle() {
+            this.config(
+                "moveHandleVisible",
+                true
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        hideMoveHandle() {
+            this.config(
+                "moveHandleVisible",
+                false
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        toggleMoveHandle() {
+            return this.config(
+                "moveHandleVisible"
+            ) === true
+                ? this.hideMoveHandle()
+                : this.showMoveHandle();
+        }
+
+        enableControlMenu() {
+            this.config(
+                "controlMenuEnabled",
+                true
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        disableControlMenu() {
+            this.config(
+                "controlMenuEnabled",
+                false
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        toggleControlMenu() {
+            this.config(
+                "controlMenuEnabled",
+                this.config("controlMenuEnabled") !== true
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        openControlMenu() {
+            this.config(
+                "controlMenuOpen",
+                true
+            );
+
+            if (
+                this.controlMenuDropdown !== null
+                && typeof this.controlMenuDropdown.open === "function"
+            ) {
+                this.controlMenuDropdown.open();
+
+                return this;
             }
 
-            const overlayControls =
-                element.querySelector(
-                    '[data-card-region="overlay-controls"]'
-                );
+            this.refresh();
 
-            const controlMenu =
-                element.querySelector(
-                    '[data-card-region="control-menu"]'
-                );
+            return this;
+        }
 
-            const moveHandle =
-                element.querySelector(
-                    '[data-card-action="move"]'
-                );
+        closeControlMenu() {
+            this.config(
+                "controlMenuOpen",
+                false
+            );
 
-            const menuControl =
-                element.querySelector(
-                    '[data-card-action="menu"]'
-                );
+            this.refresh();
 
-            const header =
-                element.querySelector(
-                    '[data-card-region="header"]'
-                );
+            return this;
+        }
 
-            const headerIcon =
-                element.querySelector(
-                    '[data-card-region="header-icon"]'
-                );
+        toggleControlMenuOpen() {
+            return this.config(
+                "controlMenuOpen"
+            ) === true
+                ? this.closeControlMenu()
+                : this.openControlMenu();
+        }
 
-            const headerTitle =
-                element.querySelector(
-                    '[data-card-region="header-title"]'
-                );
+        showCollapseControl() {
+            this.config(
+                "collapseControlVisible",
+                true
+            );
 
-            const headerControls =
-                element.querySelector(
-                    '[data-card-region="header-controls"]'
-                );
+            this.refresh();
 
-            const collapseControl =
-                element.querySelector(
-                    '[data-card-action="collapse"]'
-                );
+            return this;
+        }
 
-            const fullscreenControl =
-                element.querySelector(
-                    '[data-card-action="fullscreen"]'
-                );
+        hideCollapseControl() {
+            this.config(
+                "collapseControlVisible",
+                false
+            );
 
-            const closeControl =
-                element.querySelector(
-                    '[data-card-action="close"]'
-                );
+            this.refresh();
 
-            const body =
-                element.querySelector(
-                    '[data-card-region="body"]'
-                );
+            return this;
+        }
 
-            const footer =
-                element.querySelector(
-                    '[data-card-region="footer"]'
-                );
+        toggleCollapseControl() {
+            return this.config(
+                "collapseControlVisible"
+            ) === true
+                ? this.hideCollapseControl()
+                : this.showCollapseControl();
+        }
 
-            if (
-                !(overlayControls instanceof Element)
-                || !(controlMenu instanceof Element)
-                || !(moveHandle instanceof HTMLButtonElement)
-                || !(menuControl instanceof HTMLButtonElement)
-                || !(header instanceof Element)
-                || !(headerIcon instanceof Element)
-                || !(headerTitle instanceof Element)
-                || !(headerControls instanceof Element)
-                || !(collapseControl instanceof HTMLButtonElement)
-                || !(fullscreenControl instanceof HTMLButtonElement)
-                || !(closeControl instanceof HTMLButtonElement)
-                || !(body instanceof Element)
-                || !(footer instanceof Element)
-            ) {
+        showFullscreenControl() {
+            this.config(
+                "fullscreenControlVisible",
+                true
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        hideFullscreenControl() {
+            this.config(
+                "fullscreenControlVisible",
+                false
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        toggleFullscreenControl() {
+            return this.config(
+                "fullscreenControlVisible"
+            ) === true
+                ? this.hideFullscreenControl()
+                : this.showFullscreenControl();
+        }
+
+        showCloseControl() {
+            this.config(
+                "closeControlVisible",
+                true
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        hideCloseControl() {
+            this.config(
+                "closeControlVisible",
+                false
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        toggleCloseControl() {
+            return this.config(
+                "closeControlVisible"
+            ) === true
+                ? this.hideCloseControl()
+                : this.showCloseControl();
+        }
+
+        collapse() {
+            this.config(
+                "collapsed",
+                true
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        expand() {
+            this.config(
+                "collapsed",
+                false
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        toggleCollapsed() {
+            return this.config(
+                "collapsed"
+            ) === true
+                ? this.expand()
+                : this.collapse();
+        }
+
+        enterFullscreen() {
+            this.config(
+                "fullscreen",
+                true
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        exitFullscreen() {
+            this.config(
+                "fullscreen",
+                false
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        toggleFullscreen() {
+            return this.config(
+                "fullscreen"
+            ) === true
+                ? this.exitFullscreen()
+                : this.enterFullscreen();
+        }
+
+        createControlMenuDropdown(items) {
+            if (!global.Builder.has("dropdown")) {
                 throw new Error(
-                    "Card rendered structure is incomplete."
+                    "Card control menu requires the Dropdown component."
                 );
             }
+
+            const dropdown =
+                global.Builder.create(
+                    "dropdown",
+                    {
+                        triggerIcon:
+                            CARD_ICONS.menu,
+                        triggerTitle:
+                            "Card controls",
+                        items:
+                            items,
+                        open:
+                            this.config("controlMenuOpen") === true,
+                        onOpenChange:
+                            (open) => {
+                                this.config(
+                                    "controlMenuOpen",
+                                    open
+                                );
+                            },
+                    }
+                );
+
+            const element =
+                dropdown.element();
+
+            if (!(element instanceof HTMLElement)) {
+                dropdown.destroy();
+
+                throw new Error(
+                    "Card control Dropdown did not render an HTMLElement."
+                );
+            }
+
+            element.classList.add(
+                "app-card-control-dropdown"
+            );
+
+            this.controlMenuDropdown =
+                dropdown;
+
+            return element;
+        }
+
+        updateOverlayControls(
+            overlayControls,
+            moveHandle,
+            controlMenuRegion,
+            header
+        ) {
+            const items =
+                normalizeControlMenuItems(
+                    this.config(
+                        "controlMenuItems"
+                    )
+                );
+
+            this.config(
+                "controlMenuItems",
+                items
+            );
 
             moveHandle.hidden =
-                this.config("moveHandleVisible") !== true;
+                this.config("moveHandleVisible") !== true
+                || !this.isSortableAvailable();
 
-            menuControl.hidden =
-                this.config("controlMenuEnabled") !== true;
+            const menuVisible =
+                this.config("controlMenuEnabled") === true
+                && items.length > 0;
 
-            controlMenu.hidden =
-                this.config("controlMenuEnabled") !== true
-                || this.config("controlMenuOpen") !== true;
+            this.destroyControlMenuDropdown();
+
+            controlMenuRegion.replaceChildren();
+
+            if (menuVisible) {
+                controlMenuRegion.append(
+                    this.createControlMenuDropdown(
+                        items
+                    )
+                );
+            }
+
+            controlMenuRegion.hidden =
+                !menuVisible;
 
             overlayControls.hidden =
                 moveHandle.hidden
-                && menuControl.hidden;
+                && !menuVisible;
 
             header.classList.toggle(
                 "has-move-handle",
@@ -598,19 +1055,21 @@
 
             header.classList.toggle(
                 "has-control-menu",
-                !menuControl.hidden
+                menuVisible
             );
 
-            menuControl.setAttribute(
-                "aria-expanded",
-                controlMenu.hidden ? "false" : "true"
-            );
+            return this;
+        }
 
-            global.Builder.html(
-                controlMenu,
-                this.config("controlMenuContent")
-            );
-
+        updateHeaderControls(
+            header,
+            headerIcon,
+            headerTitle,
+            headerControls,
+            collapseControl,
+            fullscreenControl,
+            closeControl
+        ) {
             collapseControl.hidden =
                 this.config("collapseControlVisible") !== true;
 
@@ -625,7 +1084,8 @@
                 && fullscreenControl.hidden
                 && closeControl.hidden;
 
-            header.hidden = this.config("headerVisible") !== true;
+            header.hidden =
+                this.config("headerVisible") !== true;
 
             renderIcon(
                 headerIcon,
@@ -637,6 +1097,16 @@
                 this.config("title")
             );
 
+            return this;
+        }
+
+        updateBodyAndState(
+            element,
+            body,
+            footer,
+            collapseControl,
+            fullscreenControl
+        ) {
             const bodyPaddingEnabled =
                 this.config(
                     "bodyPaddingEnabled"
@@ -655,8 +1125,7 @@
                 this.config("fullscreen") === true;
 
             body.hidden =
-                this.config("bodyVisible") !== true
-                || collapsed;
+                this.config("bodyVisible") !== true;
 
             body.classList.toggle(
                 "app-card-body-flush",
@@ -669,13 +1138,25 @@
             );
 
             footer.hidden =
-                this.config("footerVisible") !== true
-                || collapsed;
+                this.config("footerVisible") !== true;
 
             global.Builder.text(
                 footer,
                 this.config("footer")
             );
+
+            if (this.collapseComponent === null) {
+                throw new Error(
+                    "Card Collapse component is missing."
+                );
+            }
+
+            this.collapseComponent.config(
+                "collapsed",
+                collapsed
+            );
+
+            this.collapseComponent.refresh();
 
             element.classList.toggle(
                 "is-collapsed",
@@ -728,6 +1209,123 @@
                 fullscreen
                     ? CARD_ICONS.exitFullscreen
                     : CARD_ICONS.fullscreen
+            );
+
+            return this;
+        }
+
+        update(element) {
+            if (
+                typeof Element === "undefined"
+                || !(element instanceof Element)
+            ) {
+                throw new TypeError(
+                    "Card update requires the rendered Element."
+                );
+            }
+
+            const overlayControls =
+                element.querySelector(
+                    '[data-card-region="overlay-controls"]'
+                );
+
+            const controlMenuRegion =
+                element.querySelector(
+                    '[data-card-region="control-menu"]'
+                );
+
+            const moveHandle =
+                element.querySelector(
+                    '[data-card-action="move"]'
+                );
+
+            const header =
+                element.querySelector(
+                    '[data-card-region="header"]'
+                );
+
+            const headerIcon =
+                element.querySelector(
+                    '[data-card-region="header-icon"]'
+                );
+
+            const headerTitle =
+                element.querySelector(
+                    '[data-card-region="header-title"]'
+                );
+
+            const headerControls =
+                element.querySelector(
+                    '[data-card-region="header-controls"]'
+                );
+
+            const collapseControl =
+                element.querySelector(
+                    '[data-card-action="collapse"]'
+                );
+
+            const fullscreenControl =
+                element.querySelector(
+                    '[data-card-action="fullscreen"]'
+                );
+
+            const closeControl =
+                element.querySelector(
+                    '[data-card-action="close"]'
+                );
+
+            const body =
+                element.querySelector(
+                    '[data-card-region="body"]'
+                );
+
+            const footer =
+                element.querySelector(
+                    '[data-card-region="footer"]'
+                );
+
+            if (
+                !(overlayControls instanceof Element)
+                || !(controlMenuRegion instanceof Element)
+                || !(moveHandle instanceof HTMLButtonElement)
+                || !(header instanceof Element)
+                || !(headerIcon instanceof Element)
+                || !(headerTitle instanceof Element)
+                || !(headerControls instanceof Element)
+                || !(collapseControl instanceof HTMLButtonElement)
+                || !(fullscreenControl instanceof HTMLButtonElement)
+                || !(closeControl instanceof HTMLButtonElement)
+                || !(body instanceof Element)
+                || !(footer instanceof Element)
+            ) {
+                throw new Error(
+                    "Card rendered structure is incomplete."
+                );
+            }
+
+            this.updateOverlayControls(
+                overlayControls,
+                moveHandle,
+                controlMenuRegion,
+                header
+            );
+
+            this.updateHeaderControls(
+                header,
+                headerIcon,
+                headerTitle,
+                headerControls,
+                collapseControl,
+                fullscreenControl,
+                closeControl
+            );
+
+            this.updateBodyAndState(
+                element,
+                body,
+                footer,
+                collapseControl,
+                fullscreenControl
             );
 
             return this;

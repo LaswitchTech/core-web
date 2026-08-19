@@ -11,6 +11,22 @@
     box-shadow: var(--app-box-shadow-sm);
 }
 
+.app-card.sortable-ghost {
+    background: color-mix(
+        in srgb,
+        var(--app-primary) 25%,
+        transparent
+    );
+    border-color: var(--app-primary);
+    border-style: dashed;
+    border-radius: var(--app-border-radius);
+    box-shadow: none;
+}
+
+.app-card.sortable-ghost > * {
+    visibility: hidden;
+}
+
 .app-card-header {
     display: flex;
     align-items: center;
@@ -138,6 +154,10 @@
     cursor: grabbing;
 }
 
+.app-card-control-menu-region {
+    margin-left: auto;
+}
+
 .app-card-menu-control {
     margin-left: auto;
 }
@@ -176,9 +196,6 @@
     border-bottom: 0;
 }
 
-.app-card.is-collapsed .app-card-overlay-controls {
-    display: none;
-}
 
 .app-card [hidden] {
     display: none !important;

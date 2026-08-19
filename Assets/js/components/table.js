@@ -389,6 +389,8 @@
                 this.handleTableClick.bind(
                     this
                 );
+
+            this.actionDropdowns = [];
         }
 
         static defaults() {
@@ -684,6 +686,23 @@
             );
         }
 
+        destroyActionDropdowns() {
+            this.actionDropdowns.forEach(
+                function (dropdown) {
+                    if (
+                        dropdown
+                        && typeof dropdown.destroy === "function"
+                    ) {
+                        dropdown.destroy();
+                    }
+                }
+            );
+
+            this.actionDropdowns = [];
+
+            return this;
+        }
+
         beforeDestroy() {
             const element =
                 this.element();
@@ -704,6 +723,7 @@
                 );
             }
 
+            this.destroyActionDropdowns();
             this.destroyDataTable();
         }
 
@@ -2517,66 +2537,76 @@
             row,
             rowIndex
         ) {
-            const menu =
-                document.createElement("details");
-
-            menu.classList.add(
-                "app-table-action-menu"
-            );
-
-            const toggle =
-                document.createElement("summary");
-
-            toggle.classList.add(
-                "app-table-action-menu-toggle"
-            );
-
-            toggle.title = "Actions";
-
-            toggle.setAttribute(
-                "aria-label",
-                "Actions"
-            );
-
-            toggle.append(
-                this.createActionsMenuIcon()
-            );
-
-            const items =
-                document.createElement("div");
-
-            items.classList.add(
-                "app-table-action-menu-items"
-            );
-
-            actions.forEach((action) => {
-                const button =
-                    this.createSingleActionElement(
-                        action,
-                        row,
-                        rowIndex
-                    );
-
-                button.classList.add(
-                    "app-table-action-menu-item"
+            if (!global.Builder.has("dropdown")) {
+                throw new Error(
+                    "Table multiple actions require the Dropdown component."
                 );
+            }
 
-                button.addEventListener(
-                    "click",
-                    () => {
-                        menu.open = false;
+            const dropdown =
+                global.Builder.create(
+                    "dropdown",
+                    {
+                        triggerIcon:
+                            [
+                                '<svg xmlns="http://www.w3.org/2000/svg"',
+                                ' viewBox="0 0 16 16">',
+                                '<path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>',
+                                "</svg>",
+                            ].join(""),
+                        triggerTitle:
+                            "Actions",
+                        items:
+                            actions.map(
+                                (action) => {
+                                    return {
+                                        label:
+                                            action.label,
+                                        icon:
+                                            action.icon,
+                                        disabled:
+                                            this.isActionDisabled(
+                                                action,
+                                                row,
+                                                rowIndex
+                                            ),
+                                        callback:
+                                            () => {
+                                                this.invokeAction(
+                                                    action,
+                                                    row,
+                                                    rowIndex,
+                                                    new CustomEvent(
+                                                        "table-action"
+                                                    )
+                                                );
+                                            },
+                                    };
+                                }
+                            ),
                     }
                 );
 
-                items.append(button);
-            });
+            const element =
+                dropdown.element();
 
-            menu.append(
-                toggle,
-                items
+            if (!(element instanceof HTMLElement)) {
+                dropdown.destroy();
+
+                throw new Error(
+                    "Table action Dropdown did not render an HTMLElement."
+                );
+            }
+
+            element.classList.add(
+                "app-table-action-dropdown"
             );
 
-            return menu;
+            this.actionDropdowns.push(
+                dropdown
+            );
+
+            return element;
         }
 
         createActionsCell(
@@ -2631,6 +2661,8 @@
         }
 
         refreshActionCells() {
+            this.destroyActionDropdowns();
+
             if (this.actions().length === 0) {
                 return this;
             }
@@ -2803,6 +2835,8 @@
         }
 
         renderBody(element = null) {
+            this.destroyActionDropdowns();
+
             const body =
                 element instanceof HTMLDivElement
                     ? element.querySelector(

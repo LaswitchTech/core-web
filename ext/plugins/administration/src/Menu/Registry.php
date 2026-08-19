@@ -97,6 +97,20 @@ final class Registry
 
     private function compareNavigation(Entry $a, Entry $b): int
     {
+        if (
+            $a->section() === 'developer'
+            && $b->section() !== 'developer'
+        ) {
+            return 1;
+        }
+
+        if (
+            $b->section() === 'developer'
+            && $a->section() !== 'developer'
+        ) {
+            return -1;
+        }
+
         $sectionComparison = $a->section() <=> $b->section();
 
         if ($sectionComparison !== 0) {

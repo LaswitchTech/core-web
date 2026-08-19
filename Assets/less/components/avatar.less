@@ -1,0 +1,74 @@
+// ============================================================
+// Core-Web — Avatar component
+// ============================================================
+
+.app-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    overflow: hidden;
+    color: var(--app-primary-contrast);
+    background-color: var(--app-primary);
+    border-radius: 50%;
+    line-height: 1;
+    text-decoration: none;
+}
+
+.app-avatar[data-avatar-size="small"] {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 0.875rem;
+}
+
+.app-avatar[data-avatar-size="medium"] {
+    width: 3rem;
+    height: 3rem;
+    font-size: 1rem;
+}
+
+.app-avatar[data-avatar-size="large"] {
+    width: 4rem;
+    height: 4rem;
+    font-size: 1.25rem;
+}
+
+.app-avatar-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.app-avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-weight: 600;
+    user-select: none;
+}
+
+a.app-avatar {
+    transition:
+        box-shadow
+        var(--app-transition-speed)
+        var(--app-transition-ease);
+}
+
+a.app-avatar:hover,
+a.app-avatar:focus-visible {
+    outline: 0;
+    box-shadow:
+        0 0 0 0.25rem
+        color-mix(
+            in srgb,
+            var(--app-primary) 25%,
+            transparent
+        );
+}
+
+.app-avatar [hidden] {
+    display: none !important;
+}

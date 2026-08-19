@@ -1,0 +1,15 @@
+{
+    "type": "plugin",
+    "name": "sortablejs",
+    "version": "1.15.7",
+    "description": "First-party SortableJS drag-and-drop assets.",
+    "depends": [],
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\SortableJS\\": "src/"
+        }
+    },
+    "hooks": [
+        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\SortableJS\\SortableJSAssetProvider::registerAssets"
+    ]
+}
