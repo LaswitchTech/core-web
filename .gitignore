@@ -7,3 +7,4 @@ snapshot.sh
 /log/*.log
 .DS_Store
 .phpunit.result.cache
+.opencode/opencode.json
