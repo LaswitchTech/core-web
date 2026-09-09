@@ -1383,9 +1383,12 @@
                 );
             }
 
-            if (typeof body !== "string") {
+            if (
+                typeof body !== "string"
+                && !(body instanceof Element)
+            ) {
                 throw new TypeError(
-                    "Modal body must be a string."
+                    "Modal body must be a string or Element."
                 );
             }
 
@@ -1467,10 +1470,16 @@
                 title
             );
 
-            global.Builder.html(
-                bodyRegion,
-                body
-            );
+            if (body instanceof Element) {
+                bodyRegion.replaceChildren(
+                    body
+                );
+            } else {
+                global.Builder.html(
+                    bodyRegion,
+                    body
+                );
+            }
 
             if (footer === "") {
                 this.destroyFooterButtons();

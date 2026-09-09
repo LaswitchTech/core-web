@@ -1,0 +1,15 @@
+{
+    "type": "plugin",
+    "name": "prismjs",
+    "version": "1.30.0",
+    "description": "First-party PrismJS syntax-highlighting runtime and common language grammars.",
+    "depends": [],
+    "autoload": {
+        "psr-4": {
+            "Laswitchtech\\CoreWeb\\Plugin\\PrismJS\\": "src/"
+        }
+    },
+    "hooks": [
+        "asset.register::Laswitchtech\\CoreWeb\\Plugin\\PrismJS\\PrismJSAssetProvider::registerAssets"
+    ]
+}

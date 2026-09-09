@@ -50,13 +50,18 @@
 }
 
 .app-card-header-identity {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+        "icon title"
+        "icon subtitle";
+    column-gap: 0.5rem;
+    row-gap: 0.125rem;
     min-width: 0;
 }
 
 .app-card-header-icon {
+    grid-area: icon;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -73,10 +78,26 @@
 }
 
 .app-card-header-title {
+    grid-area: title;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.app-card-header-subtitle {
+    grid-area: subtitle;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--app-secondary-color);
+    font-size: 0.8rem;
+    font-weight: 400;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-card-header-subtitle[hidden] {
+    display: none;
 }
 
 .app-card-header-controls {

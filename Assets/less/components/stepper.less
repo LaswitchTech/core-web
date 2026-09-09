@@ -1,0 +1,206 @@
+// ============================================================
+// Core-Web — Stepper component
+// ============================================================
+
+.app-stepper {
+    width: 100%;
+    color:
+        var(--app-body-color);
+}
+
+.app-stepper-steps {
+    display: flex;
+    min-width: 0;
+}
+
+.app-stepper-step {
+    position: relative;
+    min-width: 0;
+}
+
+.app-stepper-step-button {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    padding: 0;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    text-align: left;
+    cursor: pointer;
+}
+
+.app-stepper-step-button:focus-visible {
+    outline: 0;
+}
+
+.app-stepper-step-indicator {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    color:
+        var(--app-secondary-color);
+    background:
+        var(--app-panel-2);
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    border-radius: 50%;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.app-stepper-step-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.app-stepper-step-label {
+    font-weight: 600;
+}
+
+.app-stepper-step-description {
+    color:
+        var(--app-secondary-color);
+    font-size: 0.875rem;
+}
+
+.app-stepper [hidden] {
+    display: none !important;
+}
+
+.app-stepper-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.app-stepper-control {
+    display: flex;
+    align-items: center;
+}
+
+.app-stepper-control-next {
+    margin-left: auto;
+}
+
+.app-stepper-step-button:not(:disabled):hover
+.app-stepper-step-indicator,
+.app-stepper-step-button:not(:disabled):focus-visible
+.app-stepper-step-indicator {
+    box-shadow:
+        0 0 0 0.25rem
+        color-mix(
+            in srgb,
+            var(--app-primary) 25%,
+            transparent
+        );
+}
+
+.app-stepper-step[data-stepper-step-state="current"]
+.app-stepper-step-indicator {
+    color:
+        var(--app-white);
+    background:
+        var(--app-primary);
+    border-color:
+        var(--app-primary);
+}
+
+.app-stepper-step[data-stepper-step-state="complete"]
+.app-stepper-step-indicator {
+    color:
+        var(--app-white);
+    background:
+        var(--app-success);
+    border-color:
+        var(--app-success);
+}
+
+.app-stepper-step[data-stepper-step-state="error"]
+.app-stepper-step-indicator {
+    color:
+        var(--app-white);
+    background:
+        var(--app-danger);
+    border-color:
+        var(--app-danger);
+}
+
+.app-stepper-step[data-stepper-step-state="disabled"] {
+    opacity: 0.55;
+}
+
+.app-stepper-step[data-stepper-step-state="disabled"]
+.app-stepper-step-button {
+    cursor: not-allowed;
+}
+
+.app-stepper[data-stepper-layout="vertical"]
+.app-stepper-steps {
+    flex-direction: column;
+}
+
+.app-stepper[data-stepper-layout="vertical"]
+.app-stepper-step:not(:last-child)::after {
+    position: absolute;
+    top: 2rem;
+    bottom: 0;
+    left: 1rem;
+    width:
+        var(--app-border-width);
+    background:
+        var(--app-border-color);
+    content: "";
+}
+
+.app-stepper[data-stepper-layout="vertical"]
+.app-stepper-step-button {
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding-bottom: 1.5rem;
+}
+
+.app-stepper[data-stepper-layout="vertical"]
+.app-stepper-step-content {
+    padding-top: 0.25rem;
+}
+
+.app-stepper[data-stepper-layout="horizontal"]
+.app-stepper-steps {
+    align-items: flex-start;
+}
+
+.app-stepper[data-stepper-layout="horizontal"]
+.app-stepper-step {
+    flex: 1 1 0;
+}
+
+.app-stepper[data-stepper-layout="horizontal"]
+.app-stepper-step:not(:last-child)::after {
+    position: absolute;
+    top: 1rem;
+    left: 2rem;
+    right: 0;
+    height:
+        var(--app-border-width);
+    background:
+        var(--app-border-color);
+    content: "";
+}
+
+.app-stepper[data-stepper-layout="horizontal"]
+.app-stepper-step-button {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding-right: 1rem;
+}

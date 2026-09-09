@@ -44,6 +44,74 @@
     flex: 0 0 auto;
 }
 
+.app-tabs-tab-item {
+    display: inline-flex;
+    align-items: stretch;
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.app-tabs-tab-move-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1.75rem;
+    padding: 0;
+    color: var(--app-secondary-color);
+    background: transparent;
+    border: 0;
+    cursor: grab;
+}
+
+.app-tabs-tab-move-handle:hover {
+    color: var(--app-body-color);
+    background-color: var(--app-panel-2);
+}
+
+.app-tabs-tab-move-handle:focus-visible {
+    z-index: 2;
+    outline: 0;
+    box-shadow:
+        0 0 0 0.25rem
+        color-mix(
+            in srgb,
+            var(--app-primary) 25%,
+            transparent
+        );
+}
+
+.app-tabs-tab-move-handle:active {
+    cursor: grabbing;
+}
+
+.app-tabs-tab-move-handle .app-icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.app-tabs-tab-sortable-ghost {
+    background:
+        color-mix(
+            in srgb,
+            var(--app-primary) 25%,
+            transparent
+        );
+    border-color:
+        var(--app-primary);
+    border-style:
+        dashed;
+    border-width:
+        var(--app-border-width);
+    border-radius:
+        var(--app-border-radius);
+}
+
+.app-tabs-tab-sortable-chosen
+.app-tabs-tab-move-handle {
+    cursor: grabbing;
+}
+
 .app-tabs-tab {
     position: relative;
     display: inline-flex;
@@ -101,6 +169,19 @@
     color: var(--app-secondary-color);
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.app-tabs.is-sortable .app-tabs-tab:not(:disabled) {
+    cursor: grab;
+}
+
+.app-tabs.is-sortable .app-tabs-tab-sortable-chosen:not(:disabled) {
+    cursor: grabbing;
+}
+
+.app-tabs-tab-sortable-ghost {
+    opacity: 0.5;
+    background-color: var(--app-panel-2);
 }
 
 .app-tabs-tab-icon {

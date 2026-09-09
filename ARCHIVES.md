@@ -1,6 +1,481 @@
 # Archives
 
 ## Archive
+- [x] Administration Panel <!-- created_at: 2026-06-18T12:10:00-04:00 completed_at: 2026-08-20T12:56:27-04:00 priority: normal -->
+  - The `/admin` panel is implemented as a first-party plugin.
+  - The plugin owns the Administration layout and Overview route.
+  - Other plugins can extend Administration routes, menus, Overview entries, and features.
+  - Administration UI components must use the Builder runtime.
+  - Reusable UI components belong to the kernel; Administration-specific components belong to this plugin.
+  - V1 Administration routes are intentionally unrestricted.
+  - Authentication and authorization are deferred to Version 2.0.
+  - Tags: feature, admin, plugin, extensions, builder, v.1.0
+  - [x] Create first-party Administration plugin foundation <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-20T18:00:00-04:00 priority: normal -->
+  - [x] Define Administration menu entry contract <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-20T19:00:00-04:00 priority: normal -->
+  - [x] Implement Administration menu registry <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-20T20:00:00-04:00 priority: normal -->
+  - [x] Expose `admin.menu` service and `admin.menu.register` hook <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-20T21:00:00-04:00 priority: normal -->
+  - [x] Register Administration renderer resources <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-21T09:58:35-04:00 priority: normal -->
+  - [x] Implement Administration layout and navigation shell <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-22T11:20:31-04:00 priority: normal -->
+    - Includes responsive sidebar behavior.
+    - Includes sectioned and nested menu rendering.
+    - Includes active-route and active-descendant handling.
+    - Includes route breadcrumbs and session-history breadcrumbs.
+    - Includes SVG icon support.
+    - Includes light, dark, and automatic theme selection.
+  - [x] Register unrestricted `/admin` dashboard route <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-21T10:36:45-04:00 priority: normal -->
+  - [x] Register Dashboard administration menu entry <!-- created_at: 2026-07-20T15:00:00-04:00 completed_at: 2026-07-21T10:37:21-04:00 priority: normal -->
+  - [x] Dashboard / Overview <!-- created_at: 2026-06-18T12:11:00-04:00 completed_at: 2026-08-20T12:56:24-04:00 priority: high -->
+    - [x] Render six built-in system-status badges <!-- created_at: 2026-06-18T12:11:00-04:00 completed_at: 2026-07-23T10:00:00-04:00 priority: normal -->
+      - Core-Web version.
+      - PHP version.
+      - application mode.
+      - database driver.
+      - enabled plugin count with disabled count tooltip.
+      - enabled theme count with disabled count tooltip.
+    - [x] Create Administration Overview entry contract <!-- created_at: 2026-07-23T20:00:00-04:00 completed_at: 2026-07-23T21:00:00-04:00 priority: high -->
+      - Supports ID, Builder component slug, component configuration, column span, priority, provider, and registration order.
+    - [x] Implement Administration Overview registry <!-- created_at: 2026-07-23T20:00:00-04:00 completed_at: 2026-07-23T21:30:00-04:00 priority: high -->
+      - Supports deterministic resolution and export to client-safe arrays.
+    - [x] Expose `admin.overview.register` hook <!-- created_at: 2026-07-23T20:00:00-04:00 completed_at: 2026-07-23T22:00:00-04:00 priority: high -->
+      - Allows Administration, application, and other plugins to contribute Overview entries.
+    - [x] Register built-in Overview entries through the public hook <!-- created_at: 2026-07-23T20:00:00-04:00 completed_at: 2026-07-23T22:30:00-04:00 priority: high -->
+    - [x] Render Overview entries dynamically through Builder <!-- created_at: 2026-07-23T20:00:00-04:00 completed_at: 2026-07-23T23:00:00-04:00 priority: high -->
+      - Client renderer verifies that the requested Builder component exists.
+      - Entries are created through `Builder.create(component, config)`.
+    - [x] Add responsive one-to-four-column Overview layout <!-- created_at: 2026-07-23T20:00:00-04:00 completed_at: 2026-07-23T23:30:00-04:00 priority: normal -->
+      - Entries can span one through four grid columns.
+      - Entries fall back to one column on mobile.
+    - [x] Remove obsolete pre-registry Overview widget construction <!-- created_at: 2026-07-24T08:50:00-04:00 completed_at: 2026-07-24T13:37:55-04:00 priority: high -->
+      - Remove the unused `$overviewWidgets` array from `Administration.php`.
+      - Remove duplicate extension counting and database-driver resolution that now belongs to `DashboardOverviewProvider`.
+      - Preserve the Overview registry, hook trigger, export, and renderer arguments.
+    - [x] Remove unused Dashboard Overview provider declarations <!-- created_at: 2026-07-24T08:51:00-04:00 completed_at: 2026-07-24T13:38:03-04:00 priority: normal -->
+      - Remove unused imports and variables such as an unused `$priority` declaration.
+    - [x] Add optional customizable Overview ordering <!-- created_at: 2026-07-24T08:52:00-04:00 completed_at: 2026-08-20T12:56:15-04:00 priority: normal -->
+      - Enable dashboard rearrangement only when the SortableJS plugin is installed and enabled.
+      - Use component-provided move handles.
+      - The Overview container owns SortableJS initialization.
+      - Define a persistence strategy for user-specific or application-level ordering.
+      - Preserve registry priority/order as the default when no saved customization exists.
+    - [x] Add Overview customization mode <!-- created_at: 2026-07-24T08:53:00-04:00 completed_at: 2026-08-20T12:56:17-04:00 priority: normal -->
+      - Provide an explicit mode for enabling widget movement and future visibility controls.
+      - Avoid showing move handles during normal read-only dashboard use.
+      - Expose clear save, reset, and cancel behavior when persistence is implemented.
+    - [x] Document `admin.overview.register` extension contract <!-- created_at: 2026-07-24T08:54:00-04:00 completed_at: 2026-07-24T14:44:19-04:00 priority: normal -->
+      - Include examples for badges, cards, charts, system monitors, and third-party Builder components.
+      - Document component availability, column spans, priorities, providers, IDs, and safe configuration values.
+      - Explain that a future monitoring plugin may register CPU, RAM, disk usage, disk health, network, and service widgets.
+  - [x] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 completed_at: 2026-08-03T14:38:12-04:00 priority: normal -->
+    - Provide a settings route and Administration menu entry.
+    - Use the future writable Configuration Manager rather than modifying `core.cfg`.
+    - Initial settings should include application name, Administration brand, logo, and related presentation values.
+    - UI must use Builder components.
+- [x] Builder Component Library <!-- created_at: 2026-07-22T07:00:00-04:00 completed_at: 2026-08-20T12:26:06-04:00 priority: high -->
+  - Reusable first-party UI components implemented through the Builder runtime.
+  - Kernel components must not depend directly on Administration or any application.
+  - Components may integrate with optional asset plugins through runtime capability detection.
+  - Optional integrations must degrade safely when the corresponding plugin is unavailable.
+  - Component configuration must be refreshable without replacing the component root element.
+  - Interactive Boolean options should expose explicit component methods in addition to generic `config()` access.
+  - Toggle methods should update configuration, call `refresh()`, and return the component instance unless a different return type is explicitly documented.
+  - Components should use Builder-safe text or sanitized HTML rendering and must not introduce direct unsafe `innerHTML` assignments.
+  - Components will be implemented incrementally as required by Administration and future application features.
+  - Tags: framework, builder, components, frontend, ui, v.1.0
+  - [x] Avatar component <!-- created_at: 2026-08-17T14:30:00-04:00 completed_at: 2026-08-17T15:00:00-04:00 priority: normal -->
+    - [x] Create a reusable Builder Avatar component. <!-- created_at: 2026-08-17T14:30:00-04:00 completed_at: 2026-08-17T15:00:00-04:00 priority: normal -->
+    - [x] Support image source, accessible alternative text, optional profile link, and initials fallback. <!-- created_at: 2026-08-17T14:30:00-04:00 completed_at: 2026-08-17T15:00:00-04:00 priority: normal -->
+    - [x] Support standardized small, medium, and large sizes. <!-- created_at: 2026-08-17T14:30:00-04:00 completed_at: 2026-08-17T15:00:00-04:00 priority: normal -->
+    - [x] Fall back to generated initials when no image is configured or the configured image fails to load. <!-- created_at: 2026-08-17T14:30:00-04:00 completed_at: 2026-08-17T15:00:00-04:00 priority: normal -->
+    - [x] Replace duplicated avatar rendering in reusable components where applicable. <!-- created_at: 2026-08-17T14:30:00-04:00 completed_at: 2026-08-17T15:00:00-04:00 priority: normal -->
+  - [x] Badge component <!-- created_at: 2026-07-22T07:00:00-04:00 completed_at: 2026-08-10T14:04:16-04:00 priority: high -->
+    - [x] Create kernel Badge Builder component <!-- created_at: 2026-07-22T07:00:00-04:00 completed_at: 2026-07-23T09:00:00-04:00 priority: high -->
+      - Supports `href`, `icon`, `value`, `label`, and `tooltip`.
+      - Registered as Builder slug `badge`, provider `kernel`, priority `0`.
+    - [x] Correct Badge value and label region rendering <!-- created_at: 2026-07-23T09:00:00-04:00 completed_at: 2026-07-23T10:00:00-04:00 priority: high -->
+      - `value` renders into the large value region.
+      - `label` renders into the smaller label region.
+    - [x] Add Badge theme-aware styling <!-- created_at: 2026-07-23T09:00:00-04:00 completed_at: 2026-07-23T11:00:00-04:00 priority: normal -->
+    - [x] Add Badge color option <!-- created_at: 2026-07-24T08:10:00-04:00 completed_at: 2026-08-10T13:00:50-04:00 priority: normal -->
+      - Add a validated `color` configuration option.
+      - The option controls the icon foreground and icon-area background.
+      - Support the Core-Web semantic color set such as primary, secondary, success, danger, warning, info, light, and dark.
+      - Use theme tokens rather than hardcoded component colors.
+      - Define a deterministic fallback for missing or invalid color values.
+    - [x] Add optional Badge move handle <!-- created_at: 2026-07-24T08:11:00-04:00 completed_at: 2026-08-10T13:00:47-04:00 priority: normal -->
+      - Add a `moveHandleVisible` configuration option.
+      - Render the structural move-handle region as part of the Badge component.
+      - The handle must appear only when `moveHandleVisible` is true and the SortableJS capability is available.
+      - The handle must remain hidden when the SortableJS plugin is absent, disabled, or failed to load.
+      - Do not bundle SortableJS into the Badge component.
+    - [x] Add explicit Badge option methods <!-- created_at: 2026-07-24T08:12:00-04:00 completed_at: 2026-08-10T14:03:57-04:00 priority: normal -->
+      - Add methods for enabling, disabling, and toggling the move handle.
+      - Add a method for changing the semantic color.
+      - Add suitable setters or toggle methods for other interactive Badge options introduced later.
+      - Methods must update configuration and refresh the existing element.
+    - [x] Validate Badge drag integration with SortableJS <!-- created_at: 2026-07-24T08:13:00-04:00 completed_at: 2026-08-10T14:04:12-04:00 priority: normal -->
+      - Verify that the Badge handle can be used by a sortable dashboard container.
+      - Badge itself should expose the handle; the parent dashboard owns ordering and persistence.
+  - [x] Card component <!-- created_at: 2026-07-22T07:00:00-04:00 completed_at: 2026-08-10T14:04:29-04:00 priority: high -->
+    - [x] Audit and normalize kernel Card Builder component <!-- created_at: 2026-07-22T07:00:00-04:00 completed_at: 2026-07-22T12:00:00-04:00 priority: normal -->
+    - [x] Add theme-aware Card structure and styling <!-- created_at: 2026-07-22T12:00:00-04:00 completed_at: 2026-07-23T12:00:00-04:00 priority: normal -->
+    - [x] Add configurable header, body, and footer regions <!-- created_at: 2026-07-22T12:00:00-04:00 completed_at: 2026-07-23T12:30:00-04:00 priority: normal -->
+    - [x] Add header icon support <!-- created_at: 2026-07-22T12:00:00-04:00 completed_at: 2026-07-23T13:00:00-04:00 priority: normal -->
+    - [x] Add three-dot control menu structure and behavior <!-- created_at: 2026-07-23T13:00:00-04:00 completed_at: 2026-07-23T15:00:00-04:00 priority: normal -->
+    - [x] Add collapse control and collapsed state <!-- created_at: 2026-07-23T13:00:00-04:00 completed_at: 2026-07-23T15:30:00-04:00 priority: normal -->
+    - [x] Add fullscreen control and fullscreen state <!-- created_at: 2026-07-23T13:00:00-04:00 completed_at: 2026-07-23T16:00:00-04:00 priority: normal -->
+    - [x] Add close control and component destruction behavior <!-- created_at: 2026-07-23T13:00:00-04:00 completed_at: 2026-07-23T16:30:00-04:00 priority: normal -->
+    - [x] Add root event delegation and destroy-time listener cleanup <!-- created_at: 2026-07-23T13:00:00-04:00 completed_at: 2026-07-23T17:00:00-04:00 priority: normal -->
+    - [x] Account for overlay controls in Card header spacing <!-- created_at: 2026-07-23T17:00:00-04:00 completed_at: 2026-07-23T18:00:00-04:00 priority: normal -->
+      - Header padding accommodates the move handle and three-dot menu independently.
+    - [x] Validate Card controls through temporary Administration test harness <!-- created_at: 2026-07-23T17:00:00-04:00 completed_at: 2026-07-23T19:00:00-04:00 priority: normal -->
+      - Collapse, fullscreen, close, control menu, and visible-state options were manually verified.
+      - Temporary test markup was removed after validation.
+    - [x] Make Card move handle conditional on SortableJS <!-- created_at: 2026-07-24T08:20:00-04:00 completed_at: 2026-08-10T09:37:07-04:00 priority: high -->
+      - Preserve the existing `moveHandleVisible` component option.
+      - Show the move handle only when the option is true and the SortableJS capability is available.
+      - Hide the move handle when SortableJS is absent or disabled.
+      - Do not add SortableJS as a mandatory kernel dependency.
+    - [x] Integrate Card handle with sortable containers <!-- created_at: 2026-07-24T08:21:00-04:00 completed_at: 2026-08-10T14:02:30-04:00 priority: normal -->
+      - Card exposes the move handle.
+      - The containing dashboard or collection owns SortableJS initialization, ordering, and persistence.
+    - [x] Add explicit Card option and state methods <!-- created_at: 2026-07-24T08:22:00-04:00 completed_at: 2026-08-10T10:27:02-04:00 priority: high -->
+      - Add explicit methods for showing, hiding, and toggling the header, body, and footer.
+      - Add explicit methods for showing, hiding, and toggling the move handle.
+      - Add explicit methods for enabling, disabling, opening, closing, and toggling the control menu.
+      - Add explicit methods for showing, hiding, and toggling collapse, fullscreen, and close controls.
+      - Add explicit `collapse()`, `expand()`, and `toggleCollapsed()` methods.
+      - Add explicit `enterFullscreen()`, `exitFullscreen()`, and `toggleFullscreen()` methods.
+      - Preserve `destroy()` as the canonical close/destruction operation.
+      - Methods must refresh the existing component rather than replacing its root.
+  - [x] List component <!-- created_at: 2026-07-24T08:31:00-04:00 completed_at: 2026-08-11T10:29:31-04:00 priority: normal -->
+    - [x] Create a generic Builder List component. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-11T10:29:30-04:00 priority: normal -->
+    - [x] Include a built-in search filter. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-11T10:29:29-04:00 priority: normal -->
+    - [x] Support icons, titles, descriptions, metadata, links, empty states, and optional item actions. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-11T10:29:28-04:00 priority: normal -->
+    - [x] Consider optional sortable-item support through the SortableJS plugin. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-11T10:29:28-04:00 priority: normal -->
+  - [x] vCard component <!-- created_at: 2026-07-24T08:32:00-04:00 completed_at: 2026-08-12T07:57:53-04:00 priority: normal -->
+    - [x] Create a contact/identity card component for people and organizations. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-12T07:57:49-04:00 priority: normal -->
+    - [x] Include a built-in search filter when rendering collections of vCards. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-12T07:57:49-04:00 priority: normal -->
+    - [x] Support name, organization, title, avatar, email, phone, address, links, metadata, and optional actions. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-12T07:57:50-04:00 priority: normal -->
+    - [x] Avoid coupling the component to a particular contacts provider. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-12T07:57:50-04:00 priority: normal -->
+  - [x] Dropdown component <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T13:40:18-04:00 priority: high -->
+    - [x] Create a reusable Builder Dropdown component. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T13:40:16-04:00 priority: normal -->
+    - [x] Support configurable trigger label and icon. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T13:40:15-04:00 priority: normal -->
+    - [x] Support icon-only triggers such as the vertical-dots control. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T13:40:15-04:00 priority: normal -->
+    - [x] Support action items with labels, icons, hrefs, callbacks, and disabled state. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T13:40:14-04:00 priority: normal -->
+    - [x] Support deterministic open, close, and toggle methods. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T13:40:13-04:00 priority: normal -->
+    - [x] Close on item activation, outside click, and Escape. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T13:40:12-04:00 priority: normal -->
+    - [x] Provide accessible keyboard and ARIA behavior. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T13:40:11-04:00 priority: normal -->
+    - [x] Use shared theme-aware styling. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T13:40:10-04:00 priority: normal -->
+    - [x] Replace component-specific dropdown implementations incrementally. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T13:40:09-04:00 priority: normal -->
+  - [x] Button Group component <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T15:41:37-04:00 priority: high -->
+    - [x] Create a reusable Builder Button Group component. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T15:41:34-04:00 priority: normal -->
+    - [x] Compose existing Builder Button components rather than duplicating button styling. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T15:41:34-04:00 priority: normal -->
+    - [x] Support horizontal and vertical orientations. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T15:41:33-04:00 priority: normal -->
+    - [x] Support equal-width and natural-width button layouts. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T15:41:30-04:00 priority: normal -->
+    - [x] Support configurable spacing or attached/segmented presentation. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T15:41:29-04:00 priority: normal -->
+    - [x] Support responsive wrapping where appropriate. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T15:41:29-04:00 priority: normal -->
+    - [x] Allow buttons to retain their own size, semantic color, icon, href, callback, and disabled state. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T15:41:28-04:00 priority: normal -->
+    - [x] Replace component-specific action-group layouts incrementally. <!-- created_at: 2026-08-12T07:57:43-04:00 completed_at: 2026-08-12T15:41:27-04:00 priority: normal -->
+  - [x] Progress Bar component <!-- created_at: 2026-07-24T08:33:00-04:00 completed_at: 2026-08-13T09:04:02-04:00 priority: normal -->
+    - [x] Support minimum, maximum, current value, label, percentage display, semantic colors, and indeterminate state. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-13T09:04:00-04:00 priority: normal -->
+    - [x] Provide explicit methods for setting and incrementing progress. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-13T09:03:59-04:00 priority: normal -->
+    - [x] Ensure accessible progress semantics. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-13T09:03:59-04:00 priority: normal -->
+  - [x] Tabs component <!-- created_at: 2026-07-24T08:34:00-04:00 completed_at: 2026-08-20T12:25:51-04:00 priority: normal -->
+    - [x] Create a tabbed content area using Builder components. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-13T11:51:39-04:00 priority: normal -->
+    - [x] Support programmatic tab selection. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-13T11:51:40-04:00 priority: normal -->
+    - [x] Support disabled tabs and optional icons. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-13T11:51:40-04:00 priority: normal -->
+    - [x] Expose explicit methods for selecting, enabling, disabling, adding, and removing tabs. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-13T11:51:41-04:00 priority: normal -->
+    - [x] Provide appropriate keyboard and ARIA behavior. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-13T11:51:41-04:00 priority: normal -->
+    - [x] Allow plugins to register or append tabs where the owning feature exposes an extension registry. <!-- created_at: 2026-08-11T10:29:25-04:00 completed_at: 2026-08-13T11:51:43-04:00 priority: normal -->
+    - [x] Add optional sortable tab ordering. <!-- created_at: 2026-08-19T21:35:00-04:00 completed_at: 2026-08-20T12:25:50-04:00 priority: normal -->
+      - Add a toggleable sortable option that is disabled by default.
+      - Integrate with SortableJS only when the optional SortableJS capability is available.
+      - Preserve normal Tabs behavior when SortableJS is unavailable or disabled.
+      - Allow the user to drag tabs into a different order.
+      - Update the component's configured tab order after a successful reorder.
+      - Keep persistence of the reordered tab configuration outside the reusable Tabs component.
+      - Preserve tab selection, disabled state, keyboard navigation, panel association, and ARIA semantics after reordering.
+      - Expose explicit methods for enabling, disabling, and toggling sortable behavior.
+  - [x] Feed components <!-- created_at: 2026-07-24T08:35:00-04:00 completed_at: 2026-08-17T14:18:59-04:00 priority: normal -->
+    - Reusable Builder components for social-feed-style posts, notes, updates, announcements, and threaded discussion.
+    - Persistence, authorization, loading, and server communication remain outside the components.
+    - Tags: framework, builder, components, frontend, ui, feed, v.1.0
+    - [x] Feed component <!-- created_at: 2026-08-13T11:51:00-04:00 completed_at: 2026-08-17T14:18:55-04:00 priority: normal -->
+      - [x] Create a generic Builder Feed collection component. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T14:18:53-04:00 priority: normal -->
+      - [x] Render Post components rather than duplicating post markup. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T14:18:52-04:00 priority: normal -->
+      - [x] Include a built-in search filter. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T14:18:51-04:00 priority: normal -->
+      - [x] Support configurable empty state. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T14:18:50-04:00 priority: normal -->
+      - [x] Support filtering posts by searchable author, content, categories, and status. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T14:18:50-04:00 priority: normal -->
+      - [x] Keep persistence, loading, pagination, and authorization outside the component. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T14:18:49-04:00 priority: normal -->
+    - [x] Post component <!-- created_at: 2026-08-13T11:51:00-04:00 completed_at: 2026-08-17T13:34:09-04:00 priority: normal -->
+      - [x] Create a reusable Builder Post component. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T13:34:07-04:00 priority: normal -->
+      - [x] Support author name, avatar, title or role, timestamp, and optional link. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T13:34:05-04:00 priority: normal -->
+      - [x] Support content suitable for posts, notes, updates, and announcements. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T13:34:04-04:00 priority: normal -->
+      - [x] Support attachments. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T13:34:03-04:00 priority: normal -->
+      - [x] Support categories or tags. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T13:34:03-04:00 priority: normal -->
+      - [x] Support semantic status. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T13:33:57-04:00 priority: normal -->
+      - [x] Support optional edit, delete, archive, like, share, and comments controls. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T13:33:56-04:00 priority: normal -->
+      - [x] Controls must be individually configurable. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T13:33:54-04:00 priority: normal -->
+      - [x] Expose explicit show, hide, and toggle methods for interactive controls. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T13:33:53-04:00 priority: normal -->
+      - [x] Use the shared Dropdown component for overflow actions where appropriate. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T13:33:51-04:00 priority: normal -->
+      - [x] Provide a region for mounting a Comments component. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T13:33:48-04:00 priority: normal -->
+      - [x] Keep persistence and authorization outside the component. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-17T13:33:47-04:00 priority: normal -->
+    - [x] Comments component <!-- created_at: 2026-08-13T11:51:00-04:00 completed_at: 2026-08-14T15:44:16-04:00 priority: normal -->
+      - [x] Create a reusable Builder Comments collection component. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-14T15:44:04-04:00 priority: normal -->
+      - [x] Render Comment components rather than duplicating comment markup. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-14T15:44:05-04:00 priority: normal -->
+      - [x] Support configurable empty state. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-14T15:44:07-04:00 priority: normal -->
+      - [x] Support show, hide, and toggle behavior. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-14T15:44:08-04:00 priority: normal -->
+      - [x] Expose explicit methods for adding and removing comments from the rendered collection. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-14T15:44:12-04:00 priority: normal -->
+      - [x] Keep loading, persistence, submission, pagination, and authorization outside the component. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-14T15:44:13-04:00 priority: normal -->
+    - [x] Comment component <!-- created_at: 2026-08-13T11:51:00-04:00 completed_at: 2026-08-14T15:43:59-04:00 priority: normal -->
+      - [x] Create a reusable Builder Comment component. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-14T15:43:51-04:00 priority: normal -->
+      - [x] Support author name, avatar, timestamp, content, and optional status. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-14T15:43:51-04:00 priority: normal -->
+      - [x] Support optional edit, delete, like, and reply controls. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-14T15:43:52-04:00 priority: normal -->
+      - [x] Controls must be individually configurable. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-14T15:43:54-04:00 priority: normal -->
+      - [x] Expose explicit show, hide, and toggle methods for interactive controls. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-14T15:43:55-04:00 priority: normal -->
+      - [x] Use the shared Dropdown component for overflow actions where appropriate. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-14T15:43:55-04:00 priority: normal -->
+      - [x] Keep persistence and authorization outside the component. <!-- created_at: 2026-08-14T15:43:41-04:00 completed_at: 2026-08-14T15:43:56-04:00 priority: normal -->
+  - [x] Alert component <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T08:50:04-04:00 priority: normal -->
+    - [x] Create a reusable inline Builder Alert component. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T08:50:02-04:00 priority: normal -->
+    - [x] Support configurable title, content, icon, and semantic color. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T08:50:01-04:00 priority: normal -->
+    - [x] Support Core-Web semantic colors: primary, secondary, success, danger, warning, info, light, and dark. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T08:50:00-04:00 priority: normal -->
+    - [x] Support optional dismiss control. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T08:49:59-04:00 priority: normal -->
+    - [x] Expose explicit show, hide, toggle, and dismiss methods. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T08:49:58-04:00 priority: normal -->
+    - [x] Support configurable dismiss callback. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T08:49:57-04:00 priority: normal -->
+    - [x] Provide appropriate accessible alert semantics. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T08:49:56-04:00 priority: normal -->
+    - [x] Keep persistence and application-specific messaging outside the component. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T08:49:55-04:00 priority: normal -->
+  - [x] Toast component <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T09:51:18-04:00 priority: normal -->
+    - [x] Create a reusable Builder Toast component for transient notifications. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T09:51:14-04:00 priority: normal -->
+    - [x] Support configurable title, content, icon, and semantic color. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T09:51:15-04:00 priority: normal -->
+    - [x] Support Core-Web semantic colors: primary, secondary, success, danger, warning, info, light, and dark. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T09:51:10-04:00 priority: normal -->
+    - [x] Support optional dismiss control. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T09:51:10-04:00 priority: normal -->
+    - [x] Support configurable automatic dismissal delay and persistent mode. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T09:51:11-04:00 priority: normal -->
+    - [x] Pause automatic dismissal while the user is interacting with the Toast. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T09:51:05-04:00 priority: normal -->
+    - [x] Expose explicit show, hide, toggle, and dismiss methods. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T09:51:04-04:00 priority: normal -->
+    - [x] Expose lifecycle callbacks for show, hide, and dismiss where appropriate. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T09:51:02-04:00 priority: normal -->
+    - [x] Provide accessible live-region semantics appropriate to the configured notification severity. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T09:50:59-04:00 priority: normal -->
+    - [x] Keep notification transport, persistence, and backend communication outside the component. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T09:51:00-04:00 priority: normal -->
+  - [x] Toast Area component <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T10:29:24-04:00 priority: normal -->
+    - [x] Create a reusable Builder Toast Area collection component. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T10:29:22-04:00 priority: normal -->
+    - [x] Render Toast components rather than duplicating Toast markup. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T10:29:21-04:00 priority: normal -->
+    - [x] Support configurable viewport placement: top-left, top-center, top-right, bottom-left, bottom-center, and bottom-right. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T10:29:21-04:00 priority: normal -->
+    - [x] Stack multiple Toast components with consistent spacing. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T10:29:20-04:00 priority: normal -->
+    - [x] Expose explicit methods for adding, removing, and clearing Toasts. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T10:29:18-04:00 priority: normal -->
+    - [x] Support deterministic ordering of rendered Toasts. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T10:29:16-04:00 priority: normal -->
+    - [x] Allow Toast instances to remove themselves from the area when dismissed. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T10:29:16-04:00 priority: normal -->
+    - [x] Keep notification loading, persistence, transport, and authorization outside the component. <!-- created_at: 2026-08-17T15:46:00-04:00 completed_at: 2026-08-18T10:29:15-04:00 priority: normal -->
+  - [x] Timeline component <!-- created_at: 2026-07-24T08:36:00-04:00 completed_at: 2026-08-19T21:33:09-04:00 priority: normal -->
+    - [x] Create a timeline suitable for activity logs, history, events, and audit information. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T21:33:07-04:00 priority: normal -->
+    - [x] Support vertical and horizontal layouts. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T21:33:07-04:00 priority: normal -->
+    - [x] Include a built-in search filter. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T21:33:06-04:00 priority: normal -->
+    - [x] Include a category filter with a “Show all” option. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T21:33:05-04:00 priority: normal -->
+    - [x] Support categories, icons, timestamps, headings, descriptions, links, metadata, and semantic colors. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T21:33:04-04:00 priority: normal -->
+    - [x] Expose an explicit method for changing orientation. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T21:33:04-04:00 priority: normal -->
+    - [x] Consider optional TimeagoJS formatting when its asset plugin is available. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T21:33:03-04:00 priority: normal -->
+  - [x] Table of Content component <!-- created_at: 2026-08-19T21:35:00-04:00 completed_at: 2026-08-20T11:07:57-04:00 priority: normal -->
+    - [x] Create a reusable Builder Table of Content component. <!-- created_at: 2026-08-19T21:35:00-04:00 completed_at: 2026-08-20T11:07:55-04:00 priority: normal -->
+    - [x] Render a floating trigger button that opens and closes the Table of Content. <!-- created_at: 2026-08-19T21:35:00-04:00 completed_at: 2026-08-20T11:07:54-04:00 priority: normal -->
+    - [x] Use the following exact SVG as the default trigger icon. <!-- created_at: 2026-08-19T21:35:00-04:00 completed_at: 2026-08-20T11:07:53-04:00 priority: normal -->
+      - `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="app-icon" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M2 2.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5V3a.5.5 0 0 0-.5-.5zM3 3H2v1h1z"/><path d="M5 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M5.5 7a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1zm0 4a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1z"/><path fill-rule="evenodd" d="M1.5 7a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5zM2 7h1v1H2zm0 3.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm1 .5H2v1h1z"/></svg>`
+    - [x] Support configurable Table of Content entries suitable for navigating headings or sections. <!-- created_at: 2026-08-19T21:35:00-04:00 completed_at: 2026-08-20T11:07:51-04:00 priority: normal -->
+    - [x] Expose explicit `open()`, `close()`, and `toggle()` methods. <!-- created_at: 2026-08-19T21:35:00-04:00 completed_at: 2026-08-20T11:07:51-04:00 priority: normal -->
+    - [x] Persist the open or closed state in browser storage so it survives a page refresh. <!-- created_at: 2026-08-19T21:35:00-04:00 completed_at: 2026-08-20T11:07:49-04:00 priority: normal -->
+    - [x] Use a configurable persistence key so multiple applications or component instances do not collide. <!-- created_at: 2026-08-19T21:35:00-04:00 completed_at: 2026-08-20T11:07:49-04:00 priority: normal -->
+    - [x] Degrade safely when browser storage is unavailable. <!-- created_at: 2026-08-19T21:35:00-04:00 completed_at: 2026-08-20T11:07:48-04:00 priority: normal -->
+    - [x] Provide appropriate keyboard, focus, and expanded-state accessibility semantics. <!-- created_at: 2026-08-19T21:35:00-04:00 completed_at: 2026-08-20T11:07:48-04:00 priority: normal -->
+  - [x] Stepper component <!-- created_at: 2026-07-24T08:37:00-04:00 completed_at: 2026-08-20T09:13:16-04:00 priority: normal -->
+    - [x] Create a multi-step workflow/navigation component. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-20T09:13:14-04:00 priority: normal -->
+    - [x] Support vertical and horizontal layouts. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-20T09:13:14-04:00 priority: normal -->
+    - [x] Support current, complete, incomplete, disabled, and error states. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-20T09:13:12-04:00 priority: normal -->
+    - [x] Include configurable Previous and Next buttons. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-20T09:13:10-04:00 priority: normal -->
+    - [x] Expose explicit methods for showing, hiding, and toggling Previous and Next controls. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-20T09:13:09-04:00 priority: normal -->
+    - [x] Expose methods for navigating to the previous, next, or a specific step. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-20T09:13:08-04:00 priority: normal -->
+    - [x] Allow validation callbacks to prevent invalid step transitions. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-20T09:13:08-04:00 priority: normal -->
+  - [x] Modal component <!-- created_at: 2026-07-24T08:38:00-04:00 completed_at: 2026-08-18T14:06:25-04:00 priority: normal -->
+    - [x] Create a modal/dialog component implemented through Builder. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-18T14:06:10-04:00 priority: normal -->
+    - [x] Support semantic colors. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-18T14:06:11-04:00 priority: normal -->
+    - [x] Support multiple sizes. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-18T14:06:13-04:00 priority: normal -->
+    - [x] Support configurable header, body, footer, icon, title, and controls. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-18T14:06:14-04:00 priority: normal -->
+    - [x] Include options similar to Card where applicable, including close, collapse, fullscreen, and control-menu behavior when appropriate. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-18T14:06:21-04:00 priority: normal -->
+    - [x] Expose explicit `open()`, `close()`, and `toggle()` methods. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-18T14:06:20-04:00 priority: normal -->
+    - [x] Define focus trapping, Escape behavior, backdrop behavior, and ARIA semantics. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-18T14:06:20-04:00 priority: normal -->
+    - [x] Support displaying complete long-form values from Developer Tools. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-18T14:06:19-04:00 priority: normal -->
+  - [x] Collapsible component <!-- created_at: 2026-07-24T08:39:00-04:00 completed_at: 2026-08-17T15:42:01-04:00 priority: normal -->
+    - [x] Create a generic expandable/collapsible content region. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-17T15:41:59-04:00 priority: normal -->
+    - [x] Expose explicit `expand()`, `collapse()`, and `toggle()` methods. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-17T15:41:59-04:00 priority: normal -->
+    - [x] Support optional title, icon, initial state, and animation. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-17T15:41:58-04:00 priority: normal -->
+    - [x] Include accessible expanded-state semantics. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-17T15:41:57-04:00 priority: normal -->
+  - [x] OffCanvas component <!-- created_at: 2026-07-24T08:40:00-04:00 completed_at: 2026-08-19T15:21:34-04:00 priority: normal -->
+    - [x] Create a slide-in panel component. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T15:21:25-04:00 priority: normal -->
+    - [x] Support left, right, top, and bottom placement where practical. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T15:21:25-04:00 priority: normal -->
+    - [x] Support configurable size, semantic color, backdrop, header, body, footer, and close behavior. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T15:21:28-04:00 priority: normal -->
+    - [x] Expose explicit `open()`, `close()`, and `toggle()` methods. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T15:21:28-04:00 priority: normal -->
+    - [x] Define focus, keyboard, backdrop, and accessibility behavior. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T15:21:32-04:00 priority: normal -->
+    - [x] Must support the Developer Tools panel use case. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T15:21:31-04:00 priority: normal -->
+  - [x] Code Block component <!-- created_at: 2026-07-24T08:41:00-04:00 completed_at: 2026-08-19T15:21:46-04:00 priority: normal -->
+    - [x] Create a safe source-code display component. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T15:21:42-04:00 priority: normal -->
+    - [x] Support language, title, filename, line numbers, wrapping, copy action, and optional collapse. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T15:21:41-04:00 priority: normal -->
+    - [x] Integrate with PrismJS only when the PrismJS plugin is installed and enabled. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T15:21:41-04:00 priority: normal -->
+    - [x] Fall back to escaped plain-text rendering when PrismJS is unavailable. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T15:21:40-04:00 priority: normal -->
+    - [x] Support displaying Builder component examples on the Theme Preview page. <!-- created_at: 2026-07-30T08:02:46-04:00 completed_at: 2026-08-19T15:21:44-04:00 priority: normal -->
+- [x] Create reusable Builder Table component <!-- created_at: 2026-08-05T07:52:00-04:00 completed_at: 2026-08-10T09:05:40-04:00 priority: high -->
+  - [x] Implement a native HTML table that works without third-party plugins. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:16:54-04:00 priority: normal -->
+  - [x] Support declarative columns and client-safe row objects. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:16:56-04:00 priority: normal -->
+  - [x] Support replacing, adding, removing, and clearing rows. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:16:58-04:00 priority: normal -->
+  - [x] Support loading, empty, and invalid-row states. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-06T13:22:13-04:00 priority: normal -->
+  - [x] Provide a reusable table controls region. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:05-04:00 priority: normal -->
+  - [x] Initialize DataTables only when its runtime is available. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:07-04:00 priority: normal -->
+  - [x] Integrate compatible controls through DataTables Buttons when available. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:09-04:00 priority: normal -->
+  - [x] Preserve native controls when DataTables Buttons is unavailable. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:13-04:00 priority: normal -->
+  - [x] Add an optional actions column only when actions are configured. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:16-04:00 priority: normal -->
+  - [x] Render one direct action button when exactly one action is configured. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:19-04:00 priority: normal -->
+  - [x] Render a dropdown menu with a vertical-dots trigger when multiple actions are configured. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:22-04:00 priority: normal -->
+  - [x] Pass the original row object to action callbacks. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:26-04:00 priority: normal -->
+  - [x] Provide safe DataTables initialization, refresh, and destruction methods. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:35-04:00 priority: normal -->
+  - [x] Add kernel table styling and responsive overflow behavior. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T12:17:37-04:00 priority: normal -->
+  - [x] Support selectable Table rows <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:23-04:00 priority: high -->
+    - [x] Keep selection state owned by the native Builder Table. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:22-04:00 priority: normal -->
+    - [x] Support optional single and multiple selection modes. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:20-04:00 priority: normal -->
+    - [x] Highlight selected rows through a configurable CSS class. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:18-04:00 priority: normal -->
+    - [x] Ignore clicks originating from interactive row content. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:17-04:00 priority: normal -->
+    - [x] Expose selected rows and original row indexes. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:16-04:00 priority: normal -->
+    - [x] Clear stale selection when rows are replaced. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:14-04:00 priority: normal -->
+  - [x] Support modifier-assisted multiple selection <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:39-04:00 priority: high -->
+    - [x] Support Ctrl-click and Command-click toggling. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:38-04:00 priority: normal -->
+    - [x] Support Shift-click range selection. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:37-04:00 priority: normal -->
+    - [x] Preserve a deterministic selection anchor. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:36-04:00 priority: normal -->
+  - [x] Synchronize row selection with DataTables <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:52-04:00 priority: high -->
+    - [x] Preserve Table-owned selection through sorting, filtering, paging, and redraws. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:51-04:00 priority: normal -->
+    - [x] Do not require the DataTables Select extension. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:49-04:00 priority: normal -->
+    - [x] Reapply selected row classes after DataTables redraws. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:27:49-04:00 priority: normal -->
+  - [x] Support conditional Table controls <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T13:34:22-04:00 priority: high -->
+    - [x] Allow control visibility conditions based on current selection. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:04-04:00 priority: normal -->
+    - [x] Allow control disabled conditions based on current selection. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:03-04:00 priority: normal -->
+    - [x] Reevaluate native and DataTables Button controls when selection changes. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T13:34:20-04:00 priority: normal -->
+  - [x] Support conditional row actions <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:20-04:00 priority: high -->
+    - [x] Allow action visibility conditions using the row and current selection. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:19-04:00 priority: normal -->
+    - [x] Preserve existing action disabled conditions. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:18-04:00 priority: normal -->
+    - [x] Render direct or dropdown actions based on the number of visible actions. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:17-04:00 priority: normal -->
+  - [x] Expose Table selection-change notifications <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:34-04:00 priority: normal -->
+    - [x] Support an optional onSelectionChange callback. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:33-04:00 priority: normal -->
+    - [x] Provide selected rows, indexes, and count. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:32-04:00 priority: normal -->
+  - [x] Add selected-row styling <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:44-04:00 priority: normal -->
+    - [x] Add native selected-row highlighting. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:43-04:00 priority: normal -->
+    - [x] Maintain readable hover and selected states with Bootstrap and DataTables. <!-- created_at: 2026-08-06T12:27:14-04:00 completed_at: 2026-08-06T12:28:42-04:00 priority: normal -->
+  - [x] Verify native operation with DataTables disabled. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-10T08:46:07-04:00 priority: normal -->
+  - [x] Verify enhanced operation with DataTables and Buttons enabled. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-10T08:46:08-04:00 priority: normal -->
+- [x] Log Viewer <!-- created_at: 2026-07-22T07:00:00-04:00 completed_at: 2026-08-10T08:54:19-04:00 priority: high -->
+  - Provide an unrestricted Administration log viewer for Version 1.0.
+  - Read logs through a reusable kernel Logger reader rather than directly from Administration route handlers.
+  - Use Builder components for filters, results, loading, empty, error, and inspection states.
+  - Perform filtering, pagination, masking, and path validation server-side.
+  - Never expose arbitrary filesystem paths or unmasked sensitive context values.
+  - [x] Audit current Logger format and configuration <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-03T14:54:05-04:00 priority: high -->
+    - Confirm configured logging directory resolution.
+    - Confirm channel filename rules.
+    - Confirm timestamp, level, message, and JSON context line format.
+    - Identify malformed-line and partial-write behavior.
+  - [x] Implement reusable Logger reader service <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - Add a kernel-side reader under `src/Logger`.
+    - Resolve the configured logging directory relative to the application root.
+    - Reject paths outside the resolved logging directory.
+    - Discover readable channel files dynamically rather than hardcoding channels.
+    - Validate channel names using the Logger channel contract.
+  - [x] Parse structured log entries <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - Parse timestamp, channel, level, message, and context.
+    - Decode valid JSON context.
+    - Tolerate malformed and partially written lines without failing the full request.
+    - Return deterministic client-safe arrays.
+  - [x] Mask sensitive log data <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - Recursively mask sensitive context keys.
+    - Mask authorization values, bearer tokens, credentials, secrets, cookies, and private keys.
+    - Apply masking before any data is returned to Administration.
+  - [x] Implement bounded reverse log reading <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - Read newest entries first.
+    - Avoid loading complete large files into memory.
+    - Support deterministic page and page-size limits.
+    - Enforce a maximum page size.
+  - [x] Implement server-side log filtering <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - Filter by channel.
+    - Filter by level.
+    - Filter by start and end date.
+    - Search message and masked context text.
+    - Return pagination metadata with results.
+  - [x] Register Logger reader service <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-04T13:09:29-04:00 priority: high -->
+    - Expose the reusable reader through the dependency injection container.
+    - Keep Logger writing behavior unchanged.
+  - [x] Register Log Viewer Administration menu entry <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+  - [x] Register unrestricted `/admin/logs` route <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - Render the Administration layout and Log Viewer mount.
+  - [x] Register unrestricted `/admin/logs/data` route <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - Accept only validated filter and pagination parameters.
+    - Return deterministic JSON success and error responses.
+    - Never accept a filesystem path from the request.
+  - [x] Register Log Viewer renderer resources <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: normal -->
+  - [x] Register Log Viewer plugin assets <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: normal -->
+  - [x] Render Log Viewer controls through Builder <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-06T12:29:23-04:00 priority: high -->
+    - [x] Provide channel, level, date, and search controls. <!-- created_at: 2026-08-06T12:29:19-04:00 completed_at: 2026-08-06T12:29:20-04:00 priority: normal -->
+    - [x] Provide an explicit refresh action. <!-- created_at: 2026-08-06T12:29:19-04:00 completed_at: 2026-08-06T12:29:21-04:00 priority: normal -->
+    - [x] Preserve selected filters while paging. <!-- created_at: 2026-08-06T12:29:19-04:00 completed_at: 2026-08-06T12:29:22-04:00 priority: normal -->
+  - [x] Render paginated log results through Builder <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-10T08:54:14-04:00 priority: high -->
+    - [x] Render the initial Log Viewer card and result mount through Builder <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - [x] Load and render the first page of log entries <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - [x] Show timestamp, channel, level, message, and masked context <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - [x] Include deterministic loading, empty, and error states <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-05T07:38:00-04:00 priority: high -->
+    - [x] Add Previous and Next pagination controls. <!-- created_at: 2026-08-05T12:16:53-04:00 completed_at: 2026-08-06T12:29:32-04:00 priority: normal -->
+  - [x] Add safe long-entry inspection <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-06T13:00:33-04:00 priority: normal -->
+    - [x] Keep long messages and context collapsed in the primary listing. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-06T13:00:30-04:00 priority: normal -->
+    - [x] Expand only through an explicit inspection action. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-05T12:19:23-04:00 priority: normal -->
+    - [x] Preserve masked values in expanded content. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-05T12:19:25-04:00 priority: normal -->
+  - [x] Verify Log Viewer behavior <!-- created_at: 2026-08-03T15:00:00-04:00 completed_at: 2026-08-10T08:45:38-04:00 priority: high -->
+    - [x] Verify every discovered channel. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-10T08:45:28-04:00 priority: normal -->
+    - [x] Verify all supported levels and filters. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-10T08:45:29-04:00 priority: normal -->
+    - [x] Verify pagination with large log files. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-10T08:45:30-04:00 priority: normal -->
+    - [x] Verify malformed-line tolerance. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-10T08:45:31-04:00 priority: normal -->
+    - [x] Verify sensitive-value masking. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-10T08:45:34-04:00 priority: normal -->
+    - [x] Verify empty, missing, and unreadable log directories. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-10T08:45:35-04:00 priority: normal -->
+    - [x] Verify arbitrary path traversal is impossible. <!-- created_at: 2026-08-05T12:19:23-04:00 completed_at: 2026-08-10T08:45:35-04:00 priority: normal -->
+- [x] System Settings (brand name, logo, etc.) <!-- created_at: 2026-06-18T12:13:00-04:00 completed_at: 2026-08-03T14:36:37-04:00 priority: normal -->
+  - Provide a settings route and Administration menu entry.
+  - Use the writable Configuration Manager rather than modifying `core.cfg`.
+  - Initial settings should include application name, Administration brand, logo, and related presentation values.
+  - UI must use Builder components.
+  - [x] Audit existing writable configuration behavior <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:38-04:00 priority: normal -->
+    - Review `core.config set` and `core.config unset`.
+    - Identify reusable persistence logic and avoid duplicating it in Administration.
+  - [x] Expose reusable writable configuration service <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:41-04:00 priority: normal -->
+    - Write only to `config/local.cfg`.
+    - Preserve inherited values from `core.cfg`.
+    - Support nested keys.
+    - Support set and unset operations.
+    - Use atomic file replacement where practical.
+  - [x] Define Administration presentation settings <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:44-04:00 priority: normal -->
+    - Application name.
+    - Administration brand label.
+    - Administration logo.
+    - Footer content or related presentation metadata.
+    - Define validation and default/inherited behavior for each key.
+  - [x] Register unrestricted `/admin/settings` route <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:49-04:00 priority: normal -->
+  - [x] Register System Settings Administration menu entry <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:55-04:00 priority: normal -->
+  - [x] Register System Settings renderer resources <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-27T08:57:58-04:00 priority: normal -->
+  - [x] Register System Settings plugin assets <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:55:57-04:00 priority: normal -->
+  - [x] Render System Settings UI through Builder <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:56:03-04:00 priority: normal -->
+  - [x] Load resolved and locally overridden values <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:56:12-04:00 priority: normal -->
+  - [x] Persist validated settings through the writable configuration service <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-30T08:02:46-04:00 priority: normal -->
+  - [x] Support resetting settings to inherited defaults <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-08-03T14:33:43-04:00 priority: normal -->
+  - [x] Display deterministic success and validation feedback <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-08-03T14:33:44-04:00 priority: normal -->
+  - [x] Apply configured branding to the Administration layout <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-07-29T14:56:22-04:00 priority: normal -->
+  - [x] Verify settings persistence and inherited fallback behavior <!-- created_at: 2026-07-27T08:57:38-04:00 completed_at: 2026-08-03T14:36:34-04:00 priority: normal -->
+- [x] BUG: Assets loading does not seem to take into account if the extension is enabled or not. All assets remain loaded. <!-- created_at: 2026-07-27T20:32:56-04:00 completed_at: 2026-07-28T08:24:09-04:00 priority: urgent -->
+- [x] Configuration Manager <!-- created_at: 2026-06-18T11:00:00-04:00 completed_at: 2026-07-29T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: high -->
+  - Load, merge, and provide read and write access to application configuration (`core.cfg` + optional `local.cfg`).
+  - Tags: feature, config, v.1.0
+  - [x] Implement Config class with `get()` / `all()` accessors <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Support deep nested key access <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Implement merge strategy (`local.cfg` overrides `core.cfg`) <!-- created_at: 2026-06-19T12:41:25-04:00 completed_at: 2026-06-19T12:41:25-04:00 priority: normal -->
+  - [x] Persist changes to `local.cfg` only <!-- created_at: 2026-06-18T11:03:00-04:00 completed_at: 2026-07-29T00:00:00-04:00 due_at: 2026-07-10T08:00:00-04:00 priority: normal -->
+    - `ConfigManager` supports nested set and unset operations and explicit persistence through `saveLocal()`.
+    - Only the local override payload is written; inherited configuration files such as `core.cfg` remain unchanged.
 - [x] Presentation Layer <!-- created_at: 2026-06-18T11:48:12-04:00 completed_at: 2026-07-20T14:31:32-04:00 priority: normal -->
   - Centralize renderer runtime settings so applications can configure engine defaults, Latte behavior, and cache paths without hardcoding them in Bootstrap or engine constructors.
   - Tags: framework, ui, renderer, config

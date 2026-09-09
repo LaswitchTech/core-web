@@ -1,0 +1,233 @@
+// ============================================================
+// Core-Web — Timeline Item component
+// ============================================================
+
+.app-timeline-item {
+    --app-timeline-item-color:
+        var(--app-secondary);
+
+    display: grid;
+    grid-template-columns:
+        2.5rem
+        minmax(0, 1fr);
+    gap: 0.75rem;
+    position: relative;
+    color:
+        var(--app-body-color);
+}
+
+.app-timeline-item-indicator {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    z-index: 1;
+}
+
+.app-timeline-item-indicator-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    color:
+        var(--app-timeline-item-color);
+    background:
+        var(--app-panel-3);
+    border-radius: 50%;
+}
+
+.app-timeline-item:hover
+.app-timeline-item-indicator-icon {
+    background:
+        color-mix(
+            in srgb,
+            var(--app-timeline-item-color) 20%,
+            var(--app-panel)
+        );
+}
+
+.app-timeline-item-indicator-icon .app-icon,
+.app-timeline-item-indicator-icon > svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.app-timeline-item-card {
+    min-width: 0;
+    overflow: hidden;
+    background:
+        var(--app-panel);
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    border-radius:
+        var(--app-border-radius);
+}
+
+.app-timeline-item-header {
+    display: flex;
+    align-items: center;
+    min-height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    background:
+        var(--app-panel-2);
+    border-bottom:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+}
+
+.app-timeline-item-metadata {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+    color:
+        var(--app-secondary-color);
+    font-size: 0.875rem;
+}
+
+.app-timeline-item-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.app-timeline-item-user {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-timeline-item-user a {
+    color:
+        var(--app-body-color);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.app-timeline-item-user a:hover {
+    text-decoration: underline;
+}
+
+.app-timeline-item-user a:focus-visible {
+    text-decoration: underline;
+    outline: 0;
+    border-radius:
+        var(--app-border-radius-sm);
+    box-shadow:
+        0 0 0 0.25rem
+        color-mix(
+            in srgb,
+            var(--app-primary) 25%,
+            transparent
+        );
+}
+
+.app-timeline-item-time {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.app-timeline-item-controls {
+    margin-left: auto;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    justify-content: flex-end;
+}
+
+.app-timeline-item-title {
+    padding: 0.75rem 1rem 0;
+    font-weight: 600;
+}
+
+.app-timeline-item-body {
+    padding: 0.75rem 1rem;
+}
+
+.app-timeline-item-title + .app-timeline-item-body {
+    padding-top: 0.25rem;
+}
+
+.app-timeline-item-body > :first-child {
+    margin-top: 0;
+}
+
+.app-timeline-item-body > :last-child {
+    margin-bottom: 0;
+}
+
+.app-timeline-item [hidden] {
+    display: none !important;
+}
+
+.app-timeline-item[data-timeline-item-layout="horizontal"] {
+    position: relative;
+    display: block;
+    flex: 0 0 auto;
+    width: 20rem;
+    padding-top: 2.5rem;
+}
+
+.app-timeline-item[data-timeline-item-layout="horizontal"]
+.app-timeline-item-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.app-timeline-item[data-timeline-item-layout="horizontal"]
+.app-timeline-item-card {
+    width: 100%;
+}
+
+.app-timeline-item[data-timeline-item-color="primary"] {
+    --app-timeline-item-color:
+        var(--app-primary);
+}
+
+.app-timeline-item[data-timeline-item-color="secondary"] {
+    --app-timeline-item-color:
+        var(--app-secondary);
+}
+
+.app-timeline-item[data-timeline-item-color="success"] {
+    --app-timeline-item-color:
+        var(--app-success);
+}
+
+.app-timeline-item[data-timeline-item-color="danger"] {
+    --app-timeline-item-color:
+        var(--app-danger);
+}
+
+.app-timeline-item[data-timeline-item-color="warning"] {
+    --app-timeline-item-color:
+        var(--app-warning);
+}
+
+.app-timeline-item[data-timeline-item-color="info"] {
+    --app-timeline-item-color:
+        var(--app-info);
+}
+
+.app-timeline-item[data-timeline-item-color="light"] {
+    --app-timeline-item-color:
+        var(--app-light);
+}
+
+.app-timeline-item[data-timeline-item-color="dark"] {
+    --app-timeline-item-color:
+        var(--app-dark);
+}

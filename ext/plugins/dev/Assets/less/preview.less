@@ -3,9 +3,27 @@
     gap: 2rem;
 }
 
-.dev-theme-preview-section {
+.dev-theme-preview-group {
     display: grid;
     gap: 1rem;
+    min-width: 0;
+}
+
+.dev-theme-preview-group-title {
+    margin: 0;
+    color: var(--app-body-color);
+    font-size: 1.75rem;
+}
+
+.dev-theme-preview-group-description {
+    margin: -0.5rem 0 0;
+    color: var(--app-secondary-color);
+}
+
+.dev-theme-preview-group-content {
+    display: grid;
+    gap: 2rem;
+    min-width: 0;
 }
 
 .dev-theme-preview-section-heading {
@@ -41,6 +59,110 @@
 
 .dev-theme-preview-examples > .app-button {
     justify-self: start;
+}
+
+.dev-theme-preview-card-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dev-theme-preview-card-footer-end {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.dev-source-modal .app-modal-body {
+    padding: 0;
+}
+
+.dev-source-modal .app-tabs-header {
+    padding-right: 1rem;
+    padding-left: 1rem;
+}
+
+.dev-source-modal .app-tabs-panel {
+    padding: 0;
+}
+
+.dev-source-modal .app-tabs-panel-content {
+    padding-right: 0;
+}
+
+.dev-source-modal .app-code-block {
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0;
+}
+
+.dev-basic-content-preview {
+    display: block;
+    min-width: 0;
+}
+
+.dev-basic-content-preview > :first-child {
+    margin-top: 0;
+}
+
+.dev-basic-content-preview > :last-child {
+    margin-bottom: 0;
+}
+
+.dev-basic-content-preview table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.dev-basic-content-preview th,
+.dev-basic-content-preview td {
+    padding: 0.5rem;
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    text-align: left;
+}
+
+.dev-utilities-preview {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.dev-utility-example {
+    display: grid;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.dev-utility-example > p {
+    margin: 0;
+}
+
+.dev-visually-hidden-example {
+    min-height: 3rem;
+    padding: 1rem;
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    border-radius:
+        var(--app-border-radius);
+}
+
+.dev-bootstrap-utility-box {
+    padding: 0.5rem;
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    border-radius:
+        var(--app-border-radius);
+    background:
+        var(--app-panel);
 }
 
 .dev-toast-area-viewport {

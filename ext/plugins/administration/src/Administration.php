@@ -83,6 +83,92 @@ final class Administration
 
             $overviewEntries = $overview->export();
 
+            $configManager =
+                $container->resolve(
+                    'config_manager',
+                );
+
+            if (!($configManager instanceof ConfigManager)) {
+                throw new \RuntimeException(
+                    'Administration Overview configuration manager is invalid.',
+                );
+            }
+
+            $savedOverviewOrder =
+                $configManager->get(
+                    'administration.overview.order',
+                    [],
+                );
+
+            if (!is_array($savedOverviewOrder)) {
+                $savedOverviewOrder = [];
+            }
+
+            $savedOverviewOrder =
+                array_values(
+                    array_filter(
+                        $savedOverviewOrder,
+                        static fn (mixed $id): bool =>
+                            is_string($id)
+                            && $id !== '',
+                    ),
+                );
+
+            if ($savedOverviewOrder !== []) {
+                $overviewEntriesById = [];
+
+                foreach ($overviewEntries as $overviewEntry) {
+                    $overviewEntriesById[
+                        $overviewEntry['id']
+                    ] = $overviewEntry;
+                }
+
+                $orderedOverviewEntries = [];
+
+                foreach ($savedOverviewOrder as $overviewEntryId) {
+                    if (!isset(
+                        $overviewEntriesById[
+                            $overviewEntryId
+                        ]
+                    )) {
+                        continue;
+                    }
+
+                    $orderedOverviewEntries[] =
+                        $overviewEntriesById[
+                            $overviewEntryId
+                        ];
+
+                    unset(
+                        $overviewEntriesById[
+                            $overviewEntryId
+                        ]
+                    );
+                }
+
+                foreach ($overviewEntries as $overviewEntry) {
+                    if (!isset(
+                        $overviewEntriesById[
+                            $overviewEntry['id']
+                        ]
+                    )) {
+                        continue;
+                    }
+
+                    $orderedOverviewEntries[] =
+                        $overviewEntry;
+
+                    unset(
+                        $overviewEntriesById[
+                            $overviewEntry['id']
+                        ]
+                    );
+                }
+
+                $overviewEntries =
+                    $orderedOverviewEntries;
+            }
+
             $output = $renderer->render(
                 'panel.layout',
                 'admin.template',
@@ -110,6 +196,134 @@ final class Administration
             );
             return Response::html($output);
         });
+
+        $router->post(
+            '/admin/overview/order',
+            function (Web $request): Response {
+                $container =
+                    Bootstrap::container();
+
+                $configManager =
+                    $container->resolve(
+                        'config_manager',
+                    );
+
+                if (!($configManager instanceof ConfigManager)) {
+                    throw new \RuntimeException(
+                        'Administration Overview configuration manager is invalid.',
+                    );
+                }
+
+                $action =
+                    $request->postParam(
+                        'action',
+                        'save',
+                    );
+
+                if ($action === 'reset') {
+                    $hadLocal =
+                        $configManager->hasLocal(
+                            'administration.overview.order',
+                        );
+
+                    $configManager->unsetKey(
+                        'administration.overview.order',
+                    );
+
+                    if ($hadLocal) {
+                        $configManager->saveLocal();
+                    }
+
+                    return Response::json([
+                        'success' => true,
+                        'reset' => true,
+                    ], Response::STATUS_OK);
+                }
+
+                if ($action !== 'save') {
+                    return Response::json([
+                        'success' => false,
+                        'message' =>
+                            'The requested Overview ordering action is invalid.',
+                    ], Response::STATUS_UNPROCESSABLE_ENTITY);
+                }
+
+                $order =
+                    $request->postParam(
+                        'order',
+                        [],
+                    );
+
+                if (!is_array($order)) {
+                    return Response::json([
+                        'success' => false,
+                        'message' =>
+                            'The submitted Overview order is invalid.',
+                    ], Response::STATUS_UNPROCESSABLE_ENTITY);
+                }
+
+                $overview =
+                    new OverviewRegistry();
+
+                $hooks =
+                    $container->resolve(
+                        'hook_registry',
+                    );
+
+                if (!($hooks instanceof HookRegistry)) {
+                    throw new \RuntimeException(
+                        'Administration Overview hook registry is invalid.',
+                    );
+                }
+
+                $hooks->trigger(
+                    'admin.overview.register',
+                    [
+                        'registry' => $overview,
+                        'container' => $container,
+                        'mode' => 'web',
+                    ],
+                );
+
+                $allowedOverviewIds =
+                    array_fill_keys(
+                        array_map(
+                            static fn (array $entry): string =>
+                                $entry['id'],
+                            $overview->export(),
+                        ),
+                        true,
+                    );
+
+                $order =
+                    array_values(
+                        array_unique(
+                            array_filter(
+                                $order,
+                                static fn (mixed $id): bool =>
+                                    is_string($id)
+                                    && isset(
+                                        $allowedOverviewIds[
+                                            $id
+                                        ]
+                                    ),
+                            ),
+                        ),
+                    );
+
+                $configManager->set(
+                    'administration.overview.order',
+                    $order,
+                );
+
+                $configManager->saveLocal();
+
+                return Response::json([
+                    'success' => true,
+                    'order' => $order,
+                ], Response::STATUS_OK);
+            },
+        );
 
         // Settings page — placeholder only.
         $router->get('/admin/settings', function (Web $_request) use ($renderer): Response {

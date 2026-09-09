@@ -1,3 +1,14 @@
+.admin-overview-customization-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+.admin-overview-customization-controls:empty {
+    display: none;
+}
+
 .admin-overview-widgets {
     display: grid;
     grid-template-columns: repeat(
@@ -9,6 +20,35 @@
 
 .admin-overview-entry {
     min-width: 0;
+}
+
+.admin-overview-move-handle {
+    cursor: grab;
+}
+
+.admin-overview-move-handle:active {
+    cursor: grabbing;
+}
+
+.admin-overview-sortable-ghost {
+    background:
+        color-mix(
+            in srgb,
+            var(--app-primary) 25%,
+            transparent
+        );
+    border-color:
+        var(--app-primary);
+    border-style:
+        dashed;
+    border-width:
+        var(--app-border-width);
+    border-radius:
+        var(--app-border-radius);
+}
+
+.admin-overview-sortable-ghost > * {
+    visibility: hidden;
 }
 
 .admin-overview-columns-2 {

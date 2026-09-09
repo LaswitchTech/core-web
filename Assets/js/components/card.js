@@ -147,7 +147,41 @@
         element.replaceChildren(svg);
     }
 
+    function renderRegionContent(element, value, htmlEnabled) {
+        if (!(element instanceof Element)) {
+            throw new TypeError(
+                "Card region rendering requires an Element."
+            );
+        }
 
+        if (value instanceof Element) {
+            element.replaceChildren(value);
+            return;
+        }
+
+        if (value === null || value === undefined) {
+            element.replaceChildren();
+            return;
+        }
+
+        if (typeof value !== "string") {
+            throw new TypeError(
+                "Card region content must be a string, Element, null, or undefined."
+            );
+        }
+
+        if (htmlEnabled === true) {
+            global.Builder.html(
+                element,
+                value
+            );
+        } else {
+            global.Builder.text(
+                element,
+                value
+            );
+        }
+    }
 
     function normalizeControlMenuItems(value) {
         if (!Array.isArray(value)) {
@@ -229,6 +263,7 @@
         static defaults() {
             return {
                 title: "",
+                subtitle: "",
                 content: "",
                 footer: "",
                 headerVisible: true,
@@ -283,6 +318,9 @@
                 document.createElement("span");
 
             const headerTitle =
+                document.createElement("span");
+
+            const headerSubtitle =
                 document.createElement("span");
 
             const body =
@@ -362,6 +400,10 @@
                 "app-card-header-title"
             );
 
+            headerSubtitle.classList.add(
+                "app-card-header-subtitle"
+            );
+
             headerControls.classList.add(
                 "app-card-header-controls"
             );
@@ -394,6 +436,11 @@
                 "header-title"
             );
 
+            headerSubtitle.setAttribute(
+                "data-card-region",
+                "header-subtitle"
+            );
+
             headerControls.setAttribute(
                 "data-card-region",
                 "header-controls"
@@ -421,7 +468,8 @@
 
             headerIdentity.append(
                 headerIcon,
-                headerTitle
+                headerTitle,
+                headerSubtitle
             );
 
             renderIcon(
@@ -450,14 +498,16 @@
                 headerControls
             );
 
-            global.Builder.html(
+            renderRegionContent(
                 body,
-                this.config("content")
+                this.config("content"),
+                true
             );
 
-            global.Builder.text(
+            renderRegionContent(
                 footer,
-                this.config("footer")
+                this.config("footer"),
+                false
             );
 
             collapsible.append(
@@ -532,7 +582,8 @@
 
             if (
                 !(control instanceof HTMLButtonElement)
-                || !this.element()?.contains(control)
+                || control.closest(".app-card")
+                    !== this.element()
             ) {
                 return;
             }
@@ -1065,11 +1116,23 @@
             header,
             headerIcon,
             headerTitle,
+            headerSubtitle,
             headerControls,
             collapseControl,
             fullscreenControl,
             closeControl
         ) {
+            const subtitle =
+                this.config(
+                    "subtitle"
+                );
+
+            if (typeof subtitle !== "string") {
+                throw new TypeError(
+                    "Card subtitle must be a string."
+                );
+            }
+
             collapseControl.hidden =
                 this.config("collapseControlVisible") !== true;
 
@@ -1096,6 +1159,14 @@
                 headerTitle,
                 this.config("title")
             );
+
+            global.Builder.text(
+                headerSubtitle,
+                subtitle
+            );
+
+            headerSubtitle.hidden =
+                subtitle === "";
 
             return this;
         }
@@ -1132,17 +1203,19 @@
                 bodyPaddingEnabled === false
             );
 
-            global.Builder.html(
+            renderRegionContent(
                 body,
-                this.config("content")
+                this.config("content"),
+                true
             );
 
             footer.hidden =
                 this.config("footerVisible") !== true;
 
-            global.Builder.text(
+            renderRegionContent(
                 footer,
-                this.config("footer")
+                this.config("footer"),
+                false
             );
 
             if (this.collapseComponent === null) {
@@ -1254,6 +1327,11 @@
                     '[data-card-region="header-title"]'
                 );
 
+            const headerSubtitle =
+                element.querySelector(
+                    '[data-card-region="header-subtitle"]'
+                );
+
             const headerControls =
                 element.querySelector(
                     '[data-card-region="header-controls"]'
@@ -1276,12 +1354,12 @@
 
             const body =
                 element.querySelector(
-                    '[data-card-region="body"]'
+                    ':scope > .app-collapse > .app-collapse-content > * > [data-card-region="body"]'
                 );
 
             const footer =
                 element.querySelector(
-                    '[data-card-region="footer"]'
+                    ':scope > .app-collapse > .app-collapse-content > * > [data-card-region="footer"]'
                 );
 
             if (
@@ -1291,6 +1369,7 @@
                 || !(header instanceof Element)
                 || !(headerIcon instanceof Element)
                 || !(headerTitle instanceof Element)
+                || !(headerSubtitle instanceof Element)
                 || !(headerControls instanceof Element)
                 || !(collapseControl instanceof HTMLButtonElement)
                 || !(fullscreenControl instanceof HTMLButtonElement)
@@ -1314,6 +1393,7 @@
                 header,
                 headerIcon,
                 headerTitle,
+                headerSubtitle,
                 headerControls,
                 collapseControl,
                 fullscreenControl,

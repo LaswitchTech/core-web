@@ -1,0 +1,194 @@
+// ============================================================
+// Core-Web — Callout component
+// ============================================================
+
+.app-callout {
+    --app-callout-color:
+        var(--app-primary);
+
+    position: relative;
+
+    display: grid;
+    grid-template-columns:
+        auto
+        minmax(0, 1fr)
+        auto;
+    align-items: start;
+    gap: 0.75rem;
+    padding: 1rem;
+    color:
+        var(--app-body-color);
+    background:
+        color-mix(
+            in srgb,
+            var(--app-callout-color) 8%,
+            var(--app-panel)
+        );
+    border:
+        var(--app-border-width)
+        var(--app-border-style)
+        var(--app-border-color);
+    border-left:
+        0.25rem
+        solid
+        var(--app-callout-color);
+    border-radius:
+        var(--app-border-radius);
+}
+
+.app-callout.has-move-handle {
+    padding-left: 2.5rem;
+}
+
+.app-callout.sortable-ghost {
+    background:
+        color-mix(
+            in srgb,
+            var(--app-primary) 25%,
+            transparent
+        );
+    border-color:
+        var(--app-primary);
+    border-style:
+        dashed;
+    border-width:
+        var(--app-border-width);
+    border-radius:
+        var(--app-border-radius);
+}
+
+.app-callout.sortable-ghost > * {
+    visibility: hidden;
+}
+
+.app-callout-content {
+    min-width: 0;
+}
+
+.app-callout-title {
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.app-callout-body {
+    min-width: 0;
+}
+
+.app-callout-body > :first-child {
+    margin-top: 0;
+}
+
+.app-callout-body > :last-child {
+    margin-bottom: 0;
+}
+
+.app-callout-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    color:
+        var(--app-callout-color);
+}
+
+.app-callout-icon .app-icon,
+.app-callout-icon > svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.app-callout-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.app-callout-move-handle {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    color:
+        var(--app-secondary-color);
+    background: transparent;
+    border: 0;
+    border-radius:
+        var(--app-border-radius-sm);
+    cursor: grab;
+}
+
+.app-callout-move-handle:hover,
+.app-callout-move-handle:focus-visible {
+    color:
+        var(--app-body-color);
+    background:
+        var(--app-panel-2);
+    outline: 0;
+    box-shadow:
+        0 0 0 0.25rem
+        color-mix(
+            in srgb,
+            var(--app-primary) 25%,
+            transparent
+        );
+}
+
+.app-callout-move-handle:active {
+    cursor: grabbing;
+}
+
+.app-callout-move-handle .app-icon,
+.app-callout-move-handle > svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.app-callout [hidden] {
+    display: none !important;
+}
+
+.app-callout[data-callout-color="primary"] {
+    --app-callout-color:
+        var(--app-primary);
+}
+
+.app-callout[data-callout-color="secondary"] {
+    --app-callout-color:
+        var(--app-secondary);
+}
+
+.app-callout[data-callout-color="success"] {
+    --app-callout-color:
+        var(--app-success);
+}
+
+.app-callout[data-callout-color="danger"] {
+    --app-callout-color:
+        var(--app-danger);
+}
+
+.app-callout[data-callout-color="warning"] {
+    --app-callout-color:
+        var(--app-warning);
+}
+
+.app-callout[data-callout-color="info"] {
+    --app-callout-color:
+        var(--app-info);
+}
+
+.app-callout[data-callout-color="light"] {
+    --app-callout-color:
+        var(--app-light);
+}
+
+.app-callout[data-callout-color="dark"] {
+    --app-callout-color:
+        var(--app-dark);
+}

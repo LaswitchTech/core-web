@@ -163,6 +163,7 @@
                         : "",
                 content:
                     typeof tab.content === "string"
+                    || tab.content instanceof Element
                         ? tab.content
                         : "",
                 panelActions:
@@ -174,6 +175,12 @@
     }
 
     const TABS_ICONS = Object.freeze({
+        move: [
+            '<svg xmlns="http://www.w3.org/2000/svg"',
+            ' viewBox="0 0 16 16">',
+            '<path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>',
+            "</svg>",
+        ].join(""),
         menu: [
             '<svg xmlns="http://www.w3.org/2000/svg"',
             ' viewBox="0 0 16 16">',
@@ -208,6 +215,42 @@
 
             this.panelActionDropdowns =
                 [];
+
+            this.sortable =
+                null;
+
+            this.handleSortEnd =
+                this.handleSortEnd.bind(
+                    this
+                );
+        }
+
+
+        isSortableAvailable() {
+            return (
+                global.Sortable !== null
+                && (
+                    typeof global.Sortable === "function"
+                    || typeof global.Sortable === "object"
+                )
+                && typeof global.Sortable.create
+                    === "function"
+            );
+        }
+
+        destroySortable() {
+            if (
+                this.sortable !== null
+                && typeof this.sortable.destroy
+                    === "function"
+            ) {
+                this.sortable.destroy();
+            }
+
+            this.sortable =
+                null;
+
+            return this;
         }
 
 
@@ -311,6 +354,135 @@
             }
         }
 
+        handleSortEnd(event) {
+            if (
+                this.config(
+                    "sortableEnabled"
+                ) !== true
+                || event === null
+                || typeof event !== "object"
+                || !(event.to instanceof HTMLElement)
+            ) {
+                return;
+            }
+
+            const orderedIds =
+                Array.from(
+                    event.to.querySelectorAll(
+                        "[data-tabs-tab]"
+                    )
+                ).map(
+                    function (button) {
+                        return button.getAttribute(
+                            "data-tabs-tab"
+                        );
+                    }
+                ).filter(
+                    function (tabId) {
+                        return (
+                            typeof tabId === "string"
+                            && tabId !== ""
+                        );
+                    }
+                );
+
+            const tabs =
+                normalizeTabs(
+                    this.config(
+                        "tabs"
+                    )
+                );
+
+            const currentIds =
+                tabs.map(
+                    function (tab) {
+                        return tab.id;
+                    }
+                );
+
+            if (
+                orderedIds.length
+                !== tabs.length
+            ) {
+                this.refresh();
+
+                return;
+            }
+
+            const orderChanged =
+                orderedIds.some(
+                    function (tabId, index) {
+                        return tabId
+                            !== currentIds[index];
+                    }
+                );
+
+            if (!orderChanged) {
+                return;
+            }
+
+            const tabsById =
+                new Map(
+                    tabs.map(
+                        function (tab) {
+                            return [
+                                tab.id,
+                                tab,
+                            ];
+                        }
+                    )
+                );
+
+            const reorderedTabs =
+                orderedIds.map(
+                    function (tabId) {
+                        return tabsById.get(
+                            tabId
+                        );
+                    }
+                );
+
+            if (
+                reorderedTabs.some(
+                    function (tab) {
+                        return tab === undefined;
+                    }
+                )
+            ) {
+                this.refresh();
+
+                return;
+            }
+
+            this.config(
+                "tabs",
+                reorderedTabs
+            );
+
+            const onReorder =
+                this.config(
+                    "onReorder"
+                );
+
+            if (
+                onReorder !== null
+                && typeof onReorder !== "function"
+            ) {
+                throw new TypeError(
+                    "Tabs onReorder must be a function or null."
+                );
+            }
+
+            if (typeof onReorder === "function") {
+                onReorder(
+                    reorderedTabs,
+                    this
+                );
+            }
+
+            this.refresh();
+        }
+
         handleClick(event) {
             if (!(event.target instanceof Element)) {
                 return;
@@ -344,6 +516,37 @@
             this.select(
                 tabId
             );
+        }
+
+        enableSortable() {
+            this.config(
+                "sortableEnabled",
+                true
+            );
+
+            this.refresh();
+
+            return this;
+        }
+
+        disableSortable() {
+            this.config(
+                "sortableEnabled",
+                false
+            );
+
+            this.destroySortable();
+            this.refresh();
+
+            return this;
+        }
+
+        toggleSortable() {
+            return this.config(
+                "sortableEnabled"
+            ) === true
+                ? this.disableSortable()
+                : this.enableSortable();
         }
 
         setPresentation(presentation) {
@@ -697,7 +900,9 @@
         }
 
         beforeDestroy() {
+            this.destroySortable();
             this.destroyActionDropdown();
+            this.destroyPanelActionDropdowns();
 
             const element =
                 this.element();
@@ -837,6 +1042,11 @@
                     "presentation"
                 );
 
+            const sortableEnabled =
+                this.config(
+                    "sortableEnabled"
+                );
+
             if (
                 typeof presentation !== "string"
                 || !PRESENTATIONS.includes(
@@ -851,6 +1061,12 @@
             if (typeof selectedTab !== "string") {
                 throw new TypeError(
                     "Tabs selectedTab must be a string."
+                );
+            }
+
+            if (typeof sortableEnabled !== "boolean") {
+                throw new TypeError(
+                    "Tabs sortableEnabled must be a boolean."
                 );
             }
 
@@ -931,10 +1147,22 @@
             actionsRegion.hidden =
                 actions.length === 0;
 
+            this.destroySortable();
+
             listRegion.replaceChildren();
 
             tabs.forEach(
                 (tab) => {
+                    const item =
+                        document.createElement(
+                            "div"
+                        );
+
+                    const moveHandle =
+                        document.createElement(
+                            "button"
+                        );
+
                     const button =
                         document.createElement(
                             "button"
@@ -953,6 +1181,41 @@
                     const selected =
                         tab.id
                         === resolvedSelectedTab;
+
+                    item.classList.add(
+                        "app-tabs-tab-item"
+                    );
+
+                    item.setAttribute(
+                        "data-tabs-tab-item",
+                        tab.id
+                    );
+
+                    moveHandle.type =
+                        "button";
+
+                    moveHandle.classList.add(
+                        "app-tabs-tab-move-handle"
+                    );
+
+                    moveHandle.setAttribute(
+                        "aria-label",
+                        "Move " + tab.label + " tab"
+                    );
+
+                    moveHandle.setAttribute(
+                        "title",
+                        "Move " + tab.label + " tab"
+                    );
+
+                    renderIcon(
+                        moveHandle,
+                        TABS_ICONS.move
+                    );
+
+                    moveHandle.hidden =
+                        !sortableEnabled
+                        || !this.isSortableAvailable();
 
                     button.type =
                         "button";
@@ -1021,13 +1284,48 @@
                         label
                     );
 
-                    listRegion.append(
+                    item.append(
+                        moveHandle,
                         button
+                    );
+
+                    listRegion.append(
+                        item
                     );
                 }
             );
 
             this.destroyPanelActionDropdowns();
+
+            if (
+                sortableEnabled
+                && this.isSortableAvailable()
+            ) {
+                this.sortable =
+                    global.Sortable.create(
+                        listRegion,
+                        {
+                            draggable:
+                                ".app-tabs-tab-item",
+                            handle:
+                                ".app-tabs-tab-move-handle",
+                            animation:
+                                150,
+                            ghostClass:
+                                "app-tabs-tab-sortable-ghost",
+                            chosenClass:
+                                "app-tabs-tab-sortable-chosen",
+                            onEnd:
+                                this.handleSortEnd,
+                        }
+                    );
+            }
+
+            element.classList.toggle(
+                "is-sortable",
+                sortableEnabled
+                && this.isSortableAvailable()
+            );
 
             panelsRegion.replaceChildren();
 
@@ -1137,10 +1435,16 @@
                     panelActions.hidden =
                         tab.panelActions.length === 0;
 
-                    global.Builder.html(
-                        panelContent,
-                        tab.content
-                    );
+                    if (tab.content instanceof Element) {
+                        panelContent.replaceChildren(
+                            tab.content
+                        );
+                    } else {
+                        global.Builder.html(
+                            panelContent,
+                            tab.content
+                        );
+                    }
 
                     panel.append(
                         panelActions,
@@ -1162,6 +1466,8 @@
                 selectedTab: "",
                 presentation: "tabs",
                 actions: [],
+                sortableEnabled: false,
+                onReorder: null,
             };
         }
     }
