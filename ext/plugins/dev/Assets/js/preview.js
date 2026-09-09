@@ -62,6 +62,34 @@
         ].join(""),
     });
 
+    const STEPPER_PREVIEW_ICONS = Object.freeze({
+        account: [
+            '<svg xmlns="http://www.w3.org/2000/svg"',
+            ' viewBox="0 0 16 16">',
+            '<path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>',
+            "</svg>",
+        ].join(""),
+        install: [
+            '<svg xmlns="http://www.w3.org/2000/svg"',
+            ' viewBox="0 0 16 16">',
+            '<path d="M.5 9.9a.5.5 0 0 1 .5.5V12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1.6a.5.5 0 0 1 1 0V12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-1.6a.5.5 0 0 1 .5-.5"/>',
+            '<path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>',
+            "</svg>",
+        ].join(""),
+        next: [
+            '<svg xmlns="http://www.w3.org/2000/svg"',
+            ' viewBox="0 0 16 16">',
+            '<path fill-rule="evenodd" d="M6.646 3.646a.5.5 0 0 1 .708 0l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L10.293 8 6.646 4.354a.5.5 0 0 1 0-.708"/>',
+            "</svg>",
+        ].join(""),
+        previous: [
+            '<svg xmlns="http://www.w3.org/2000/svg"',
+            ' viewBox="0 0 16 16">',
+            '<path fill-rule="evenodd" d="M9.354 3.646a.5.5 0 0 0-.708 0l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L5.707 8l3.647-3.646a.5.5 0 0 0 0-.708"/>',
+            "</svg>",
+        ].join(""),
+    });
+
     const ALERT_PREVIEW_ICONS = Object.freeze({
         info: [
             '<svg xmlns="http://www.w3.org/2000/svg"',
@@ -71,10 +99,80 @@
         ].join(""),
     });
 
+    function createGroup(
+        mount,
+        id,
+        title,
+        description
+    ) {
+        const group =
+            document.createElement(
+                "section"
+            );
+
+        const heading =
+            document.createElement(
+                "h2"
+            );
+
+        const text =
+            document.createElement(
+                "p"
+            );
+
+        const content =
+            document.createElement(
+                "div"
+            );
+
+        group.classList.add(
+            "dev-theme-preview-group"
+        );
+
+        group.id =
+            "dev-preview-group-"
+            + id;
+
+        heading.classList.add(
+            "dev-theme-preview-group-title"
+        );
+
+        text.classList.add(
+            "dev-theme-preview-group-description"
+        );
+
+        content.classList.add(
+            "dev-theme-preview-group-content"
+        );
+
+        global.Builder.text(
+            heading,
+            title
+        );
+
+        global.Builder.text(
+            text,
+            description
+        );
+
+        group.append(
+            heading,
+            text,
+            content
+        );
+
+        mount.append(
+            group
+        );
+
+        return content;
+    }
+
     function createSection(
         mount,
         title,
-        description
+        description,
+        metadataVisible = true
     ) {
         const section =
             document.createElement(
@@ -110,6 +208,19 @@
             "dev-theme-preview-section"
         );
 
+        section.id =
+            "dev-preview-"
+            + title
+                .toLowerCase()
+                .replace(
+                    /[^a-z0-9]+/g,
+                    "-"
+                )
+                .replace(
+                    /^-|-$/g,
+                    ""
+                );
+
         headingRow.classList.add(
             "dev-theme-preview-section-heading"
         );
@@ -140,6 +251,12 @@
             description
         );
 
+        heading.hidden =
+            metadataVisible !== true;
+
+        text.hidden =
+            metadataVisible !== true;
+
         headingRow.append(
             heading,
             controls
@@ -156,6 +273,52 @@
         );
 
         return examples;
+    }
+
+    function appendSourceExample(
+        examples,
+        title,
+        filename,
+        language,
+        source
+    ) {
+        if (
+            !(examples instanceof Element)
+            || !global.Builder.has(
+                "code-block"
+            )
+        ) {
+            return null;
+        }
+
+        const codeBlock =
+            global.Builder.create(
+                "code-block",
+                {
+                    title:
+                        title,
+                    filename:
+                        filename,
+                    language:
+                        language,
+                    code:
+                        source,
+                    lineNumbers:
+                        true,
+                    wrap:
+                        true,
+                    copyControlVisible:
+                        true,
+                    syntaxHighlighting:
+                        true,
+                }
+            );
+
+        codeBlock.appendTo(
+            examples
+        );
+
+        return codeBlock;
     }
 
     function createToggleControl(
@@ -201,7 +364,8 @@
                         enabled
                             ? "primary"
                             : "secondary",
-                    size: "small",
+                    size:
+                        "small",
                 }
             );
 
@@ -250,6 +414,672 @@
         return button;
     }
 
+    async function fetchDevSource(
+        descriptor
+    ) {
+        if (
+            descriptor === null
+            || typeof descriptor !== "object"
+            || Array.isArray(descriptor)
+            || typeof descriptor.file !== "string"
+            || descriptor.file === ""
+        ) {
+            throw new TypeError(
+                "Developer source descriptor is invalid."
+            );
+        }
+
+        const params =
+            new URLSearchParams();
+
+        params.set(
+            "file",
+            descriptor.file
+        );
+
+        if (
+            typeof descriptor.startMarker === "string"
+            && descriptor.startMarker !== ""
+            && typeof descriptor.endMarker === "string"
+            && descriptor.endMarker !== ""
+        ) {
+            params.set(
+                "startMarker",
+                descriptor.startMarker
+            );
+
+            params.set(
+                "endMarker",
+                descriptor.endMarker
+            );
+        }
+
+        if (
+            Number.isInteger(
+                descriptor.startLine
+            )
+            && Number.isInteger(
+                descriptor.endLine
+            )
+        ) {
+            params.set(
+                "startLine",
+                String(
+                    descriptor.startLine
+                )
+            );
+
+            params.set(
+                "endLine",
+                String(
+                    descriptor.endLine
+                )
+            );
+        }
+
+        const response =
+            await fetch(
+                "/admin/dev/source?"
+                + params.toString(),
+                {
+                    headers: {
+                        "X-Requested-With":
+                            "XMLHttpRequest",
+                    },
+                }
+            );
+
+        const payload =
+            await response.json();
+
+        if (
+            !response.ok
+            || payload === null
+            || typeof payload !== "object"
+            || payload.success !== true
+            || typeof payload.source !== "string"
+        ) {
+            throw new Error(
+                payload !== null
+                && typeof payload === "object"
+                && typeof payload.message === "string"
+                && payload.message !== ""
+                    ? payload.message
+                    : "Developer source could not be loaded."
+            );
+        }
+
+        return payload.source;
+    }
+
+    function formatHtmlSource(
+        element
+    ) {
+        if (!(element instanceof Element)) {
+            throw new TypeError(
+                "HTML source formatting requires an Element."
+            );
+        }
+
+        const voidElements =
+            new Set([
+                "area",
+                "base",
+                "br",
+                "col",
+                "embed",
+                "hr",
+                "img",
+                "input",
+                "link",
+                "meta",
+                "param",
+                "source",
+                "track",
+                "wbr",
+            ]);
+
+        const whitespaceSensitiveElements =
+            new Set([
+                "pre",
+                "code",
+                "textarea",
+            ]);
+
+        const indentation =
+            function (level) {
+                return "    ".repeat(
+                    level
+                );
+            };
+
+        const escapeText =
+            function (value) {
+                return value
+                    .replace(
+                        /&/g,
+                        "&amp;"
+                    )
+                    .replace(
+                        /</g,
+                        "&lt;"
+                    )
+                    .replace(
+                        />/g,
+                        "&gt;"
+                    );
+            };
+
+        const serializeNode =
+            function (
+                node,
+                level
+            ) {
+                if (
+                    node.nodeType
+                    === Node.TEXT_NODE
+                ) {
+                    const value =
+                        node.textContent
+                        ?? "";
+
+                    const normalized =
+                        value
+                            .replace(
+                                /\s+/g,
+                                " "
+                            )
+                            .trim();
+
+                    if (normalized === "") {
+                        return [];
+                    }
+
+                    return [
+                        indentation(level)
+                        + escapeText(
+                            normalized
+                        ),
+                    ];
+                }
+
+                if (
+                    node.nodeType
+                    === Node.COMMENT_NODE
+                ) {
+                    return [
+                        indentation(level)
+                        + "<!--"
+                        + node.data
+                        + "-->",
+                    ];
+                }
+
+                if (!(node instanceof Element)) {
+                    return [];
+                }
+
+                const tagName =
+                    node.localName
+                        .toLowerCase();
+
+                const shallowClone =
+                    node.cloneNode(
+                        false
+                    );
+
+                const serializedOpening =
+                    shallowClone.outerHTML;
+
+                const closingBracket =
+                    serializedOpening.indexOf(
+                        ">"
+                    );
+
+                const openingTag =
+                    serializedOpening.slice(
+                        0,
+                        closingBracket + 1
+                    );
+
+                if (
+                    voidElements.has(
+                        tagName
+                    )
+                ) {
+                    return [
+                        indentation(level)
+                        + openingTag,
+                    ];
+                }
+
+                if (
+                    whitespaceSensitiveElements.has(
+                        tagName
+                    )
+                ) {
+                    return [
+                        indentation(level)
+                        + openingTag
+                        + node.innerHTML
+                        + "</"
+                        + tagName
+                        + ">",
+                    ];
+                }
+
+                const childNodes =
+                    Array.from(
+                        node.childNodes
+                    );
+
+                if (childNodes.length === 0) {
+                    return [
+                        indentation(level)
+                        + openingTag
+                        + "</"
+                        + tagName
+                        + ">",
+                    ];
+                }
+
+                if (
+                    childNodes.length === 1
+                    && childNodes[0].nodeType
+                        === Node.TEXT_NODE
+                ) {
+                    const text =
+                        (
+                            childNodes[0]
+                                .textContent
+                            ?? ""
+                        )
+                            .replace(
+                                /\s+/g,
+                                " "
+                            )
+                            .trim();
+
+                    return [
+                        indentation(level)
+                        + openingTag
+                        + escapeText(
+                            text
+                        )
+                        + "</"
+                        + tagName
+                        + ">",
+                    ];
+                }
+
+                const lines = [
+                    indentation(level)
+                    + openingTag,
+                ];
+
+                childNodes.forEach(
+                    function (childNode) {
+                        lines.push(
+                            ...serializeNode(
+                                childNode,
+                                level + 1
+                            )
+                        );
+                    }
+                );
+
+                lines.push(
+                    indentation(level)
+                    + "</"
+                    + tagName
+                    + ">"
+                );
+
+                return lines;
+            };
+
+        const lines = [];
+
+        Array.from(
+            element.childNodes
+        ).forEach(
+            function (node) {
+                lines.push(
+                    ...serializeNode(
+                        node,
+                        0
+                    )
+                );
+            }
+        );
+
+        return lines.join(
+            "\n"
+        );
+    }
+
+    async function resolveSourceContent(
+        source
+    ) {
+        if (source instanceof Element) {
+            return formatHtmlSource(
+                source
+            );
+        }
+
+        if (typeof source === "string") {
+            return source;
+        }
+
+        if (
+            source !== null
+            && typeof source === "object"
+            && !Array.isArray(source)
+        ) {
+            return fetchDevSource(
+                source
+            );
+        }
+
+        throw new TypeError(
+            "Developer source content is invalid."
+        );
+    }
+
+    function createSourceModal(
+        title,
+        sources
+    ) {
+        if (
+            !global.Builder.has("modal")
+            || !global.Builder.has("tabs")
+            || !global.Builder.has("code-block")
+        ) {
+            return null;
+        }
+
+        if (
+            sources === null
+            || typeof sources !== "object"
+            || Array.isArray(sources)
+        ) {
+            throw new TypeError(
+                "Source modal sources must be an object."
+            );
+        }
+
+        const createSourceBlock =
+            function (
+                filename,
+                language
+            ) {
+                return global.Builder.create(
+                    "code-block",
+                    {
+                        filename:
+                            filename,
+                        language:
+                            language,
+                        code:
+                            "",
+                    }
+                );
+            };
+
+        const htmlBlock =
+            createSourceBlock(
+                sources.html.filename,
+                "html"
+            );
+
+        const javascriptBlock =
+            createSourceBlock(
+                sources.javascript.filename,
+                "javascript"
+            );
+
+        const cssBlock =
+            createSourceBlock(
+                sources.css.filename,
+                "css"
+            );
+
+        const tabs =
+            global.Builder.create(
+                "tabs",
+                {
+                    tabs: [
+                        {
+                            id:
+                                "html",
+                            label:
+                                "HTML",
+                            content:
+                                htmlBlock.element(),
+                        },
+                        {
+                            id:
+                                "javascript",
+                            label:
+                                "JavaScript",
+                            content:
+                                javascriptBlock.element(),
+                        },
+                        {
+                            id:
+                                "css",
+                            label:
+                                "CSS",
+                            content:
+                                cssBlock.element(),
+                        },
+                    ],
+                    selectedTab:
+                        "html",
+                }
+            );
+
+        const modal =
+            global.Builder.create(
+                "modal",
+                {
+                    title:
+                        title,
+                    body:
+                        tabs.element(),
+                    size:
+                        "xlarge",
+                    closeControlVisible:
+                        true,
+                    fullscreenControlVisible:
+                        true,
+                    closeOnEscape:
+                        true,
+                    closeOnBackdrop:
+                        true,
+                }
+            );
+
+        modal.appendTo(
+            document.body
+        );
+
+        const modalElement =
+            modal.element();
+
+        if (modalElement instanceof HTMLElement) {
+            modalElement.classList.add(
+                "dev-source-modal"
+            );
+        }
+
+        return {
+            open:
+                async function () {
+                    const resolvedSources =
+                        await Promise.all([
+                            resolveSourceContent(
+                                sources.html.source
+                            ),
+                            resolveSourceContent(
+                                sources.javascript.source
+                            ),
+                            resolveSourceContent(
+                                sources.css.source
+                            ),
+                        ]);
+
+                    htmlBlock.config(
+                        "code",
+                        resolvedSources[0]
+                    );
+
+                    htmlBlock.refresh();
+
+                    javascriptBlock.config(
+                        "code",
+                        resolvedSources[1]
+                    );
+
+                    javascriptBlock.refresh();
+
+                    cssBlock.config(
+                        "code",
+                        resolvedSources[2]
+                    );
+
+                    cssBlock.refresh();
+
+                    modal.open();
+                },
+        };
+    }
+
+    function createPreviewCard(
+        mount,
+        title,
+        subtitle,
+        content,
+        sourceModal,
+        footerStart = null
+    ) {
+        if (!(mount instanceof Element)) {
+            throw new TypeError(
+                "Preview Card mount must be an Element."
+            );
+        }
+
+        if (typeof title !== "string") {
+            throw new TypeError(
+                "Preview Card title must be a string."
+            );
+        }
+
+        if (typeof subtitle !== "string") {
+            throw new TypeError(
+                "Preview Card subtitle must be a string."
+            );
+        }
+
+        if (!(content instanceof Element)) {
+            throw new TypeError(
+                "Preview Card content must be an Element."
+            );
+        }
+
+        if (
+            !global.Builder.has("card")
+            || !global.Builder.has("button")
+        ) {
+            return null;
+        }
+
+        const sourceButton =
+            global.Builder.create(
+                "button",
+                {
+                    label:
+                        "",
+                    icon:
+                        [
+                            '<svg xmlns="http://www.w3.org/2000/svg"',
+                            ' viewBox="0 0 16 16">',
+                            '<path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0m6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0"/>',
+                            "</svg>",
+                        ].join(""),
+                    title:
+                        "View Source",
+                    variant:
+                        "secondary",
+                    size:
+                        "small",
+                    callback:
+                        function () {
+                            if (
+                                sourceModal !== null
+                                && typeof sourceModal.open
+                                    === "function"
+                            ) {
+                                sourceModal.open();
+                            }
+                        },
+                }
+            );
+
+        const footer =
+            document.createElement(
+                "div"
+            );
+
+        const footerEnd =
+            document.createElement(
+                "div"
+            );
+
+        footer.classList.add(
+            "dev-theme-preview-card-footer"
+        );
+
+        footerEnd.classList.add(
+            "dev-theme-preview-card-footer-end"
+        );
+
+        if (footerStart instanceof Element) {
+            footer.append(
+                footerStart
+            );
+        }
+
+        footerEnd.append(
+            sourceButton.element()
+        );
+
+        footer.append(
+            footerEnd
+        );
+
+        const card =
+            global.Builder.create(
+                "card",
+                {
+                    title:
+                        title,
+                    subtitle:
+                        subtitle,
+                    content:
+                        content,
+                    footer:
+                        footer,
+                }
+            );
+
+        card.appendTo(
+            mount
+        );
+
+        return card;
+    }
+
     function initializeThemePreview() {
         const mount =
             document.getElementById(
@@ -260,15 +1090,251 @@
             return;
         }
 
+        const componentsGroup =
+            createGroup(
+                mount,
+                "components",
+                "Components",
+                "Reusable Builder components and their supported states and controls."
+            );
+
+        const widgetsGroup =
+            createGroup(
+                mount,
+                "widgets",
+                "Widgets",
+                "Larger composed and application-style interface examples built from reusable components."
+            );
+
+        const contentGroup =
+            createGroup(
+                mount,
+                "content",
+                "Typography / Basic Content",
+                "Baseline rendered HTML including typography, links, lists, code, quotations, tables, and related content."
+            );
+
+        const utilitiesGroup =
+            createGroup(
+                mount,
+                "utilities",
+                "CSS Utilities",
+                "Reusable framework utility classes for layout, spacing, alignment, sizing, visibility, and related presentation."
+            );
+
+        const bootstrapProbe =
+            document.createElement(
+                "div"
+            );
+
+        bootstrapProbe.classList.add(
+            "d-none"
+        );
+
+        document.body.append(
+            bootstrapProbe
+        );
+
+        const bootstrapAvailable =
+            global.getComputedStyle(
+                bootstrapProbe
+            ).display === "none";
+
+        bootstrapProbe.remove();
+
+        if (bootstrapAvailable) {
+            const bootstrapUtilitiesExamples =
+                createSection(
+                    utilitiesGroup,
+                    "Bootstrap Utilities",
+                    "Optional Bootstrap utility classes available when the Bootstrap plugin is enabled."
+                );
+
+            const bootstrapUtilitiesContent =
+                document.createElement(
+                    "div"
+                );
+
+            bootstrapUtilitiesContent.classList.add(
+                "dev-utilities-preview"
+            );
+
+            bootstrapUtilitiesContent.innerHTML = [
+                "<div class=\"dev-utility-example\">",
+                "<strong>Spacing</strong>",
+                "<div class=\"dev-bootstrap-utility-box p-3\">.p-3</div>",
+                "</div>",
+                "<div class=\"dev-utility-example\">",
+                "<strong>Flexbox and gap</strong>",
+                "<div class=\"d-flex gap-2\">",
+                "<span class=\"dev-bootstrap-utility-box\">Item One</span>",
+                "<span class=\"dev-bootstrap-utility-box\">Item Two</span>",
+                "<span class=\"dev-bootstrap-utility-box\">Item Three</span>",
+                "</div>",
+                "</div>",
+                "<div class=\"dev-utility-example\">",
+                "<strong>Alignment</strong>",
+                "<div class=\"d-flex justify-content-between align-items-center\">",
+                "<span class=\"dev-bootstrap-utility-box\">Start</span>",
+                "<span class=\"dev-bootstrap-utility-box\">End</span>",
+                "</div>",
+                "</div>",
+                "<div class=\"dev-utility-example\">",
+                "<strong>Sizing</strong>",
+                "<div class=\"dev-bootstrap-utility-box w-50\">.w-50</div>",
+                "</div>",
+                "<div class=\"dev-utility-example\">",
+                "<strong>Visibility</strong>",
+                "<div class=\"dev-bootstrap-utility-box invisible\">Invisible content</div>",
+                "<span>Space remains above because .invisible preserves layout.</span>",
+                "</div>"
+            ].join("");
+
+            bootstrapUtilitiesExamples.append(
+                bootstrapUtilitiesContent
+            );
+        }
+
+        const coreUtilitiesExamples =
+            createSection(
+                utilitiesGroup,
+                "Core-Web Utilities",
+                "Utility classes provided directly by the Core-Web kernel."
+            );
+
+        const coreUtilitiesContent =
+            document.createElement(
+                "div"
+            );
+
+        coreUtilitiesContent.classList.add(
+            "dev-utilities-preview"
+        );
+
+        coreUtilitiesContent.innerHTML = [
+            "<div class=\"dev-utility-example\">",
+            "<strong>.text-app-muted</strong>",
+            "<p class=\"text-app-muted\">Muted secondary text using the Core-Web utility class.</p>",
+            "</div>",
+            "<div class=\"dev-utility-example\">",
+            "<strong>.visually-hidden</strong>",
+            "<p>The text inside the bordered example below is present in the DOM but visually hidden.</p>",
+            "<div class=\"dev-visually-hidden-example\">",
+            "<span class=\"visually-hidden\">This text is visually hidden.</span>",
+            "<span aria-hidden=\"true\">Visible reference area</span>",
+            "</div>",
+            "</div>"
+        ].join("");
+
+        coreUtilitiesExamples.append(
+            coreUtilitiesContent
+        );
+
+        const typographyExamples =
+            createSection(
+                contentGroup,
+                "Typography",
+                "Baseline heading, paragraph, emphasis, link, and muted-text presentation."
+            );
+
+        const typographyContent =
+            document.createElement(
+                "div"
+            );
+
+        typographyContent.classList.add(
+            "dev-basic-content-preview"
+        );
+
+        typographyContent.innerHTML = [
+            "<h1>Heading 1</h1>",
+            "<h2>Heading 2</h2>",
+            "<h3>Heading 3</h3>",
+            "<h4>Heading 4</h4>",
+            "<h5>Heading 5</h5>",
+            "<h6>Heading 6</h6>",
+            "<p>This is a standard paragraph used to validate baseline body typography and spacing.</p>",
+            "<p><strong>Strong text</strong>, <em>emphasized text</em>, <small>small text</small>, and <a href=\"#dev-preview-typography\">an example link</a>.</p>",
+            "<p class=\"text-app-muted\">This paragraph uses the Core-Web text-app-muted utility.</p>"
+        ].join("");
+
+        typographyExamples.append(
+            typographyContent
+        );
+
+        const basicContentExamples =
+            createSection(
+                contentGroup,
+                "Basic Content",
+                "Lists, quotations, inline code, preformatted content, horizontal rules, and native tables."
+            );
+
+        const basicContent =
+            document.createElement(
+                "div"
+            );
+
+        basicContent.classList.add(
+            "dev-basic-content-preview"
+        );
+
+        basicContent.innerHTML = [
+            "<h3>Unordered list</h3>",
+            "<ul>",
+            "<li>First list item</li>",
+            "<li>Second list item</li>",
+            "<li>Third list item</li>",
+            "</ul>",
+            "<h3>Ordered list</h3>",
+            "<ol>",
+            "<li>First ordered item</li>",
+            "<li>Second ordered item</li>",
+            "<li>Third ordered item</li>",
+            "</ol>",
+            "<h3>Blockquote</h3>",
+            "<blockquote><p>This is an example quotation used to validate default content presentation.</p></blockquote>",
+            "<h3>Inline code</h3>",
+            "<p>Use <code>Builder.create()</code> to create a registered Builder component.</p>",
+            "<h3>Preformatted content</h3>",
+            "<pre><code>const example = true;\\nconsole.log(example);</code></pre>",
+            "<hr>",
+            "<h3>Native table</h3>",
+            "<table>",
+            "<thead><tr><th>Column One</th><th>Column Two</th></tr></thead>",
+            "<tbody>",
+            "<tr><td>Alpha</td><td>Enabled</td></tr>",
+            "<tr><td>Bravo</td><td>Disabled</td></tr>",
+            "</tbody>",
+            "</table>"
+        ].join("");
+
+        basicContentExamples.append(
+            basicContent
+        );
 
         const alertExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Alert",
-                "Inline alerts with semantic colors, optional title, icon, content, and dismiss behavior."
+                "Inline alerts with semantic colors, optional title, icon, content, and dismiss behavior.",
+                false
             );
 
-        if (global.Builder.has("alert")) {
+        if (
+            global.Builder.has("alert")
+            && global.Builder.has("card")
+            && global.Builder.has("button")
+        ) {
+            const alertPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            alertPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            // DEV SOURCE: Alert START
             [
                 "primary",
                 "secondary",
@@ -303,21 +1369,75 @@
                             color === "info"
                                 ? ALERT_PREVIEW_ICONS.info
                                 : "",
-                    }
-                ).appendTo(
-                    alertExamples
-                );
+                }
+            ).appendTo(
+                alertPreviewContent
+            );
             });
+
+            // DEV SOURCE: Alert END
+
+            const alertSourceModal =
+                createSourceModal(
+                    "Alert Source",
+                    {
+                        html: {
+                            filename:
+                                "alert.html",
+                            source:
+                                alertPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Alert START",
+                                endMarker:
+                                    "// DEV SOURCE: Alert END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "alert.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/alert.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                alertExamples,
+                "Alert",
+                "Inline alerts with semantic colors, optional title, icon, content, and dismiss behavior.",
+                alertPreviewContent,
+                alertSourceModal
+            );
         }
 
         const toastExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Toast",
-                "Transient notification with semantic color, optional icon, dismiss control, and automatic dismissal."
+                "Transient notification with semantic color, optional icon, dismiss control, and automatic dismissal.",
+                false
             );
 
         if (global.Builder.has("toast")) {
+            const toastPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            toastPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            // DEV SOURCE: Toast START
             global.Builder.create(
                 "toast",
                 {
@@ -335,7 +1455,7 @@
                         true,
                 }
             ).appendTo(
-                toastExamples
+                toastPreviewContent
             );
 
             global.Builder.create(
@@ -355,21 +1475,84 @@
                         15000,
                 }
             ).appendTo(
-                toastExamples
+                toastPreviewContent
+            );
+
+            // DEV SOURCE: Toast END
+
+        const toastSourceModal =
+            createSourceModal(
+                "Toast Source",
+                {
+                    html: {
+                        filename:
+                            "toast.html",
+                        source:
+                            toastPreviewContent,
+                    },
+                    javascript: {
+                        filename:
+                            "preview.js",
+                        source: {
+                            file:
+                                "dev:Assets/js/preview.js",
+                            startMarker:
+                                "// DEV SOURCE: Toast START",
+                            endMarker:
+                                "// DEV SOURCE: Toast END",
+                        },
+                    },
+                    css: {
+                        filename:
+                            "toast.less",
+                        source: {
+                            file:
+                                "kernel:Assets/less/components/toast.less",
+                        },
+                    },
+                }
+            );
+
+            createPreviewCard(
+                toastExamples,
+                "Toast",
+                "Transient notification with semantic color, optional icon, dismiss control, and automatic dismissal.",
+                toastPreviewContent,
+                toastSourceModal
             );
         }
 
         const toastAreaExamples =
             createSection(
-                mount,
+                widgetsGroup,
                 "Toast Area",
-                "Viewport-positioned Toast collection with configurable placement, stacking, and collection controls."
+                "Viewport-positioned Toast collection with configurable placement, stacking, and collection controls.",
+                false
             );
 
         if (
             global.Builder.has("toast-area")
             && global.Builder.has("button")
         ) {
+            const toastAreaPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            toastAreaPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            const toastAreaPreviewControls =
+                document.createElement(
+                    "div"
+                );
+
+            toastAreaPreviewControls.classList.add(
+                "dev-theme-preview-card-controls"
+            );
+
+            // DEV SOURCE: Toast Area START
             const toastArea =
                 global.Builder.create(
                     "toast-area",
@@ -420,13 +1603,13 @@
                                 position === "bottom-right"
                                     ? "primary"
                                     : "secondary",
-                            size:
-                                "small",
-                            callback:
-                                function () {
-                                    toastArea.setPosition(
-                                        position
-                                    );
+                        size:
+                            "small",
+                        callback:
+                            function () {
+                                toastArea.setPosition(
+                                    position
+                                );
 
                                     toastAreaViewport
                                         .querySelectorAll(
@@ -481,7 +1664,7 @@
                 );
             });
 
-            toastAreaExamples.append(
+            toastAreaPreviewContent.append(
                 toastAreaViewport
             );
 
@@ -513,7 +1696,7 @@
                         },
                 }
             ).appendTo(
-                toastAreaExamples
+                toastAreaPreviewControls
             );
 
             global.Builder.create(
@@ -531,24 +1714,79 @@
                         },
                 }
             ).appendTo(
-                toastAreaExamples
+                toastAreaPreviewControls
             );
 
             global.devToastArea =
                 toastArea;
+
+            // DEV SOURCE: Toast Area END
+
+            const toastAreaSourceModal =
+                createSourceModal(
+                    "Toast Area Source",
+                    {
+                        html: {
+                            filename:
+                                "toast-area.html",
+                            source:
+                                toastAreaPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Toast Area START",
+                                endMarker:
+                                    "// DEV SOURCE: Toast Area END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "toast-area.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/toast-area.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                toastAreaExamples,
+                "Toast Area",
+                "Viewport-positioned Toast collection with configurable placement, stacking, and collection controls.",
+                toastAreaPreviewContent,
+                toastAreaSourceModal,
+                toastAreaPreviewControls
+            );
         }
 
         const modalExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Modal",
-                "Dialog component with semantic colors, configurable sizes, fullscreen, close, overflow actions, backdrop closing, and keyboard accessibility."
+                "Dialog component with semantic colors, configurable sizes, fullscreen, close, overflow actions, backdrop closing, and keyboard accessibility.",
+                false
             );
 
         if (
             global.Builder.has("modal")
             && global.Builder.has("button")
         ) {
+            const modalPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            modalPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            // DEV SOURCE: Modal START
             [
                 {
                     size:
@@ -687,22 +1925,76 @@
                             },
                     }
                 ).appendTo(
-                    modalExamples
+                    modalPreviewContent
                 );
             });
+
+            // DEV SOURCE: Modal END
+
+            const modalSourceModal =
+                createSourceModal(
+                    "Modal Source",
+                    {
+                        html: {
+                            filename:
+                                "modal.html",
+                            source:
+                                modalPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Modal START",
+                                endMarker:
+                                    "// DEV SOURCE: Modal END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "modal.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/modal.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                modalExamples,
+                "Modal",
+                "Dialog component with semantic colors, configurable sizes, fullscreen, close, overflow actions, backdrop closing, and keyboard accessibility.",
+                modalPreviewContent,
+                modalSourceModal
+            );
         }
 
         const offcanvasExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Offcanvas",
-                "Sliding overlay panel with configurable placement, size, semantic color, backdrop, close control, and keyboard accessibility."
+                "Sliding overlay panel with configurable placement, size, semantic color, backdrop, close control, and keyboard accessibility.",
+                false
             );
 
         if (
             global.Builder.has("offcanvas")
             && global.Builder.has("button")
         ) {
+            const offcanvasPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            offcanvasPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            // DEV SOURCE: Offcanvas START
             [
                 {
                     placement:
@@ -818,20 +2110,1391 @@
                             },
                     }
                 ).appendTo(
-                    offcanvasExamples
+                    offcanvasPreviewContent
                 );
             });
+
+            // DEV SOURCE: Offcanvas END
+
+            const offcanvasSourceModal =
+                createSourceModal(
+                    "Offcanvas Source",
+                    {
+                        html: {
+                            filename:
+                                "offcanvas.html",
+                            source:
+                                offcanvasPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Offcanvas START",
+                                endMarker:
+                                    "// DEV SOURCE: Offcanvas END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "offcanvas.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/offcanvas.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                offcanvasExamples,
+                "Offcanvas",
+                "Sliding overlay panel with configurable placement, size, semantic color, backdrop, close control, and keyboard accessibility.",
+                offcanvasPreviewContent,
+                offcanvasSourceModal
+            );
         }
 
+        const codeBlockExamples =
+            createSection(
+                componentsGroup,
+                "Code Block",
+                "Card-style source code presentation with filename metadata, copy control, line numbers, wrapping, overflow actions, and optional syntax highlighting.",
+                false
+            );
+
+        const calloutExamples =
+            createSection(
+                componentsGroup,
+                "Callout",
+                "Inline contextual emphasis with semantic colors, optional icon, overflow actions, and sortable move handles.",
+                false
+            );
+
+        if (global.Builder.has("callout")) {
+            const calloutPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            calloutPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            const calloutPreviewControls =
+                document.createElement(
+                    "div"
+                );
+
+            calloutPreviewControls.classList.add(
+                "dev-theme-preview-card-controls"
+            );
+
+            // DEV SOURCE: Callout START
+            const calloutOne =
+                global.Builder.create(
+                    "callout",
+                    {
+                        title:
+                            "Information",
+                        content:
+                            "<p>This Callout demonstrates the primary semantic presentation and optional icon.</p>",
+                        icon:
+                            ALERT_PREVIEW_ICONS.info,
+                        color:
+                            "primary",
+                        controlMenuEnabled:
+                            true,
+                        controlMenuItems: [
+                            {
+                                label:
+                                    "Inspect",
+                                callback:
+                                    function () {},
+                            },
+                            {
+                                label:
+                                    "Dismiss",
+                                callback:
+                                    function () {},
+                            },
+                        ],
+                    }
+                );
+
+            const calloutTwo =
+                global.Builder.create(
+                    "callout",
+                    {
+                        title:
+                            "Success",
+                        content:
+                            "<p>This Callout uses the success semantic color.</p>",
+                        color:
+                            "success",
+                    }
+                );
+
+            const calloutThree =
+                global.Builder.create(
+                    "callout",
+                    {
+                        title:
+                            "Warning",
+                        content:
+                            "<p>This Callout uses the warning semantic color.</p>",
+                        color:
+                            "warning",
+                    }
+                );
+
+            const calloutFour =
+                global.Builder.create(
+                    "callout",
+                    {
+                        title:
+                            "Danger",
+                        content:
+                            "<p>This Callout uses the danger semantic color.</p>",
+                        color:
+                            "danger",
+                    }
+                );
+
+            calloutOne.appendTo(
+                calloutPreviewContent
+            );
+
+            calloutTwo.appendTo(
+                calloutPreviewContent
+            );
+
+            calloutThree.appendTo(
+                calloutPreviewContent
+            );
+
+            calloutFour.appendTo(
+                calloutPreviewContent
+            );
+
+            if (
+                typeof global.Sortable === "function"
+                || (
+                    global.Sortable !== null
+                    && typeof global.Sortable === "object"
+                    && typeof global.Sortable.create === "function"
+                )
+            ) {
+                let calloutSortable =
+                    null;
+
+                const calloutSortableToggle =
+                    createToggleControl(
+                        calloutExamples,
+                        "Sortable",
+                        false,
+                        function (enabled) {
+                            if (
+                                calloutSortable !== null
+                                && typeof calloutSortable.destroy
+                                    === "function"
+                            ) {
+                                calloutSortable.destroy();
+
+                                calloutSortable =
+                                    null;
+                            }
+
+                            if (!enabled) {
+                                calloutOne.hideMoveHandle();
+                                calloutTwo.hideMoveHandle();
+                                calloutThree.hideMoveHandle();
+                                calloutFour.hideMoveHandle();
+
+                                return;
+                            }
+
+                            calloutOne.showMoveHandle();
+                            calloutTwo.showMoveHandle();
+                            calloutThree.showMoveHandle();
+                            calloutFour.showMoveHandle();
+
+                            calloutSortable =
+                                global.Sortable.create(
+                                    calloutPreviewContent,
+                                    {
+                                        draggable:
+                                            ".app-callout",
+                                        handle:
+                                            ".app-callout-move-handle",
+                                        animation:
+                                            150,
+                                    }
+                                );
+                        }
+                    );
+
+                if (
+                    calloutSortableToggle !== null
+                    && typeof calloutSortableToggle.element
+                        === "function"
+                ) {
+                    calloutPreviewControls.append(
+                        calloutSortableToggle.element()
+                    );
+                }
+            }
+
+            // DEV SOURCE: Callout END
+
+            const calloutSourceModal =
+                createSourceModal(
+                    "Callout Source",
+                    {
+                        html: {
+                            filename:
+                                "callout.html",
+                            source:
+                                calloutPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Callout START",
+                                endMarker:
+                                    "// DEV SOURCE: Callout END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "callout.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/callout.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                calloutExamples,
+                "Callout",
+                "Inline contextual emphasis with semantic colors, optional icon, overflow actions, and sortable move handles.",
+                calloutPreviewContent,
+                calloutSourceModal,
+                calloutPreviewControls
+            );
+        }
+
+        if (global.Builder.has("code-block")) {
+            const codeBlockPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            codeBlockPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            // DEV SOURCE: Code Block START
+            global.Builder.create(
+                "code-block",
+                {
+                    title:
+                        "JavaScript Example",
+                    filename:
+                        "example.js",
+                    language:
+                        "javascript",
+                    code:
+                        [
+                            "function greet(name) {",
+                            '    return "Hello, " + name + "!";',
+                            "}",
+                            "",
+                            'console.log(greet("Core-Web"));',
+                        ].join("\n"),
+                    copyControlVisible:
+                        true,
+                    controlMenuEnabled:
+                        true,
+                    controlMenuItems: [
+                        {
+                            label:
+                                "Open file",
+                            callback:
+                                function () {},
+                        },
+                        {
+                            label:
+                                "Download",
+                            callback:
+                                function () {},
+                        },
+                    ],
+                }
+            ).appendTo(
+                codeBlockPreviewContent
+            );
+
+            global.Builder.create(
+                "code-block",
+                {
+                    title:
+                        "Wrapped Code with Line Numbers",
+                    filename:
+                        "configuration.php",
+                    language:
+                        "php",
+                    code:
+                        [
+                            "<?php",
+                            "",
+                            "$configuration = [",
+                            '    "description" => "This intentionally long line demonstrates how the Code Block component wraps source code while preserving readable line numbering and formatting across the available container width.",',
+                            '    "enabled" => true,',
+                            '    "environment" => "development",',
+                            "];",
+                            "",
+                            "return $configuration;",
+                            "// End of configuration.",
+                        ].join("\n"),
+                    lineNumbers:
+                        true,
+                    highlightedLines: [
+                        3,
+                        4,
+                        5,
+                        6,
+                    ],
+                    wrap:
+                        true,
+                    copyControlVisible:
+                        true,
+                }
+            ).appendTo(
+                codeBlockPreviewContent
+            );
+
+            global.Builder.create(
+                "code-block",
+                {
+                    title:
+                        "Python Example",
+                    filename:
+                        "example.py",
+                    language:
+                        "python",
+                    code:
+                        [
+                            "def greet(name):",
+                            '    message = f"Hello, {name}!"',
+                            "    return message",
+                            "",
+                            'for name in ["Alex", "Jamie", "Taylor"]:',
+                            "    print(greet(name))",
+                        ].join("\n"),
+                    lineNumbers:
+                        true,
+                    copyControlVisible:
+                        true,
+                }
+            ).appendTo(
+                codeBlockPreviewContent
+            );
+
+            // DEV SOURCE: Code Block END
+
+            const codeBlockSourceModal =
+                createSourceModal(
+                    "Code Block Source",
+                    {
+                        html: {
+                            filename:
+                                "code-block.html",
+                            source:
+                                codeBlockPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Code Block START",
+                                endMarker:
+                                    "// DEV SOURCE: Code Block END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "code-block.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/code-block.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                codeBlockExamples,
+                "Code Block",
+                "Card-style source code presentation with filename metadata, copy control, line numbers, wrapping, overflow actions, and optional syntax highlighting.",
+                codeBlockPreviewContent,
+                codeBlockSourceModal
+            );
+        }
+
+        const timelineExamples =
+            createSection(
+                widgetsGroup,
+                "Timeline",
+                "Vertical and horizontal activity timelines with search, type filters, sorting, automatic date separators, past and now indicators, load-more support, and reusable Timeline Item entries.",
+                false
+            );
+
+        if (global.Builder.has("timeline")) {
+            const timelinePreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            timelinePreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            // DEV SOURCE: Timeline START
+            const timelineExample =
+                global.Builder.create(
+                    "timeline",
+                    {
+                    direction:
+                        "descending",
+                    searchEnabled:
+                        true,
+                    searchPlaceholder:
+                        "Search activity…",
+                    controlMenuEnabled:
+                        true,
+                    controlMenuItems: [
+                        {
+                            label:
+                                "Refresh timeline",
+                            callback:
+                                function () {},
+                        },
+                        {
+                            label:
+                                "Export activity",
+                            callback:
+                                function () {},
+                        },
+                    ],
+                    filters: [
+                        {
+                            value:
+                                "",
+                            label:
+                                "All",
+                        },
+                        {
+                            value:
+                                "lead",
+                            label:
+                                "Lead",
+                        },
+                        {
+                            value:
+                                "vcard",
+                            label:
+                                "vCard",
+                        },
+                        {
+                            value:
+                                "task",
+                            label:
+                                "Task",
+                        },
+                    ],
+                    items: [
+                        {
+                            id:
+                                "timeline-lead-1",
+                            type:
+                                "lead",
+                            title:
+                                "Lead created",
+                            content:
+                                "<p>A new lead was created and assigned for follow-up.</p>",
+                            color:
+                                "primary",
+                            user: {
+                                name:
+                                    "Alex Morgan",
+                                href:
+                                    "/admin/dev/preview",
+                                src:
+                                    "https://picsum.photos/200/200",
+                            },
+                            timestamp:
+                                "2026-08-19T14:30:00-04:00",
+                            actions: [
+                                {
+                                    label:
+                                        "Edit",
+                                    variant:
+                                        "primary",
+                                    callback:
+                                        function () {},
+                                },
+                            ],
+                        },
+                        {
+                            id:
+                                "timeline-vcard-1",
+                            type:
+                                "vcard",
+                            title:
+                                "Contact updated",
+                            content:
+                                "<p>Phone and email information were updated.</p>",
+                            icon:
+                                ALERT_PREVIEW_ICONS.info,
+                            color:
+                                "success",
+                            user: {
+                                name:
+                                    "Jamie Rivera",
+                            },
+                            timestamp:
+                                "2026-08-19T11:15:00-04:00",
+                            controlMenuEnabled:
+                                true,
+                            controlMenuItems: [
+                                {
+                                    label:
+                                        "Inspect",
+                                    callback:
+                                        function () {},
+                                },
+                                {
+                                    label:
+                                        "Edit",
+                                    callback:
+                                        function () {},
+                                },
+                            ],
+                        },
+                        {
+                            id:
+                                "timeline-task-1",
+                            type:
+                                "task",
+                            title:
+                                "Follow-up completed",
+                            content:
+                                "<p>The scheduled follow-up task was completed.</p>",
+                            color:
+                                "warning",
+                            user: {
+                                name:
+                                    "Taylor Chen",
+                            },
+                            timestamp:
+                                "2026-08-18T16:45:00-04:00",
+                        },
+                        {
+                            id:
+                                "timeline-lead-2",
+                            type:
+                                "lead",
+                            title:
+                                "Lead qualified",
+                            content:
+                                "<p>The lead was reviewed and marked as qualified.</p>",
+                            color:
+                                "info",
+                            user: {
+                                name:
+                                    "Morgan Patel",
+                            },
+                            timestamp:
+                                "2026-08-18T09:20:00-04:00",
+                        },
+                    ],
+                    startVisible:
+                        true,
+                    endVisible:
+                        true,
+                    onLoadMore:
+                        async function (timeline) {
+                            const items =
+                                timeline.config(
+                                    "items"
+                                );
+
+                            if (
+                                items.some(
+                                    function (item) {
+                                        return item.id
+                                            === "timeline-task-loaded";
+                                    }
+                                )
+                            ) {
+                                return;
+                            }
+
+                            timeline.config(
+                                "items",
+                                items.concat([
+                                    {
+                                        id:
+                                            "timeline-task-loaded",
+                                        type:
+                                            "task",
+                                        title:
+                                            "Older task loaded",
+                                        content:
+                                            "<p>This older Timeline Item was added through the Load More callback.</p>",
+                                        color:
+                                            "secondary",
+                                        user: {
+                                            name:
+                                                "Jordan Smith",
+                                        },
+                                        timestamp:
+                                            "2026-08-17T14:00:00-04:00",
+                                    },
+                                ])
+                            );
+                        },
+                }
+            );
+
+            timelineExample.appendTo(
+                timelinePreviewContent
+            );
+
+            global.Builder.create(
+                "timeline",
+                {
+                    layout:
+                        "horizontal",
+                    direction:
+                        "descending",
+                    searchEnabled:
+                        true,
+                    searchPlaceholder:
+                        "Search horizontal timeline…",
+                    filters: [
+                        {
+                            value:
+                                "",
+                            label:
+                                "All",
+                        },
+                        {
+                            value:
+                                "lead",
+                            label:
+                                "Lead",
+                        },
+                        {
+                            value:
+                                "vcard",
+                            label:
+                                "vCard",
+                        },
+                        {
+                            value:
+                                "task",
+                            label:
+                                "Task",
+                        },
+                    ],
+                    items: [
+                        {
+                            id:
+                                "horizontal-lead-1",
+                            type:
+                                "lead",
+                            title:
+                                "Lead created",
+                            content:
+                                "<p>A new lead was added to the horizontal activity history.</p>",
+                            color:
+                                "primary",
+                            user: {
+                                name:
+                                    "Alex Morgan",
+                            },
+                            timestamp:
+                                "2026-08-19T14:30:00-04:00",
+                            actions: [
+                                {
+                                    label:
+                                        "Edit",
+                                    variant:
+                                        "primary",
+                                    callback:
+                                        function () {},
+                                },
+                            ],
+                        },
+                        {
+                            id:
+                                "horizontal-vcard-1",
+                            type:
+                                "vcard",
+                            title:
+                                "Contact updated",
+                            content:
+                                "<p>The associated contact information was updated.</p>",
+                            icon:
+                                ALERT_PREVIEW_ICONS.info,
+                            color:
+                                "success",
+                            user: {
+                                name:
+                                    "Jamie Rivera",
+                            },
+                            timestamp:
+                                "2026-08-19T11:15:00-04:00",
+                            controlMenuEnabled:
+                                true,
+                            controlMenuItems: [
+                                {
+                                    label:
+                                        "Inspect",
+                                    callback:
+                                        function () {},
+                                },
+                                {
+                                    label:
+                                        "Edit",
+                                    callback:
+                                        function () {},
+                                },
+                            ],
+                        },
+                        {
+                            id:
+                                "horizontal-task-1",
+                            type:
+                                "task",
+                            title:
+                                "Task completed",
+                            content:
+                                "<p>The scheduled follow-up task was completed.</p>",
+                            color:
+                                "warning",
+                            user: {
+                                name:
+                                    "Taylor Chen",
+                            },
+                            timestamp:
+                                "2026-08-18T16:45:00-04:00",
+                        },
+                        {
+                            id:
+                                "horizontal-lead-2",
+                            type:
+                                "lead",
+                            title:
+                                "Lead qualified",
+                            content:
+                                "<p>The lead was reviewed and marked as qualified.</p>",
+                            color:
+                                "info",
+                            user: {
+                                name:
+                                    "Morgan Patel",
+                            },
+                            timestamp:
+                                "2026-08-18T09:20:00-04:00",
+                        },
+                    ],
+                    startVisible:
+                        true,
+                    endVisible:
+                        true,
+                    onLoadMore:
+                        async function () {},
+                }
+            ).appendTo(
+                timelinePreviewContent
+            );
+
+            // DEV SOURCE: Timeline END
+
+            const timelineSourceModal =
+                createSourceModal(
+                    "Timeline Source",
+                    {
+                        html: {
+                            filename:
+                                "timeline.html",
+                            source:
+                                timelinePreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Timeline START",
+                                endMarker:
+                                    "// DEV SOURCE: Timeline END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "timeline.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/timeline.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                timelineExamples,
+                "Timeline",
+                "Vertical and horizontal activity timelines with search, type filters, sorting, automatic date separators, past and now indicators, load-more support, and reusable Timeline Item entries.",
+                timelinePreviewContent,
+                timelineSourceModal
+            );
+        }
+
+        const timelineItemExamples =
+            createSection(
+                componentsGroup,
+                "Timeline Item",
+                "Individual timeline event with semantic indicator, user metadata, relative timestamp, content, custom icon, and optional overflow actions.",
+                false
+            );
+
+        if (global.Builder.has("timeline-item")) {
+            const timelineItemPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            timelineItemPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            // DEV SOURCE: Timeline Item START
+            global.Builder.create(
+                "timeline-item",
+                {
+                    id:
+                        "timeline-item-lead",
+                    type:
+                        "lead",
+                    title:
+                        "Lead created",
+                    content:
+                        "<p>A new lead was created and added to the activity history.</p>",
+                    color:
+                        "primary",
+                    user: {
+                        name:
+                            "Alex Morgan",
+                        href:
+                            "/admin/dev/preview",
+                        src:
+                            "https://picsum.photos/200/200",
+                    },
+                    timestamp:
+                        "2026-08-19T14:30:00-04:00",
+                    actions: [
+                        {
+                            label:
+                                "Edit",
+                            variant:
+                                "primary",
+                            callback:
+                                function () {},
+                        },
+                        {
+                            label:
+                                "Delete",
+                            variant:
+                                "danger",
+                            callback:
+                                function () {},
+                        },
+                    ],
+                    controlMenuEnabled:
+                        true,
+                    controlMenuItems: [
+                        {
+                            label:
+                                "Inspect",
+                            callback:
+                                function () {},
+                        },
+                        {
+                            label:
+                                "Edit",
+                            callback:
+                                function () {},
+                        },
+                    ],
+                }
+            ).appendTo(
+                timelineItemPreviewContent
+            );
+
+            global.Builder.create(
+                "timeline-item",
+                {
+                    id:
+                        "timeline-item-vcard",
+                    type:
+                        "vcard",
+                    title:
+                        "Contact updated",
+                    content:
+                        "<p>Contact information was updated for the associated vCard.</p>",
+                    icon:
+                        ALERT_PREVIEW_ICONS.info,
+                    color:
+                        "success",
+                    user: {
+                        name:
+                            "Jamie Rivera",
+                    },
+                    timestamp:
+                        "2026-08-18T11:15:00-04:00",
+                }
+            ).appendTo(
+                timelineItemPreviewContent
+            );
+
+            global.Builder.create(
+                "timeline-item",
+                {
+                    id:
+                        "timeline-item-task",
+                    type:
+                        "task",
+                    title:
+                        "Task completed",
+                    content:
+                        "<p>The follow-up task was marked as completed.</p>",
+                    color:
+                        "warning",
+                    timestamp:
+                        "2026-08-17T09:45:00-04:00",
+                }
+            ).appendTo(
+                timelineItemPreviewContent
+            );
+
+            // DEV SOURCE: Timeline Item END
+
+            const timelineItemSourceModal =
+                createSourceModal(
+                    "Timeline Item Source",
+                    {
+                        html: {
+                            filename:
+                                "timeline-item.html",
+                            source:
+                                timelineItemPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Timeline Item START",
+                                endMarker:
+                                    "// DEV SOURCE: Timeline Item END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "timeline-item.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/timeline-item.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                timelineItemExamples,
+                "Timeline Item",
+                "Individual timeline event with semantic indicator, user metadata, relative timestamp, content, custom icon, and optional overflow actions.",
+                timelineItemPreviewContent,
+                timelineItemSourceModal
+            );
+        }
+
+        const stepperExamples =
+            createSection(
+                componentsGroup,
+                "Stepper",
+                "Multi-step workflow navigation with horizontal and vertical layouts, semantic states, icons or custom numbers, per-step content, configurable Previous/Next controls, and async transition callbacks.",
+                false
+            );
+
+        if (global.Builder.has("stepper")) {
+            const stepperPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            stepperPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            // DEV SOURCE: Stepper START
+            global.Builder.create(
+                "stepper",
+                {
+                    layout:
+                        "horizontal",
+                    currentStep:
+                        "payment",
+                    steps: [
+                        {
+                            id:
+                                "account",
+                            label:
+                                "Account",
+                            description:
+                                "Create your account.",
+                            icon:
+                                STEPPER_PREVIEW_ICONS.account,
+                            content:
+                                "<h3>Account</h3><p>Create the account that will be used for this setup.</p>",
+                            state:
+                                "complete",
+                            next: {
+                                label:
+                                    "Continue",
+                                icon:
+                                    STEPPER_PREVIEW_ICONS.next,
+                                variant:
+                                    "primary",
+                            },
+                        },
+                        {
+                            id:
+                                "shipping",
+                            label:
+                                "Shipping",
+                            description:
+                                "Enter shipping information.",
+                            number:
+                                "2",
+                            content:
+                                "<h3>Shipping</h3><p>Enter the shipping address and delivery preferences.</p>",
+                            state:
+                                "complete",
+                            previous: {
+                                label:
+                                    "Back",
+                                icon:
+                                    STEPPER_PREVIEW_ICONS.previous,
+                            },
+                            next: {
+                                label:
+                                    "Continue",
+                                icon:
+                                    STEPPER_PREVIEW_ICONS.next,
+                            },
+                        },
+                        {
+                            id:
+                                "payment",
+                            label:
+                                "Payment",
+                            description:
+                                "Choose a payment method.",
+                            number:
+                                "3",
+                            content:
+                                "<h3>Payment</h3><p>Select and confirm the payment method for this example workflow.</p>",
+                            state:
+                                "current",
+                            previous: {
+                                label:
+                                    "Shipping",
+                                icon:
+                                    STEPPER_PREVIEW_ICONS.previous,
+                            },
+                            next: {
+                                label:
+                                    "Review Order",
+                                icon:
+                                    STEPPER_PREVIEW_ICONS.next,
+                                variant:
+                                    "success",
+                            },
+                        },
+                        {
+                            id:
+                                "review",
+                            label:
+                                "Review",
+                            description:
+                                "Review and confirm.",
+                            number:
+                                "4",
+                            content:
+                                "<h3>Review</h3><p>Review the configured values before completing the workflow.</p>",
+                            state:
+                                "incomplete",
+                            previous: {
+                                label:
+                                    "Payment",
+                                icon:
+                                    STEPPER_PREVIEW_ICONS.previous,
+                            },
+                        },
+                    ],
+                    previousControlVisible:
+                        true,
+                    nextControlVisible:
+                        true,
+                }
+            ).appendTo(
+                stepperPreviewContent
+            );
+
+            global.Builder.create(
+                "stepper",
+                {
+                    layout:
+                        "vertical",
+                    currentStep:
+                        "profile",
+                    steps: [
+                        {
+                            id:
+                                "details",
+                            label:
+                                "Requirements",
+                            description:
+                                "Review installation requirements.",
+                            number:
+                                "1",
+                            content:
+                                "<h3>Requirements</h3><p>Review the environment requirements before starting the installation.</p>",
+                            state:
+                                "complete",
+                            next: {
+                                label:
+                                    "Continue",
+                                icon:
+                                    STEPPER_PREVIEW_ICONS.next,
+                            },
+                        },
+                        {
+                            id:
+                                "profile",
+                            label:
+                                "Configuration",
+                            description:
+                                "Configure installation options.",
+                            number:
+                                "2",
+                            content:
+                                "<h3>Configuration</h3><p>Configure the settings that will be used during installation.</p>",
+                            state:
+                                "current",
+                            previous: {
+                                label:
+                                    "Requirements",
+                                icon:
+                                    STEPPER_PREVIEW_ICONS.previous,
+                            },
+                            next: {
+                                label:
+                                    "Start Installation",
+                                icon:
+                                    STEPPER_PREVIEW_ICONS.install,
+                                variant:
+                                    "success",
+                                callback:
+                                    async function () {
+                                        await new Promise(
+                                            function (resolve) {
+                                                global.setTimeout(
+                                                    resolve,
+                                                    500
+                                                );
+                                            }
+                                        );
+
+                                        return true;
+                                    },
+                            },
+                        },
+                        {
+                            id:
+                                "verification",
+                            label:
+                                "Installation",
+                            description:
+                                "Install the configured application.",
+                            icon:
+                                STEPPER_PREVIEW_ICONS.install,
+                            content:
+                                "<h3>Installation</h3><p>The installation callback completed successfully and navigation advanced to this step.</p>",
+                            state:
+                                "error",
+                            previous: {
+                                label:
+                                    "Configuration",
+                                icon:
+                                    STEPPER_PREVIEW_ICONS.previous,
+                            },
+                            next: {
+                                label:
+                                    "Continue",
+                                icon:
+                                    STEPPER_PREVIEW_ICONS.next,
+                            },
+                        },
+                        {
+                            id:
+                                "security",
+                            label:
+                                "Disabled Step",
+                            description:
+                                "This step cannot be selected.",
+                            number:
+                                "4",
+                            content:
+                                "<h3>Disabled</h3><p>This content should never become active while the step remains disabled.</p>",
+                            state:
+                                "disabled",
+                            disabled:
+                                true,
+                        },
+                        {
+                            id:
+                                "finish",
+                            label:
+                                "Complete",
+                            description:
+                                "Finish the installation.",
+                            number:
+                                "5",
+                            content:
+                                "<h3>Installation Complete</h3><p>The example installation workflow has reached its final step.</p>",
+                            state:
+                                "incomplete",
+                            previous: {
+                                label:
+                                    "Back",
+                                icon:
+                                    STEPPER_PREVIEW_ICONS.previous,
+                            },
+                        },
+                    ],
+                    previousControlVisible:
+                        true,
+                    nextControlVisible:
+                        true,
+                }
+             ).appendTo(
+                stepperPreviewContent
+            );
+
+             // DEV SOURCE: Stepper END
+
+            const stepperSourceModal =
+                createSourceModal(
+                    "Stepper Source",
+                    {
+                        html: {
+                            filename:
+                                "stepper.html",
+                            source:
+                                stepperPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Stepper START",
+                                endMarker:
+                                    "// DEV SOURCE: Stepper END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "stepper.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/stepper.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                stepperExamples,
+                "Stepper",
+                "Multi-step workflow navigation with horizontal and vertical layouts, semantic states, icons or custom numbers, per-step content, configurable Previous/Next controls, and async transition callbacks.",
+                stepperPreviewContent,
+                stepperSourceModal
+            );
+        }
+
+        const tableOfContentExamples =
+            createSection(
+                componentsGroup,
+                "Table of Content",
+                "Floating page navigation with nested entries, persisted open state, and optional Scrollspy tracking.",
+                false
+            );
+
+        // DEV SECTION: Avatar START
         const avatarExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Avatar",
-                "Reusable profile image with initials fallback, standardized sizes, optional link, and broken-image fallback."
+                "Reusable profile image with initials fallback, standardized sizes, optional link, and broken-image fallback.",
+                false
             );
 
         if (global.Builder.has("avatar")) {
+            const avatarPreviewContent =
+                document.createElement(
+                    "div"
+                );
 
+            avatarPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            // DEV SOURCE: Avatar START
             global.Builder.create(
                 "avatar",
                 {
@@ -841,7 +3504,7 @@
                         "small",
                 }
             ).appendTo(
-                avatarExamples
+                avatarPreviewContent
             );
 
             global.Builder.create(
@@ -855,7 +3518,7 @@
                         "/admin/dev/preview",
                 }
             ).appendTo(
-                avatarExamples
+                avatarPreviewContent
             );
 
             global.Builder.create(
@@ -869,7 +3532,7 @@
                         "large",
                 }
             ).appendTo(
-                avatarExamples
+                avatarPreviewContent
             );
 
             global.Builder.create(
@@ -883,18 +3546,83 @@
                         "medium",
                 }
             ).appendTo(
-                avatarExamples
+                avatarPreviewContent
+            );
+
+            // DEV SOURCE: Avatar END
+
+            const avatarSourceModal =
+                createSourceModal(
+                    "Avatar Source",
+                    {
+                        html: {
+                            filename:
+                                "avatar.html",
+                            source:
+                                avatarPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Avatar START",
+                                endMarker:
+                                    "// DEV SOURCE: Avatar END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "avatar.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/avatar.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                avatarExamples,
+                "Avatar",
+                "Reusable profile image with initials fallback, standardized sizes, optional link, and broken-image fallback.",
+                avatarPreviewContent,
+                avatarSourceModal
             );
         }
+        // DEV SECTION: Avatar END
 
+        // DEV SECTION: Badge START
         const badgeExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Badge",
-                "Status and summary badge examples."
+                "Status and summary badge examples.",
+                false
             );
 
         if (global.Builder.has("badge")) {
+            const badgePreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            badgePreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            const badgePreviewControls =
+                document.createElement(
+                    "div"
+                );
+
+            badgePreviewControls.classList.add(
+                "dev-theme-preview-card-controls"
+            );
+
+            // DEV SOURCE: Badge START
             const badgeOne =
                 global.Builder.create(
                     "badge",
@@ -920,11 +3648,11 @@
                 );
 
             badgeOne.appendTo(
-                badgeExamples
+                badgePreviewContent
             );
 
             badgeTwo.appendTo(
-                badgeExamples
+                badgePreviewContent
             );
 
             if (
@@ -938,11 +3666,12 @@
                 let badgeSortable =
                     null;
 
-                createToggleControl(
-                    badgeExamples,
-                    "Sortable",
-                    false,
-                    function (enabled) {
+                const badgeSortableToggle =
+                    createToggleControl(
+                        badgeExamples,
+                        "Sortable",
+                        false,
+                        function (enabled) {
                         if (
                             badgeSortable !== null
                             && typeof badgeSortable.destroy
@@ -963,7 +3692,7 @@
 
                         badgeSortable =
                             global.Sortable.create(
-                                badgeExamples,
+                                badgePreviewContent,
                                 {
                                     draggable:
                                         ".app-badge",
@@ -974,17 +3703,93 @@
                             );
                     }
                 );
-            }
-        }
 
+                if (
+                    badgeSortableToggle !== null
+                    && typeof badgeSortableToggle.element
+                        === "function"
+                ) {
+                    badgePreviewControls.append(
+                        badgeSortableToggle.element()
+                    );
+                }
+            }
+
+            // DEV SOURCE: Badge END
+
+            const badgeSourceModal =
+                createSourceModal(
+                    "Badge Source",
+                    {
+                        html: {
+                            filename:
+                                "badge.html",
+                            source:
+                                badgePreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Badge START",
+                                endMarker:
+                                    "// DEV SOURCE: Badge END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "badge.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/badge.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                badgeExamples,
+                "Badge",
+                "Status and summary badge examples.",
+                badgePreviewContent,
+                badgeSourceModal,
+                badgePreviewControls
+            );
+        }
+        // DEV SECTION: Badge END
+
+        // DEV SECTION: Card START
         const cardExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Card",
-                "Card layout and interactive control examples."
+                "Card layout and interactive control examples.",
+                false
             );
 
         if (global.Builder.has("card")) {
+            const cardPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            cardPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            const cardPreviewControls =
+                document.createElement(
+                    "div"
+                );
+
+            cardPreviewControls.classList.add(
+                "dev-theme-preview-card-controls"
+            );
+
+            // DEV SOURCE: Card START
             const cardOne =
                 global.Builder.create(
                     "card",
@@ -1047,11 +3852,65 @@
                 );
 
             cardOne.appendTo(
-                cardExamples
+                cardPreviewContent
             );
 
             cardTwo.appendTo(
-                cardExamples
+                cardPreviewContent
+            );
+
+            let cardElementFooterClickCount =
+                0;
+
+            const cardElementFooterButton =
+                global.Builder.create(
+                    "button",
+                    {
+                        label:
+                            "Footer Button",
+                        variant:
+                            "primary",
+                        size:
+                            "small",
+                        callback:
+                            function () {
+                                cardElementFooterClickCount +=
+                                    1;
+
+                                cardElementFooterButton.config(
+                                    "label",
+                                    "Clicked "
+                                    + cardElementFooterClickCount
+                                );
+
+                                cardElementFooterButton.refresh();
+                            },
+                    }
+                );
+
+            const cardElementBody =
+                document.createElement(
+                    "div"
+                );
+
+            cardElementBody.innerHTML =
+                "<p>This Card body was supplied as a DOM Element instead of an HTML string.</p>";
+
+            const cardElementExample =
+                global.Builder.create(
+                    "card",
+                    {
+                        title:
+                            "Element Content Card",
+                        content:
+                            cardElementBody,
+                        footer:
+                            cardElementFooterButton.element(),
+                    }
+                );
+
+            cardElementExample.appendTo(
+                cardPreviewContent
             );
 
             if (
@@ -1065,11 +3924,12 @@
                 let cardSortable =
                     null;
 
-                createToggleControl(
-                    cardExamples,
-                    "Sortable",
-                    false,
-                    function (enabled) {
+                const cardSortableToggle =
+                    createToggleControl(
+                        cardExamples,
+                        "Sortable",
+                        false,
+                        function (enabled) {
                         if (
                             cardSortable !== null
                             && typeof cardSortable.destroy
@@ -1090,7 +3950,7 @@
 
                         cardSortable =
                             global.Sortable.create(
-                                cardExamples,
+                                cardPreviewContent,
                                 {
                                     draggable:
                                         ".app-card",
@@ -1101,20 +3961,96 @@
                             );
                     }
                 );
-            }
-        }
 
+                if (
+                    cardSortableToggle !== null
+                    && typeof cardSortableToggle.element
+                        === "function"
+                ) {
+                    cardPreviewControls.append(
+                        cardSortableToggle.element()
+                    );
+                }
+            }
+
+            // DEV SOURCE: Card END
+
+            const cardSourceModal =
+                createSourceModal(
+                    "Card Source",
+                    {
+                        html: {
+                            filename:
+                                "card.html",
+                            source:
+                                cardPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Card START",
+                                endMarker:
+                                    "// DEV SOURCE: Card END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "card.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/card.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                cardExamples,
+                "Card",
+                "Card layout and interactive control examples.",
+                cardPreviewContent,
+                cardSourceModal,
+                cardPreviewControls
+            );
+        }
+        // DEV SECTION: Card END
+
+        // DEV SECTION: Collapse START
         const collapseExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Collapse",
-                "Reusable content region with programmatic collapse, expand, and toggle behavior."
+                "Reusable content region with programmatic collapse, expand, and toggle behavior.",
+                false
             );
 
         if (
             global.Builder.has("collapse")
             && global.Builder.has("button")
         ) {
+            const collapsePreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            collapsePreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            const collapsePreviewControls =
+                document.createElement(
+                    "div"
+                );
+
+            collapsePreviewControls.classList.add(
+                "dev-theme-preview-card-controls"
+            );
+
+            // DEV SOURCE: Collapse START
             const collapseExample =
                 global.Builder.create(
                     "collapse",
@@ -1141,22 +4077,79 @@
                         },
                 }
             ).appendTo(
-                collapseExamples
+                collapsePreviewControls
             );
 
             collapseExample.appendTo(
-                collapseExamples
+                collapsePreviewContent
+            );
+
+            // DEV SOURCE: Collapse END
+
+            const collapseSourceModal =
+                createSourceModal(
+                    "Collapse Source",
+                    {
+                        html: {
+                            filename:
+                                "collapse.html",
+                            source:
+                                collapsePreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Collapse START",
+                                endMarker:
+                                    "// DEV SOURCE: Collapse END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "collapse.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/collapse.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                collapseExamples,
+                "Collapse",
+                "Reusable content region with programmatic collapse, expand, and toggle behavior.",
+                collapsePreviewContent,
+                collapseSourceModal,
+                collapsePreviewControls
             );
         }
+        // DEV SECTION: Collapse END
 
+        // DEV SECTION: Dropdown START
         const dropdownExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Dropdown",
-                "Reusable action dropdown with label, icon, links, callbacks, and disabled items."
+                "Reusable action dropdown with label, icon, links, callbacks, and disabled items.",
+                false
             );
 
         if (global.Builder.has("dropdown")) {
+            const dropdownPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            dropdownPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            // DEV SOURCE: Dropdown START
             global.Builder.create(
                 "dropdown",
                 {
@@ -1192,7 +4185,7 @@
                     ],
                 }
             ).appendTo(
-                dropdownExamples
+                dropdownPreviewContent
             );
 
             global.Builder.create(
@@ -1218,18 +4211,74 @@
                     ],
                 }
             ).appendTo(
-                dropdownExamples
+                dropdownPreviewContent
+            );
+
+            // DEV SOURCE: Dropdown END
+
+            const dropdownSourceModal =
+                createSourceModal(
+                    "Dropdown Source",
+                    {
+                        html: {
+                            filename:
+                                "dropdown.html",
+                            source:
+                                dropdownPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Dropdown START",
+                                endMarker:
+                                    "// DEV SOURCE: Dropdown END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "dropdown.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/dropdown.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                dropdownExamples,
+                "Dropdown",
+                "Reusable action dropdown with label, icon, links, callbacks, and disabled items.",
+                dropdownPreviewContent,
+                dropdownSourceModal
             );
         }
+        // DEV SECTION: Dropdown END
 
+        // DEV SECTION: Form Field START
         const fieldExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Form Field",
-                "Form field label, description, and validation structure."
+                "Form field label, description, and validation structure.",
+                false
             );
 
         if (global.Builder.has("form-field")) {
+            const fieldPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            fieldPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            // DEV SOURCE: Form Field START
             global.Builder.create(
                 "form-field",
                 {
@@ -1243,18 +4292,74 @@
                     required: true,
                 }
             ).appendTo(
-                fieldExamples
+                fieldPreviewContent
+            );
+
+            // DEV SOURCE: Form Field END
+
+            const fieldSourceModal =
+                createSourceModal(
+                    "Form Field Source",
+                    {
+                        html: {
+                            filename:
+                                "form-field.html",
+                            source:
+                                fieldPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Form Field START",
+                                endMarker:
+                                    "// DEV SOURCE: Form Field END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "form-field.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/form-field.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                fieldExamples,
+                "Form Field",
+                "Form field label, description, and validation structure.",
+                fieldPreviewContent,
+                fieldSourceModal
             );
         }
+        // DEV SECTION: Form Field END
 
+        // DEV SECTION: Input START
         const inputExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Input",
-                "Input controls and input-group behavior."
+                "Input controls and input-group behavior.",
+                false
             );
 
         if (global.Builder.has("input")) {
+            const inputPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            inputPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            // DEV SOURCE: Input START
             global.Builder.create(
                 "input",
                 {
@@ -1270,18 +4375,83 @@
                     clearActionEnabled: true,
                 }
             ).appendTo(
-                inputExamples
+                inputPreviewContent
+            );
+
+            // DEV SOURCE: Input END
+
+            const inputSourceModal =
+                createSourceModal(
+                    "Input Source",
+                    {
+                        html: {
+                            filename:
+                                "input.html",
+                            source:
+                                inputPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Input START",
+                                endMarker:
+                                    "// DEV SOURCE: Input END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "input.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/input.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                inputExamples,
+                "Input",
+                "Input controls and input-group behavior.",
+                inputPreviewContent,
+                inputSourceModal
             );
         }
+        // DEV SECTION: Input END
 
+        // DEV SECTION: Select START
         const selectExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Select",
-                "Native Select and optional Select2 integration."
+                "Native Select and optional Select2 integration.",
+                false
             );
 
         if (global.Builder.has("select")) {
+            const selectPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            selectPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            const selectPreviewControls =
+                document.createElement(
+                    "div"
+                );
+
+            selectPreviewControls.classList.add(
+                "dev-theme-preview-card-controls"
+            );
+
+            // DEV SOURCE: Select START
             const selectExample =
                 global.Builder.create(
                     "select",
@@ -1310,7 +4480,7 @@
                 );
 
             selectExample.appendTo(
-                selectExamples
+                selectPreviewContent
             );
 
             if (
@@ -1319,30 +4489,107 @@
                 && typeof global.jQuery.fn.select2
                     === "function"
             ) {
-                createToggleControl(
-                    selectExamples,
-                    "Select2",
-                    false,
-                    function (enabled) {
-                        selectExample.config(
-                            "select2Enabled",
-                            enabled
-                        );
+                const select2Toggle =
+                    createToggleControl(
+                        selectExamples,
+                        "Select2",
+                        false,
+                        function (enabled) {
+                            selectExample.config(
+                                "select2Enabled",
+                                enabled
+                            );
 
-                        selectExample.refresh();
+                            selectExample.refresh();
+                        }
+                    );
+
+                if (
+                    select2Toggle !== null
+                    && typeof select2Toggle.element
+                        === "function"
+                ) {
+                    selectPreviewControls.append(
+                        select2Toggle.element()
+                    );
+                }
+            }
+
+            // DEV SOURCE: Select END
+
+            const selectSourceModal =
+                createSourceModal(
+                    "Select Source",
+                    {
+                        html: {
+                            filename:
+                                "select.html",
+                            source:
+                                selectPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Select START",
+                                endMarker:
+                                    "// DEV SOURCE: Select END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "select.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/select.less",
+                            },
+                        },
                     }
                 );
-            }
-        }
 
+            createPreviewCard(
+                selectExamples,
+                "Select",
+                "Native Select and optional Select2 integration.",
+                selectPreviewContent,
+                selectSourceModal,
+                selectPreviewControls
+            );
+        }
+        // DEV SECTION: Select END
+
+        // DEV SECTION: vCard START
         const vcardExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "vCard",
-                "Contact and organization identity card examples."
+                "Contact and organization identity card examples.",
+                false
             );
 
         if (global.Builder.has("vcard")) {
+            const vcardPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            vcardPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            const vcardPreviewControls =
+                document.createElement(
+                    "div"
+                );
+
+            vcardPreviewControls.classList.add(
+                "dev-theme-preview-card-controls"
+            );
+
+            // DEV SOURCE: vCard START
             const vcardConfigs = [
                 {
                     name: "Alex Morgan",
@@ -1695,7 +4942,7 @@
                 );
 
             vcardGrid.appendTo(
-                vcardExamples
+                vcardPreviewContent
             );
 
 
@@ -1707,30 +4954,106 @@
                     && typeof global.Sortable.create === "function"
                 )
             ) {
-                createToggleControl(
-                    vcardExamples,
-                    "Sortable",
-                    false,
-                    function (enabled) {
-                        vcardGrid.config(
-                            "sortableEnabled",
-                            enabled
-                        );
+                const vcardSortableToggle =
+                    createToggleControl(
+                        vcardExamples,
+                        "Sortable",
+                        false,
+                        function (enabled) {
+                            vcardGrid.config(
+                                "sortableEnabled",
+                                enabled
+                            );
 
-                        vcardGrid.refresh();
+                            vcardGrid.refresh();
+                        }
+                    );
+
+                if (
+                    vcardSortableToggle !== null
+                    && typeof vcardSortableToggle.element
+                        === "function"
+                ) {
+                    vcardPreviewControls.append(
+                        vcardSortableToggle.element()
+                    );
+                }
+            }
+            // DEV SOURCE: vCard END
+
+            const vcardSourceModal =
+                createSourceModal(
+                    "vCard Source",
+                    {
+                        html: {
+                            filename:
+                                "vcard.html",
+                            source:
+                                vcardPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: vCard START",
+                                endMarker:
+                                    "// DEV SOURCE: vCard END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "vcard-grid.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/vcard-grid.less",
+                            },
+                        },
                     }
                 );
-            }
-        }
 
+            createPreviewCard(
+                vcardExamples,
+                "vCard",
+                "Contact and organization identity card examples.",
+                vcardPreviewContent,
+                vcardSourceModal,
+                vcardPreviewControls
+            );
+        }
+        // DEV SECTION: vCard END
+
+        // DEV SECTION: List START
         const listExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "List",
-                "Searchable and sortable list with optional actions."
+                "Searchable and sortable list with optional actions.",
+                false
             );
 
         if (global.Builder.has("list")) {
+            const listPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            listPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            const listPreviewControls =
+                document.createElement(
+                    "div"
+                );
+
+            listPreviewControls.classList.add(
+                "dev-theme-preview-card-controls"
+            );
+
+            // DEV SOURCE: List START
             const listExample =
                 global.Builder.create(
                     "list",
@@ -1781,7 +5104,7 @@
                 );
 
             listExample.appendTo(
-                listExamples
+                listPreviewContent
             );
 
             if (
@@ -1792,30 +5115,107 @@
                     && typeof global.Sortable.create === "function"
                 )
             ) {
-                createToggleControl(
-                    listExamples,
-                    "Sortable",
-                    false,
-                    function (enabled) {
-                        listExample.config(
-                            "sortableEnabled",
-                            enabled
-                        );
+                const listSortableToggle =
+                    createToggleControl(
+                        listExamples,
+                        "Sortable",
+                        false,
+                        function (enabled) {
+                            listExample.config(
+                                "sortableEnabled",
+                                enabled
+                            );
 
-                        listExample.refresh();
+                            listExample.refresh();
+                        }
+                    );
+
+                if (
+                    listSortableToggle !== null
+                    && typeof listSortableToggle.element
+                        === "function"
+                ) {
+                    listPreviewControls.append(
+                        listSortableToggle.element()
+                    );
+                }
+            }
+
+            // DEV SOURCE: List END
+
+            const listSourceModal =
+                createSourceModal(
+                    "List Source",
+                    {
+                        html: {
+                            filename:
+                                "list.html",
+                            source:
+                                listPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: List START",
+                                endMarker:
+                                    "// DEV SOURCE: List END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "list.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/list.less",
+                            },
+                        },
                     }
                 );
-            }
-        }
 
+            createPreviewCard(
+                listExamples,
+                "List",
+                "Searchable and sortable list with optional actions.",
+                listPreviewContent,
+                listSourceModal,
+                listPreviewControls
+            );
+        }
+        // DEV SECTION: List END
+
+        // DEV SECTION: Table START
         const tableExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Table",
-                "Structured tabular data with optional DataTables enhancement."
+                "Structured tabular data with optional DataTables enhancement.",
+                false
             );
 
         if (global.Builder.has("table")) {
+            const tablePreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            tablePreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            const tablePreviewControls =
+                document.createElement(
+                    "div"
+                );
+
+            tablePreviewControls.classList.add(
+                "dev-theme-preview-card-controls"
+            );
+
+            // DEV SOURCE: Table START
             const tableExample =
                 global.Builder.create(
                     "table",
@@ -1889,7 +5289,7 @@
                 );
 
             tableExample.appendTo(
-                tableExamples
+                tablePreviewContent
             );
 
             if (
@@ -1901,30 +5301,107 @@
                         === "function"
                 )
             ) {
-                createToggleControl(
-                    tableExamples,
-                    "DataTables",
-                    false,
-                    function (enabled) {
-                        tableExample.config(
-                            "dataTableEnabled",
-                            enabled
-                        );
+                const tableDataTablesToggle =
+                    createToggleControl(
+                        tableExamples,
+                        "DataTables",
+                        false,
+                        function (enabled) {
+                            tableExample.config(
+                                "dataTableEnabled",
+                                enabled
+                            );
 
-                        tableExample.refresh();
+                            tableExample.refresh();
+                        }
+                    );
+
+                if (
+                    tableDataTablesToggle !== null
+                    && typeof tableDataTablesToggle.element
+                        === "function"
+                ) {
+                    tablePreviewControls.append(
+                        tableDataTablesToggle.element()
+                    );
+                }
+            }
+
+            // DEV SOURCE: Table END
+
+            const tableSourceModal =
+                createSourceModal(
+                    "Table Source",
+                    {
+                        html: {
+                            filename:
+                                "table.html",
+                            source:
+                                tablePreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Table START",
+                                endMarker:
+                                    "// DEV SOURCE: Table END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "table.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/table.less",
+                            },
+                        },
                     }
                 );
-            }
-        }
 
+            createPreviewCard(
+                tableExamples,
+                "Table",
+                "Structured tabular data with optional DataTables enhancement.",
+                tablePreviewContent,
+                tableSourceModal,
+                tablePreviewControls
+            );
+        }
+        // DEV SECTION: Table END
+
+        // DEV SECTION: Tabs START
         const tabsExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Tabs",
-                "Tabbed content with programmatic selection, disabled tabs, icons, and keyboard navigation."
+                "Tabbed content with programmatic selection, disabled tabs, icons, and keyboard navigation.",
+                false
             );
 
         if (global.Builder.has("tabs")) {
+            const tabsPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            tabsPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            const tabsPreviewControls =
+                document.createElement(
+                    "div"
+                );
+
+            tabsPreviewControls.classList.add(
+                "dev-theme-preview-card-controls"
+            );
+
+            // DEV SOURCE: Tabs START
             const tabsExample =
                 global.Builder.create(
                     "tabs",
@@ -2023,8 +5500,43 @@
                 );
 
             tabsExample.appendTo(
-                tabsExamples
+                tabsPreviewContent
             );
+
+            if (
+                typeof global.Sortable === "function"
+                || (
+                    global.Sortable !== null
+                    && typeof global.Sortable === "object"
+                    && typeof global.Sortable.create === "function"
+                )
+            ) {
+                const tabsSortableToggle =
+                    createToggleControl(
+                        tabsExamples,
+                        "Sortable",
+                        false,
+                        function (enabled) {
+                            if (enabled) {
+                                tabsExample.enableSortable();
+
+                                return;
+                            }
+
+                            tabsExample.disableSortable();
+                        }
+                    );
+
+                if (
+                    tabsSortableToggle !== null
+                    && typeof tabsSortableToggle.element
+                        === "function"
+                ) {
+                    tabsPreviewControls.append(
+                        tabsSortableToggle.element()
+                    );
+                }
+            }
 
             global.Builder.create(
                 "tabs",
@@ -2087,21 +5599,80 @@
                     ],
                 }
             ).appendTo(
-                tabsExamples
+                tabsPreviewContent
             );
 
             global.devTabsExample =
                 tabsExample;
+
+            // DEV SOURCE: Tabs END
+
+            const tabsSourceModal =
+                createSourceModal(
+                    "Tabs Source",
+                    {
+                        html: {
+                            filename:
+                                "tabs.html",
+                            source:
+                                tabsPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Tabs START",
+                                endMarker:
+                                    "// DEV SOURCE: Tabs END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "tabs.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/tabs.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                tabsExamples,
+                "Tabs",
+                "Tabbed content with programmatic selection, disabled tabs, icons, and keyboard navigation.",
+                tabsPreviewContent,
+                tabsSourceModal,
+                tabsPreviewControls
+            );
         }
+        // DEV SECTION: Tabs END
+
+        // DEV SECTION: Post START
 
         const postExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Post",
-                "Social-style post with author identity, categories, attachments, actions, and optional comments."
+                "Social-style post with author identity, categories, attachments, actions, and optional comments.",
+                false
             );
 
         if (global.Builder.has("post")) {
+            const postPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            postPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            // DEV SOURCE: Post START
+
             global.Builder.create(
                 "post",
                 {
@@ -2183,7 +5754,7 @@
                         function () {},
                 }
             ).appendTo(
-                postExamples
+                postPreviewContent
             );
 
             global.Builder.create(
@@ -2278,18 +5849,74 @@
                     ],
                 }
             ).appendTo(
-                postExamples
+                postPreviewContent
+            );
+
+            // DEV SOURCE: Post END
+
+            const postSourceModal =
+                createSourceModal(
+                    "Post Source",
+                    {
+                        html: {
+                            filename:
+                                "post.html",
+                            source:
+                                postPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Post START",
+                                endMarker:
+                                    "// DEV SOURCE: Post END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "post.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/post.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                postExamples,
+                "Post",
+                "Social-style post with author identity, categories, attachments, actions, and optional comments.",
+                postPreviewContent,
+                postSourceModal
             );
         }
+        // DEV SECTION: Post END
 
+        // DEV SECTION: Feed START
         const feedExamples =
             createSection(
-                mount,
+                widgetsGroup,
                 "Feed",
-                "Searchable collection of Post components filtered by author, content, categories, and status."
+                "Searchable collection of Post components filtered by author, content, categories, and status.",
+                false
             );
 
         if (global.Builder.has("feed")) {
+            const feedPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            feedPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            // DEV SOURCE: Feed START
             global.Builder.create(
                 "feed",
                 {
@@ -2503,17 +6130,73 @@
                     ],
                 }
             ).appendTo(
-                feedExamples
+                feedPreviewContent
+            );
+
+            // DEV SOURCE: Feed END
+
+            const feedSourceModal =
+                createSourceModal(
+                    "Feed Source",
+                    {
+                        html: {
+                            filename:
+                                "feed.html",
+                            source:
+                                feedPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Feed START",
+                                endMarker:
+                                    "// DEV SOURCE: Feed END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "feed.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/feed.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                feedExamples,
+                "Feed",
+                "Searchable collection of Post components filtered by author, content, categories, and status.",
+                feedPreviewContent,
+                feedSourceModal
             );
         }
+        // DEV SECTION: Feed END
 
+        // DEV SECTION: Comment START
         const commentExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Comment",
-                "Individual discussion comments with author identity, status, overflow actions, and direct actions."
+                "Social-style comment with author, timestamp, action, and optional replies.",
+                false
             );
 
+        const commentPreviewContent =
+            document.createElement(
+                "div"
+            );
+
+        commentPreviewContent.classList.add(
+            "dev-theme-preview-card-content"
+        );
+
+        // DEV SOURCE: Comment START
         if (global.Builder.has("comment")) {
             global.Builder.create(
                 "comment",
@@ -2550,7 +6233,7 @@
                         function () {},
                 }
             ).appendTo(
-                commentExamples
+                commentPreviewContent
             );
 
             global.Builder.create(
@@ -2568,7 +6251,7 @@
                         "<p>This example has no status and no actions, validating the minimal Comment presentation.</p>",
                 }
             ).appendTo(
-                commentExamples
+                commentPreviewContent
             );
 
             global.Builder.create(
@@ -2598,7 +6281,7 @@
                         function () {},
                 }
             ).appendTo(
-                commentExamples
+                commentPreviewContent
             );
 
             const commentControlExample =
@@ -2645,17 +6328,80 @@
                 );
 
             commentControlExample.appendTo(
-                commentExamples
+                commentPreviewContent
             );
         }
+        // DEV SOURCE: Comment END
 
-        const commentsExamples =
-            createSection(
-                mount,
-                "Comments",
-                "Nested discussion collection with configurable indentation, reply depth, empty state, and section-level actions."
+        const commentSourceModal =
+            createSourceModal(
+                "Comment Source",
+                {
+                    html: {
+                        filename:
+                            "comment.html",
+                        source:
+                            commentPreviewContent,
+                    },
+                    javascript: {
+                        filename:
+                            "preview.js",
+                        source: {
+                            file:
+                                "dev:Assets/js/preview.js",
+                            startMarker:
+                                "// DEV SOURCE: Comment START",
+                            endMarker:
+                                "// DEV SOURCE: Comment END",
+                        },
+                    },
+                    css: {
+                        filename:
+                            "comment.less",
+                        source: {
+                            file:
+                                "kernel:Assets/less/components/comment.less",
+                        },
+                    },
+                }
             );
 
+        createPreviewCard(
+            commentExamples,
+            "Comment",
+            "Social-style comment with author, timestamp, action, and optional replies.",
+            commentPreviewContent,
+            commentSourceModal
+        );
+        // DEV SECTION: Comment END
+        // DEV SECTION: Comments START
+        const commentsExamples =
+            createSection(
+                componentsGroup,
+                "Comments",
+                "Nested discussion collection with configurable indentation, reply depth, empty state, and section-level actions.",
+                false
+            );
+
+        const commentsPreviewContent =
+            document.createElement(
+                "div"
+            );
+
+        commentsPreviewContent.classList.add(
+            "dev-theme-preview-card-content"
+        );
+
+        const commentsPreviewControls =
+            document.createElement(
+                "div"
+            );
+
+        commentsPreviewControls.classList.add(
+            "dev-theme-preview-card-controls"
+        );
+
+        // DEV SOURCE: Comments START
         if (global.Builder.has("comments")) {
             const commentsExample =
                 global.Builder.create(
@@ -2667,226 +6413,127 @@
                             true,
                         indentationEnabled:
                             true,
-                        maxIndentDepth:
+                        replyDepth:
                             3,
-                        emptyMessage:
-                            "No comments are available.",
-                        actions: [
-                            {
-                                label:
-                                    "Moderate comments",
-                                callback:
-                                    function () {},
-                            },
-                            {
-                                label:
-                                    "Review reported comments",
-                                callback:
-                                    function () {},
-                            },
-                        ],
-                        comments: [
-                            {
-                                id:
-                                    "comments-alex",
-                                author: {
-                                    name:
-                                        "Alex Morgan",
-                                    title:
-                                        "Developer",
+                        emptyStateVisible:
+                            true,
+                        actions:
+                            [
+                                {
+                                    label:
+                                        "New Comment",
+                                    variant:
+                                        "primary",
+                                    callback:
+                                        function () {},
                                 },
-                                timestamp:
-                                    "2026-08-14T12:00:00-04:00",
-                                content:
-                                    "<p>This is the root comment for the nested discussion example.</p>",
-                                likeControlVisible:
-                                    true,
-                                replyControlVisible:
-                                    true,
-                                likeCount:
-                                    8,
-                                dislikeCount:
-                                    1,
-                                onLike:
-                                    function () {},
-                                onDislike:
-                                    function () {},
-                                onReply:
-                                    function () {},
-                                replies: [
-                                    {
-                                        id:
-                                            "comments-jamie",
-                                        author: {
-                                            name:
-                                                "Jamie Rivera",
-                                            title:
-                                                "Operations Manager",
-                                        },
-                                        timestamp:
-                                            "2026-08-14T12:10:00-04:00",
-                                        content:
-                                            "<p>This is a first-level reply.</p>",
-                                        likeControlVisible:
-                                            true,
-                                        replyControlVisible:
-                                            true,
-                                        onLike:
-                                            function () {},
-                                        onDislike:
-                                            function () {},
-                                        onReply:
-                                            function () {},
-                                        replies: [
-                                            {
-                                                id:
-                                                    "comments-taylor",
-                                                author: {
-                                                    name:
-                                                        "Taylor Chen",
-                                                    title:
-                                                        "Designer",
-                                                },
-                                                timestamp:
-                                                    "2026-08-14T12:20:00-04:00",
-                                                content:
-                                                    "<p>This is a second-level reply.</p>",
-                                                likeControlVisible:
-                                                    true,
-                                                replyControlVisible:
-                                                    true,
-                                                onLike:
-                                                    function () {},
-                                                onDislike:
-                                                    function () {},
-                                                onReply:
-                                                    function () {},
-                                                replies: [
-                                                    {
-                                                        id:
-                                                            "comments-morgan",
-                                                        author: {
-                                                            name:
-                                                                "Morgan Patel",
-                                                            title:
-                                                                "Account Manager",
-                                                        },
-                                                        timestamp:
-                                                            "2026-08-14T12:30:00-04:00",
-                                                        content:
-                                                            "<p>This is a third-level reply.</p>",
-                                                        likeControlVisible:
-                                                            true,
-                                                        replyControlVisible:
-                                                            true,
-                                                        onLike:
-                                                            function () {},
-                                                        onDislike:
-                                                            function () {},
-                                                        onReply:
-                                                            function () {},
-                                                        replies: [
-                                                            {
-                                                                id:
-                                                                    "comments-casey",
-                                                                author: {
-                                                                    name:
-                                                                        "Casey Williams",
-                                                                    title:
-                                                                        "Project Coordinator",
-                                                                },
-                                                                timestamp:
-                                                                    "2026-08-14T12:40:00-04:00",
-                                                                content:
-                                                                    "<p>This reply is deeper than maxIndentDepth and should remain structurally nested without moving farther to the right.</p>",
-                                                                likeControlVisible:
-                                                                    true,
-                                                                replyControlVisible:
-                                                                    true,
-                                                                onLike:
-                                                                    function () {},
-                                                                onDislike:
-                                                                    function () {},
-                                                                onReply:
-                                                                    function () {},
-                                                            },
-                                                        ],
-                                                    },
-                                                ],
-                                            },
-                                        ],
-                                    },
-                                ],
-                            },
-                            {
-                                id:
-                                    "comments-jordan",
-                                author: {
-                                    name:
-                                        "Jordan Smith",
-                                    title:
-                                        "Support Specialist",
+                                {
+                                    label:
+                                        "Refresh",
+                                    variant:
+                                        "secondary",
+                                    callback:
+                                        function () {},
                                 },
-                                timestamp:
-                                    "2026-08-14T12:50:00-04:00",
-                                content:
-                                    "<p>This is a separate root-level comment used to verify spacing between independent discussion branches.</p>",
-                                status:
-                                    "Visible",
-                                editControlVisible:
-                                    true,
-                                deleteControlVisible:
-                                    true,
-                                likeControlVisible:
-                                    true,
-                                replyControlVisible:
-                                    true,
-                                likeCount:
-                                    3,
-                                dislikeCount:
-                                    0,
-                                onEdit:
-                                    function () {},
-                                onDelete:
-                                    function () {},
-                                onLike:
-                                    function () {},
-                                onDislike:
-                                    function () {},
-                                onReply:
-                                    function () {},
-                            },
-                        ],
+                            ],
                     }
                 );
 
             commentsExample.appendTo(
-                commentsExamples
+                commentsPreviewContent
             );
 
-            createToggleControl(
-                commentsExamples,
-                "Indentation",
-                true,
-                function (enabled) {
-                    if (enabled) {
-                        commentsExample.enableIndentation();
+            const commentsIndentationToggle =
+                createToggleControl(
+                    commentsExamples,
+                    "Indentation",
+                    true,
+                    function (enabled) {
+                        if (enabled) {
+                            commentsExample.enableIndentation();
 
-                        return;
+                            return;
+                        }
+
+                        commentsExample.disableIndentation();
                     }
+                );
 
-                    commentsExample.disableIndentation();
+            if (
+                commentsIndentationToggle !== null
+                && typeof commentsIndentationToggle.element
+                    === "function"
+            ) {
+                commentsPreviewControls.append(
+                    commentsIndentationToggle.element()
+                );
+            }
+        }
+        // DEV SOURCE: Comments END
+
+        const commentsSourceModal =
+            createSourceModal(
+                "Comments Source",
+                {
+                    html: {
+                        filename:
+                            "comments.html",
+                        source:
+                            commentsPreviewContent,
+                    },
+                    javascript: {
+                        filename:
+                            "preview.js",
+                        source: {
+                            file:
+                                "dev:Assets/js/preview.js",
+                            startMarker:
+                                "// DEV SOURCE: Comments START",
+                            endMarker:
+                                "// DEV SOURCE: Comments END",
+                        },
+                    },
+                    css: {
+                        filename:
+                            "comments.less",
+                        source: {
+                            file:
+                                "kernel:Assets/less/components/comments.less",
+                        },
+                    },
                 }
             );
-        }
 
+        if (global.Builder.has("comments")) {
+            createPreviewCard(
+                commentsExamples,
+                "Comments",
+                "Nested discussion collection with configurable indentation, reply depth, empty state, and section-level actions.",
+                commentsPreviewContent,
+                commentsSourceModal,
+                commentsPreviewControls
+            );
+        }
+        // DEV SECTION: Comments END
+        // DEV SECTION: Progress Bar START
         const progressBarExamples =
             createSection(
-                mount,
+                componentsGroup,
                 "Progress Bar",
-                "Determinate and indeterminate progress with labels, percentages, ranges, and semantic colors."
+                "Determinate and indeterminate progress with labels, percentages, ranges, and semantic colors.",
+                false
             );
 
+        const progressBarPreviewContent =
+            document.createElement(
+                "div"
+            );
+
+        progressBarPreviewContent.classList.add(
+            "dev-theme-preview-card-content"
+        );
+
+        // DEV SOURCE: Progress Bar START
         if (global.Builder.has("progress-bar")) {
             global.Builder.create(
                 "progress-bar",
@@ -2905,7 +6552,7 @@
                         "primary",
                 }
             ).appendTo(
-                progressBarExamples
+                progressBarPreviewContent
             );
 
             global.Builder.create(
@@ -2925,7 +6572,7 @@
                         "success",
                 }
             ).appendTo(
-                progressBarExamples
+                progressBarPreviewContent
             );
 
             global.Builder.create(
@@ -2945,7 +6592,7 @@
                         "warning",
                 }
             ).appendTo(
-                progressBarExamples
+                progressBarPreviewContent
             );
 
             global.Builder.create(
@@ -2961,17 +6608,73 @@
                         "info",
                 }
             ).appendTo(
-                progressBarExamples
+                progressBarPreviewContent
             );
         }
+        // DEV SOURCE: Progress Bar END
 
-        const buttonGroupExamples =
-            createSection(
-                mount,
-                "Button Group",
-                "Grouped Builder buttons with spaced, attached, horizontal, vertical, and equal-width layouts."
+        const progressBarSourceModal =
+            createSourceModal(
+                "Progress Bar Source",
+                {
+                    html: {
+                        filename:
+                            "progress-bar.html",
+                        source:
+                            progressBarPreviewContent,
+                    },
+                    javascript: {
+                        filename:
+                            "preview.js",
+                        source: {
+                            file:
+                                "dev:Assets/js/preview.js",
+                            startMarker:
+                                "// DEV SOURCE: Progress Bar START",
+                            endMarker:
+                                "// DEV SOURCE: Progress Bar END",
+                        },
+                    },
+                    css: {
+                        filename:
+                            "progress-bar.less",
+                        source: {
+                            file:
+                                "kernel:Assets/less/components/progress-bar.less",
+                        },
+                    },
+                }
             );
 
+        if (global.Builder.has("progress-bar")) {
+            createPreviewCard(
+                progressBarExamples,
+                "Progress Bar",
+                "Determinate and indeterminate progress with labels, percentages, ranges, and semantic colors.",
+                progressBarPreviewContent,
+                progressBarSourceModal
+            );
+        }
+        // DEV SECTION: Progress Bar END
+        // DEV SECTION: Button Group START
+        const buttonGroupExamples =
+            createSection(
+                componentsGroup,
+                "Button Group",
+                "Grouped Builder buttons with spaced, attached, horizontal, vertical, and equal-width layouts.",
+                false
+            );
+
+        const buttonGroupPreviewContent =
+            document.createElement(
+                "div"
+            );
+
+        buttonGroupPreviewContent.classList.add(
+            "dev-theme-preview-card-content"
+        );
+
+        // DEV SOURCE: Button Group START
         if (global.Builder.has("button-group")) {
             global.Builder.create(
                 "button-group",
@@ -3006,7 +6709,7 @@
                         true,
                 }
             ).appendTo(
-                buttonGroupExamples
+                buttonGroupPreviewContent
             );
 
             global.Builder.create(
@@ -3042,7 +6745,7 @@
                         false,
                 }
             ).appendTo(
-                buttonGroupExamples
+                buttonGroupPreviewContent
             );
 
             global.Builder.create(
@@ -3079,17 +6782,73 @@
                         false,
                 }
             ).appendTo(
-                buttonGroupExamples
+                buttonGroupPreviewContent
             );
         }
+        // DEV SOURCE: Button Group END
 
-        const buttonExamples =
-            createSection(
-                mount,
-                "Button",
-                "Button variants and states."
+        const buttonGroupSourceModal =
+            createSourceModal(
+                "Button Group Source",
+                {
+                    html: {
+                        filename:
+                            "button-group.html",
+                        source:
+                            buttonGroupPreviewContent,
+                    },
+                    javascript: {
+                        filename:
+                            "preview.js",
+                        source: {
+                            file:
+                                "dev:Assets/js/preview.js",
+                            startMarker:
+                                "// DEV SOURCE: Button Group START",
+                            endMarker:
+                                "// DEV SOURCE: Button Group END",
+                        },
+                    },
+                    css: {
+                        filename:
+                            "button-group.less",
+                        source: {
+                            file:
+                                "kernel:Assets/less/components/button-group.less",
+                        },
+                    },
+                }
             );
 
+        if (global.Builder.has("button-group")) {
+            createPreviewCard(
+                buttonGroupExamples,
+                "Button Group",
+                "Grouped Builder buttons with spaced, attached, horizontal, vertical, and equal-width layouts.",
+                buttonGroupPreviewContent,
+                buttonGroupSourceModal
+            );
+        }
+        // DEV SECTION: Button Group END
+        // DEV SECTION: Button START
+        const buttonExamples =
+            createSection(
+                componentsGroup,
+                "Button",
+                "Button variants and states.",
+                false
+            );
+
+        const buttonPreviewContent =
+            document.createElement(
+                "div"
+            );
+
+        buttonPreviewContent.classList.add(
+            "dev-theme-preview-card-content"
+        );
+
+        // DEV SOURCE: Button START
         if (global.Builder.has("button")) {
             [
                 "primary",
@@ -3112,10 +6871,258 @@
                         size: "medium",
                     }
                 ).appendTo(
-                    buttonExamples
+                    buttonPreviewContent
                 );
             });
         }
+        // DEV SOURCE: Button END
+
+        const buttonSourceModal =
+            createSourceModal(
+                "Button Source",
+                {
+                    html: {
+                        filename:
+                            "button.html",
+                        source:
+                            buttonPreviewContent,
+                    },
+                    javascript: {
+                        filename:
+                            "preview.js",
+                        source: {
+                            file:
+                                "dev:Assets/js/preview.js",
+                            startMarker:
+                                "// DEV SOURCE: Button START",
+                            endMarker:
+                                "// DEV SOURCE: Button END",
+                        },
+                    },
+                    css: {
+                        filename:
+                            "button.less",
+                        source: {
+                            file:
+                                "kernel:Assets/less/components/button.less",
+                        },
+                    },
+                }
+            );
+
+        if (global.Builder.has("button")) {
+            createPreviewCard(
+                buttonExamples,
+                "Button",
+                "Button variants and states.",
+                buttonPreviewContent,
+                buttonSourceModal
+            );
+        }
+        // DEV SECTION: Button END
+
+        // DEV SECTION: Table of Content START
+        if (global.Builder.has("table-of-content")) {
+            const tableOfContentPreviewContent =
+                document.createElement(
+                    "div"
+                );
+
+            tableOfContentPreviewContent.classList.add(
+                "dev-theme-preview-card-content"
+            );
+
+            const tableOfContentPreviewControls =
+                document.createElement(
+                    "div"
+                );
+
+            tableOfContentPreviewControls.classList.add(
+                "dev-theme-preview-card-controls"
+            );
+
+            // DEV SOURCE: Table of Content START
+            const tableOfContentEntries =
+                Array.from(
+                    mount.querySelectorAll(
+                        ".dev-theme-preview-group"
+                    )
+                ).map(
+                    function (group) {
+                        if (
+                            !(group instanceof HTMLElement)
+                            || group.id === ""
+                        ) {
+                            return null;
+                        }
+
+                        const heading =
+                            group.querySelector(
+                                ":scope > .dev-theme-preview-group-title"
+                            );
+
+                        const content =
+                            group.querySelector(
+                                ":scope > .dev-theme-preview-group-content"
+                            );
+
+                        if (
+                            !(heading instanceof HTMLElement)
+                            || !(content instanceof HTMLElement)
+                        ) {
+                            return null;
+                        }
+
+                        const children =
+                            Array.from(
+                                content.querySelectorAll(
+                                    ":scope > .dev-theme-preview-section"
+                                )
+                            ).map(
+                                function (section) {
+                                    if (
+                                        !(section instanceof HTMLElement)
+                                        || section.id === ""
+                                    ) {
+                                        return null;
+                                    }
+
+                                    const sectionHeading =
+                                        section.querySelector(
+                                            ".dev-theme-preview-section-title"
+                                        );
+
+                                    if (
+                                        !(sectionHeading instanceof HTMLElement)
+                                    ) {
+                                        return null;
+                                    }
+
+                                    return {
+                                        label:
+                                            sectionHeading.textContent.trim(),
+                                        href:
+                                            "#"
+                                            + section.id,
+                                    };
+                                }
+                            ).filter(
+                                function (entry) {
+                                    return entry !== null;
+                                }
+                            );
+
+                        return {
+                            label:
+                                heading.textContent.trim(),
+                            href:
+                                "#"
+                                + group.id,
+                            children:
+                                children,
+                        };
+                    }
+                ).filter(
+                    function (entry) {
+                        return entry !== null;
+                    }
+                );
+
+            const tableOfContentExample =
+                global.Builder.create(
+                    "table-of-content",
+                    {
+                        title:
+                            "Table of Content",
+                        triggerTitle:
+                            "Open component table of content",
+                        persistenceKey:
+                            "core-web.dev-preview.table-of-content",
+                        scrollspyEnabled:
+                            true,
+                        entries:
+                            tableOfContentEntries,
+                    }
+                );
+
+            tableOfContentExample.appendTo(
+                tableOfContentPreviewContent
+            );
+
+            const tableOfContentScrollspyToggle =
+                createToggleControl(
+                    tableOfContentExamples,
+                    "Scrollspy",
+                    true,
+                    function (enabled) {
+                        if (enabled) {
+                            tableOfContentExample.enableScrollspy();
+
+                            return;
+                        }
+
+                        tableOfContentExample.disableScrollspy();
+                    }
+                );
+
+            if (
+                tableOfContentScrollspyToggle !== null
+                && typeof tableOfContentScrollspyToggle.element
+                    === "function"
+            ) {
+                tableOfContentPreviewControls.append(
+                    tableOfContentScrollspyToggle.element()
+                );
+            }
+
+            global.devTableOfContent =
+                tableOfContentExample;
+
+            // DEV SOURCE: Table of Content END
+
+            const tableOfContentSourceModal =
+                createSourceModal(
+                    "Table of Content Source",
+                    {
+                        html: {
+                            filename:
+                                "table-of-content.html",
+                            source:
+                                tableOfContentPreviewContent,
+                        },
+                        javascript: {
+                            filename:
+                                "preview.js",
+                            source: {
+                                file:
+                                    "dev:Assets/js/preview.js",
+                                startMarker:
+                                    "// DEV SOURCE: Table of Content START",
+                                endMarker:
+                                    "// DEV SOURCE: Table of Content END",
+                            },
+                        },
+                        css: {
+                            filename:
+                                "table-of-content.less",
+                            source: {
+                                file:
+                                    "kernel:Assets/less/components/table-of-content.less",
+                            },
+                        },
+                    }
+                );
+
+            createPreviewCard(
+                tableOfContentExamples,
+                "Table of Content",
+                "Floating page navigation with nested entries, persisted open state, and optional Scrollspy tracking.",
+                tableOfContentPreviewContent,
+                tableOfContentSourceModal,
+                tableOfContentPreviewControls
+            );
+        }
+        // DEV SECTION: Table of Content END
     }
 
     if (document.readyState === "loading") {
