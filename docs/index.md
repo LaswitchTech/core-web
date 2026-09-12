@@ -25,6 +25,29 @@ Task-oriented walkthroughs for building applications on Core-Web.
 | 9 | [Creating Extensions](usage/09-creating-extensions.md) | Plugins & themes, manifest reference, full hook reference. |
 | 10 | [Messaging & Logging](usage/10-messaging-and-logging.md) | Mail/SMS templates, channel-based logging. |
 
+## First-Party Plugins
+
+Bundled plugins under `ext/plugins/`. Each ships a task-oriented reference at
+`ext/plugins/{name}/docs/README.md`.
+
+| Plugin | What it ships | Docs |
+|--------|---------------|------|
+| Administration | Extensible administration panel (dashboard, settings, logs, dev console). | [README](../ext/plugins/administration/docs/README.md) |
+| Bootstrap | Bootstrap 5.3 framework assets. | [README](../ext/plugins/bootstrap/docs/README.md) |
+| Chart.js | Canvas-based charts and data visualizations. | [README](../ext/plugins/chartjs/docs/README.md) |
+| Core | Core extension — `core.*` CLI commands (info, db, config, install, init, extension, smtp, sms). | [README](../ext/plugins/core/docs/README.md) |
+| DataTables | DataTables assets with Bootstrap 5 integration. | [README](../ext/plugins/datatables/docs/README.md) |
+| Dev | Development tools for Core-Web (dev console, tab registry, source inspection). | [README](../ext/plugins/dev/docs/README.md) |
+| jQuery | jQuery browser assets. | [README](../ext/plugins/jquery/docs/README.md) |
+| JSZip | Client-side ZIP archive generation. | [README](../ext/plugins/jszip/docs/README.md) |
+| PDFMake | Client-side PDF generation. | [README](../ext/plugins/pdfmake/docs/README.md) |
+| PrismJS | Syntax highlighting + language grammars. | [README](../ext/plugins/prismjs/docs/README.md) |
+| Select2 | Select2 assets with Bootstrap 5 theme integration. | [README](../ext/plugins/select2/docs/README.md) |
+| SortableJS | Drag-and-drop reordering. | [README](../ext/plugins/sortablejs/docs/README.md) |
+| Telico | Telico SMS provider. | [README](../ext/plugins/telico/docs/README.md) |
+| TimeagoJS | Relative-time formatting (jQuery Timeago). | [README](../ext/plugins/timeagojs/docs/README.md) |
+| Twilio | Twilio SMS provider. | [README](../ext/plugins/twilio/docs/README.md) |
+
 ## Architecture Reference
 
 Component-level design and API documentation, mirroring `src/`.
